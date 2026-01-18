@@ -19,10 +19,21 @@ namespace EasyLoan.DataAccess
         public DbSet<LoanApplication> LoanApplications { get; set; }
         public DbSet<LoanDetails> Loans { get; set; }
         public DbSet<LoanPayment> LoanPayments { get; set; }
+        public DbSet<LoanEmi> LoanEmis { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            
            modelBuilder.ApplyConfigurationsFromAssembly(typeof(EasyLoanDbContext).Assembly);
+
+           modelBuilder.Entity<Employee>().HasData(new Employee() 
+           {    Id = Guid.NewGuid(),
+                Email = "ankitkumarsingh018@gmail.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("ankit@Ankit@1"),
+                PhoneNumber = "1234567890",
+                Name = "Ankit",
+                Role = EmployeeRole.Admin
+           });
         }
 
     }

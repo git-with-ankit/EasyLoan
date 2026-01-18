@@ -11,5 +11,6 @@ namespace EasyLoan.Dtos.Common
         public bool Success { get; set; }
         public string? Message { get; set; }
         public T? Data { get; set; }
+        public IDictionary<string, string[]>? ValidationErrors { get; set; }
     }
 }

@@ -50,3 +50,18 @@ namespace EasyLoan.DataAccess.Models
         public ICollection<LoanPayment> LoanPayments { get; set; } = new List<LoanPayment>();
     }
 }
+//All the todos
+//aditya sir suggested (remove preview)
+//add enum in dtos
+//exception handling and from responses
+//jwt
+//loanId should not be public create a public loan id
+//put to patch
+
+//Model validation errors with api response dto - done
+//enums in dtos
+//db enum stored as int - add a migration and done
+//saare required payment store kar lo pehle se hee and then override the status and amount - done
+//hash password
+//review dtos
+//question - should i remove customerId if i am getting from jwt

@@ -21,7 +21,7 @@ namespace EasyLoan.DataAccess.Repositories
 
         public async Task<List<Employee>> GetAllAsync()
         {
-            return await _context.Employees.ToListAsync();
+            return await _context.Employees.Include(e => e.AssignedLoanApplications).ToListAsync();
         }
 
         public async Task<Employee?> GetByEmailAsync(string email)

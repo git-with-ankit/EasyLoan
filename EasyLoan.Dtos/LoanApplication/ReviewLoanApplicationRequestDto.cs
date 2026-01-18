@@ -18,6 +18,7 @@ namespace EasyLoan.Dtos.LoanApplication
 
         [Required]
         [Precision(18,2)]
+        [Range(0,double.MaxValue)]
         public decimal ApprovedAmount { get; set; }
     }
 }

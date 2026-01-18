@@ -1,4 +1,5 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Api.Extensions;
+using EasyLoan.Business.Interfaces;
 using EasyLoan.Business.Services;
 using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Loan;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EasyLoan.Api.Controllers
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("api/loans")]
     public class LoansController : ControllerBase
     {
         private readonly ILoanService _service;
@@ -18,10 +19,14 @@ namespace EasyLoan.Api.Controllers
             _service = service;
         }
 
-        //[Authorize(Roles = "Customer")]
-        [HttpGet("{customerId}")]
-        public async Task<IActionResult> GetAllCustomerLoans(Guid customerId)
+        [Authorize(Roles = "Customer")]
+        [HttpGet]
+        [ProducesResponseType(typeof(ApiResponseDto<List<LoanSummaryResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<List<LoanSummaryResponseDto>>>> GetAllCustomerLoans()
         {
+            var customerId = User.GetUserId();
             var loans = await _service.GetAllCustomerLoansAsync(customerId);
             return Ok(new ApiResponseDto<List<LoanSummaryResponseDto>> { Success = true, Data = loans }) ;
         }
@@ -35,10 +40,13 @@ namespace EasyLoan.Api.Controllers
         //}
 
         [Authorize(Roles = "Customer")]
-        [HttpGet("details/{loanId}")]
+        [HttpGet("{loanId}")]
+        [ProducesResponseType(typeof(ApiResponseDto<LoanDetailsResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<ApiResponseDto<LoanDetailsResponseDto>>> GetDetails(Guid loanId)
         {
-            var customerId = new Guid();//TODO : Get the customer id
+            var customerId = User.GetUserId();
             var loan = await _service.GetLoanDetailsAsync(customerId, loanId);
             return Ok(new ApiResponseDto<LoanDetailsResponseDto> { Success = true, Data = loan });
         }

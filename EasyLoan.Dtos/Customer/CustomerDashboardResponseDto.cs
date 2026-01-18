@@ -14,6 +14,6 @@ namespace EasyLoan.Dtos.Customer
         public int TotalNumberOfRejectedApplications { get; set; }
         public int TotalNumberOfActiveLoans { get; set; }
         public int TotalNumberOfClosedLoans { get; set; }
-        public int NumberOfPendingPayments { get; set; }
+        //public int NumberOfPendingPayments { get; set; }
     }
 }

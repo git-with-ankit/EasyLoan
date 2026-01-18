@@ -10,9 +10,6 @@ namespace EasyLoan.Dtos.LoanApplication
     public class CreateLoanApplicationRequestDto
     {
         [Required]
-        public Guid CustomerId { get; set; }
-
-        [Required]
         public Guid LoanTypeId { get; set; }
 
         [Required]
@@ -20,7 +17,7 @@ namespace EasyLoan.Dtos.LoanApplication
         public decimal RequestedAmount { get; set; }
 
         [Required]
-        [Range(1, 360)]
+        [Range(1, int.MaxValue)]
         public int RequestedTenureInMonths { get; set; }
     }
 }

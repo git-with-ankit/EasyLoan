@@ -8,7 +8,6 @@ namespace EasyLoan.Dtos.LoanPayment
 {
     public class LoanPaymentHistoryResponseDto
     {
-        public DateTime DueDate { get; set; }
         public DateTime? PaymentDate { get; set; }
         public decimal Amount { get; set; }
         public string Status { get; set; }

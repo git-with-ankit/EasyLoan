@@ -52,5 +52,6 @@ namespace EasyLoan.DataAccess.Models
         public Employee ApprovedByEmployee { get; set; } 
 
         public ICollection<LoanPayment> LoanPayments { get; set; } = new List<LoanPayment>();
+        public ICollection<LoanEmi> Emis { get; set; } = new List<LoanEmi>();
     }
 }

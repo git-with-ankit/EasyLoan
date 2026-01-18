@@ -1,4 +1,6 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Exceptions;
+using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.Dtos.Loan;
 
@@ -17,10 +19,10 @@ namespace EasyLoan.Business.Services
     GetLoanDetailsAsync(Guid customerId, Guid loanId)
         {
             var loan = await _repo.GetByIdAsync(loanId)
-                ?? throw new KeyNotFoundException("Loan not found");
+                ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             return new LoanDetailsResponseDto
             {
@@ -37,7 +39,8 @@ namespace EasyLoan.Business.Services
         public async Task<List<LoanSummaryResponseDto>> GetAllCustomerLoansAsync(Guid customerId)
         {
             var loans = await _repo.GetLoansByCustomerIdAsync(customerId);
-
+            /*if (!loans.Any())
+                throw new NotFoundException(ErrorMessages.LoanNotFound);*/ //return empty collection
             return loans
                 .Select(l => new LoanSummaryResponseDto
                 {

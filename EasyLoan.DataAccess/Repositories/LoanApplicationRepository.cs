@@ -16,17 +16,22 @@ namespace EasyLoan.DataAccess.Repositories
         public async Task<LoanApplication?> GetByIdAsync(Guid id)
         {
             return await _context.LoanApplications
+                .Include(a => a.Customer)
+                .Include(a => a.LoanType)
+                .Include(a => a.ApprovedByEmployee)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
         public async Task<List<LoanApplication>> GetAllAsync()
         {
-            return await _context.LoanApplications.ToListAsync();
+            return await _context.LoanApplications.Include(a => a.LoanType)
+                    .Include(a => a.Customer).Include(a => a.ApprovedByEmployee).ToListAsync();
         }
 
         public async Task<LoanApplication?> GetByApplicationIdAsync(string applicationId)
         {
-            return await _context.LoanApplications
+            return await _context.LoanApplications.Include(a => a.LoanType)
+                    .Include(a => a.Customer).Include(a => a.ApprovedByEmployee)
                 .FirstOrDefaultAsync(a => a.ApplicationId == applicationId);
         }
 
@@ -34,6 +39,7 @@ namespace EasyLoan.DataAccess.Repositories
         {
             return await _context.LoanApplications
                 .Where(a => a.CustomerId == customerId)
+                .Include(a => a.LoanType)
                 .ToListAsync();
         }
 

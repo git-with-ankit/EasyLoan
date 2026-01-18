@@ -1,4 +1,6 @@
-﻿using EasyLoan.Business.Helper;
+﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Exceptions;
+using EasyLoan.Business.Helper;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.LoanType;
@@ -29,7 +31,7 @@ public class LoanTypeService : ILoanTypeService
     public async Task<LoanTypeResponseDto> GetByIdAsync(Guid loanTypeId)
     {
         var loanType = await _loanTypeRepo.GetByIdAsync(loanTypeId)
-            ?? throw new KeyNotFoundException("Loan type not found");
+            ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
 
         return new LoanTypeResponseDto
         {
@@ -60,7 +62,7 @@ public class LoanTypeService : ILoanTypeService
     public async Task UpdateLoanTypeAsync(Guid loanTypeId, UpdateLoanTypeRequestDto dto)
     {
         var type = await _loanTypeRepo.GetByIdAsync(loanTypeId)
-            ?? throw new KeyNotFoundException();
+            ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
 
         type.InterestRate = dto.InterestRate;
         type.MinAmount = dto.MinAmount;
@@ -89,7 +91,15 @@ public class LoanTypeService : ILoanTypeService
        int tenureInMonths)
     {
         var loanType = await _loanTypeRepo.GetByIdAsync(loanTypeId)
-            ?? throw new KeyNotFoundException("Loan type not found");
+            ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
+
+        if(tenureInMonths > loanType.MaxTenureInMonths)
+        {
+            throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxTenure);
+        }
+
+        if (amount < loanType.MinAmount)
+            throw new BusinessRuleViolationException(ErrorMessages.AmountLessThanMinAmount);
 
         return EmiCalculator.GenerateSchedule(
             principal: amount,

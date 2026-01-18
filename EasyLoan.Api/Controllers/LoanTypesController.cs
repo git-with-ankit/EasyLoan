@@ -17,8 +17,11 @@ namespace EasyLoan.Api.Controllers
             _service = service;
         }
 
+        
         [HttpGet]
-        public async Task<ActionResult<ApiResponseDto<List<LoanTypeResponseDto>>>> GetAll()
+        [Authorize(Roles = "Customer,Manager,Admin")]
+        [ProducesResponseType(typeof(ApiResponseDto<List<LoanTypeResponseDto>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponseDto<List<LoanTypeResponseDto>>>> GetAllLoanTypes()
         {
             var loanTypes = await _service.GetAllAsync();
             return Ok(new ApiResponseDto<List<LoanTypeResponseDto>>
@@ -29,7 +32,10 @@ namespace EasyLoan.Api.Controllers
         }
 
         [HttpGet("{loanTypeId}")]
-        public async Task<ActionResult<ApiResponseDto<LoanTypeResponseDto>>> GetById(Guid loanTypeId)
+        [Authorize(Roles = "Customer,Manager,Admin")]
+        [ProducesResponseType(typeof(ApiResponseDto<LoanTypeResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponseDto<LoanTypeResponseDto>>> GetLoanTypesById(Guid loanTypeId)
         {
             var loanType = await _service.GetByIdAsync(loanTypeId);
             return Ok(new ApiResponseDto<LoanTypeResponseDto>
@@ -39,28 +45,37 @@ namespace EasyLoan.Api.Controllers
             });
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateLoanType(
-            CreateLoanTypeRequestDto request)
+        [ProducesResponseType(typeof(ApiResponseDto<Guid>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateLoanType(CreateLoanTypeRequestDto request)
         {
             var id = await _service.CreateLoanTypeAsync(request);
-            return Ok(new ApiResponseDto<Guid> { Success = true, Data = id });
+            return CreatedAtAction(nameof(GetLoanTypesById), new { loanTypeId = id },new ApiResponseDto<Guid> { Success = true, Data = id });
         }
-        // Customer selects loanTypeId, amount, tenure
-        //[Authorize(Roles ="Customer")]
-        [HttpGet("{loanTypeId}/emi-preview")]
-        public async Task<IActionResult> PreviewEmiPlan(
-             Guid loanTypeId,
-            [FromQuery] decimal amount,
-            [FromQuery] int tenureInMonths)
+
+        [Authorize(Roles = "Customer,Manager")]
+        [HttpGet("{loanTypeId}/emi-plan")]
+        [ProducesResponseType(typeof(ApiResponseDto<List<EmiScheduleItemResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<ActionResult<ApiResponseDto<List<EmiScheduleItemResponseDto>>>> PreviewEmiPlan(Guid loanTypeId,[FromQuery] PreviewEmiQueryDto query)
         {
             var plan = await _service.PreviewEmiAsync(
                 loanTypeId,
-                amount,
-                tenureInMonths);
+                query.Amount,
+                query.TenureInMonths);
 
-            return Ok(new ApiResponseDto<List<EmiScheduleItemResponseDto>> { Success = true, Data = plan });
+            return Ok(new ApiResponseDto<List<EmiScheduleItemResponseDto>>
+            {
+                Success = true,
+                Data = plan
+            });
         }
+
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyLoan.DataAccess.Migrations
 {
     [DbContext(typeof(EasyLoanDbContext))]
-    [Migration("20260115185612_init")]
-    partial class init
+    [Migration("20260118154508_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,8 +101,9 @@ namespace EasyLoan.DataAccess.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -110,6 +111,17 @@ namespace EasyLoan.DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("Employees");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("2ea87707-9c78-49c6-aeb9-a3e43869be9a"),
+                            Email = "ankitkumarsingh018@gmail.com",
+                            Name = "Ankit",
+                            Password = "$2a$11$GgUWkoX.jauryG30CR.VzO8qdxnF08Kuq0KZylsK1hYnvKFX2/xv2",
+                            PhoneNumber = "1234567890",
+                            Role = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanApplication", b =>
@@ -177,6 +189,9 @@ namespace EasyLoan.DataAccess.Migrations
                     b.Property<Guid>("ApprovedByEmployeeId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -207,6 +222,39 @@ namespace EasyLoan.DataAccess.Migrations
                     b.HasIndex("LoanTypeId");
 
                     b.ToTable("Loans");
+                });
+
+            modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanEmi", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmiNumber")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("LoanDetailsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("RemainingAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanDetailsId");
+
+                    b.ToTable("LoanEmis");
                 });
 
             modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanPayment", b =>
@@ -342,6 +390,17 @@ namespace EasyLoan.DataAccess.Migrations
                     b.Navigation("LoanType");
                 });
 
+            modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanEmi", b =>
+                {
+                    b.HasOne("EasyLoan.DataAccess.Models.LoanDetails", "LoanDetails")
+                        .WithMany("Emis")
+                        .HasForeignKey("LoanDetailsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LoanDetails");
+                });
+
             modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanPayment", b =>
                 {
                     b.HasOne("EasyLoan.DataAccess.Models.Customer", "Customer")
@@ -379,6 +438,8 @@ namespace EasyLoan.DataAccess.Migrations
 
             modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanDetails", b =>
                 {
+                    b.Navigation("Emis");
+
                     b.Navigation("LoanPayments");
                 });
 

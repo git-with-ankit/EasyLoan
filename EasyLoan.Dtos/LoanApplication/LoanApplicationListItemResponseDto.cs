@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using EasyLoan.DataAccess.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace EasyLoan.Dtos.LoanApplication
 {
@@ -11,10 +8,9 @@ namespace EasyLoan.Dtos.LoanApplication
         public string ApplicationId { get; set; }
         public string LoanTypeName { get; set; }
         public decimal RequestedAmount { get; set; }
+        public int TenureInMonths { get; set; }
+        public Guid AssignedEmployeeId {  get; set; }
         public string Status { get; set; }
         public DateTime CreatedDate { get; set; }
-        public int TenureInMonths { get; set; }
-        public Guid AssignedEmployeeId { get; set; }
     }
-}//TODO : EMi plan and tenureinmonths
-//TODO : Assign employee id
+}

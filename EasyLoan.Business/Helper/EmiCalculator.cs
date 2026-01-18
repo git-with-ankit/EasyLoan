@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.LoanType;
+﻿using EasyLoan.Dtos.LoanPayment;
+using EasyLoan.Dtos.LoanType;
 using System;
 using System.Collections.Generic;
 using System.Linq;

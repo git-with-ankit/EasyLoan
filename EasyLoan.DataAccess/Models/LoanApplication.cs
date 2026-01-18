@@ -21,10 +21,6 @@ namespace EasyLoan.DataAccess.Models
         public Guid LoanTypeId { get; set; }
 
         [Required]
-        [Precision(5, 2)]
-        public decimal InterestRate { get; set; }
-
-        [Required]
         public Guid AssignedEmployeeId { get; set; }
         [Required]
         [Precision(18, 2)]

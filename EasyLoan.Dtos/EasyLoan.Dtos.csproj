@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.23" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EasyLoan.DataAccess\EasyLoan.DataAccess.csproj" />
+  </ItemGroup>
+
 </Project>

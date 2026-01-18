@@ -16,6 +16,9 @@ namespace EasyLoan.DataAccess.Repositories
         public async Task<Customer?> GetByIdAsync(Guid id)
         {
             return await _context.Customers
+                .Include(c => c.Loans)
+                .ThenInclude(l => l.LoanPayments)
+                .Include(c => c.LoanApplications)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 

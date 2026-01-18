@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EasyLoan.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,7 +40,7 @@ namespace EasyLoan.DataAccess.Migrations
                     Email = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<int>(type: "int", nullable: false)
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -113,7 +113,8 @@ namespace EasyLoan.DataAccess.Migrations
                     PrincipalRemaining = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     TenureInMonths = table.Column<int>(type: "int", nullable: false),
                     InterestRate = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -136,6 +137,29 @@ namespace EasyLoan.DataAccess.Migrations
                         principalTable: "LoanTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoanEmis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoanDetailsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EmiNumber = table.Column<int>(type: "int", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    RemainingAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    PaidDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoanEmis", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LoanEmis_Loans_LoanDetailsId",
+                        column: x => x.LoanDetailsId,
+                        principalTable: "Loans",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -170,6 +194,11 @@ namespace EasyLoan.DataAccess.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.InsertData(
+                table: "Employees",
+                columns: new[] { "Id", "Email", "Name", "Password", "PhoneNumber", "Role" },
+                values: new object[] { new Guid("2ea87707-9c78-49c6-aeb9-a3e43869be9a"), "ankitkumarsingh018@gmail.com", "Ankit", "$2a$11$GgUWkoX.jauryG30CR.VzO8qdxnF08Kuq0KZylsK1hYnvKFX2/xv2", "1234567890", "Admin" });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Customers_Email_PanNumber",
                 table: "Customers",
@@ -196,6 +225,11 @@ namespace EasyLoan.DataAccess.Migrations
                 name: "IX_LoanApplications_LoanTypeId",
                 table: "LoanApplications",
                 column: "LoanTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoanEmis_LoanDetailsId",
+                table: "LoanEmis",
+                column: "LoanDetailsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LoanPayments_CustomerId",
@@ -240,6 +274,9 @@ namespace EasyLoan.DataAccess.Migrations
         {
             migrationBuilder.DropTable(
                 name: "LoanApplications");
+
+            migrationBuilder.DropTable(
+                name: "LoanEmis");
 
             migrationBuilder.DropTable(
                 name: "LoanPayments");

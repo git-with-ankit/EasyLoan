@@ -23,51 +23,51 @@ namespace EasyLoan.Business.Services
             _loanApplicationRepo = loanApplicationRepo;
         }
 
-        public async Task<string> LoginAsync(EmployeeLoginRequestDto dto)
-        {
-            var emp = await _employeeRepo.GetByEmailAsync(dto.Email)
-                ?? throw new UnauthorizedAccessException();
-
-            if (dto.Password == emp.Password) //TODO : Check hashed password
-                throw new UnauthorizedAccessException();
-
-            //return _tokenService.GenerateEmployeeToken(emp);  TODO : Generate token
-            return "Created";
-        }
-
-        //public async Task<List<AssignedLoanApplicationsResponseDto>> GetAssignedApplicationsAsync(Guid employeeId)
+        //public async Task<string> LoginAsync(EmployeeLoginRequestDto dto)
         //{
-        //    var manager = await _employeeRepo.GetByIdAsync(employeeId)
-        //        ?? throw new KeyNotFoundException();
+        //    var emp = await _employeeRepo.GetByEmailAsync(dto.Email)
+        //        ?? throw new UnauthorizedAccessException();
 
-        //    return manager.AssignedLoanApplications.Select(a => new AssignedLoanApplicationsResponseDto
+        //    if (dto.Password == emp.Password) //TODO : Check hashed password
+        //        throw new UnauthorizedAccessException();
+
+        //    //return _tokenService.GenerateEmployeeToken(emp);  TODO : Generate token
+        //    return "Created";
+        //}
+
+        ////public async Task<List<AssignedLoanApplicationsResponseDto>> GetAssignedApplicationsAsync(Guid employeeId)
+        ////{
+        ////    var manager = await _employeeRepo.GetByIdAsync(employeeId)
+        ////        ?? throw new KeyNotFoundException();
+
+        ////    return manager.AssignedLoanApplications.Select(a => new AssignedLoanApplicationsResponseDto
+        ////    {
+        ////        ApplicationId = a.ApplicationId,
+        ////        Status = a.Status.ToString(),
+        ////        LoanTypeName = a.LoanType.Name,
+        ////        CreatedDate = a.CreatedDate,
+        ////        CustomerName = a.Customer.Name,
+        ////        RequestedTenureInMonths = a.RequestedTenureInMonths,
+        ////        RequestedAmount = a.RequestedAmount
+        ////    }).ToList();
+        ////} TODO : Remove
+        //public async Task<Guid> CreateManagerAsync(CreateEmployeeRequestDto dto)
+        //{
+        //    var emp = new Employee
         //    {
-        //        ApplicationId = a.ApplicationId,
-        //        Status = a.Status.ToString(),
-        //        LoanTypeName = a.LoanType.Name,
-        //        CreatedDate = a.CreatedDate,
-        //        CustomerName = a.Customer.Name,
-        //        RequestedTenureInMonths = a.RequestedTenureInMonths,
-        //        RequestedAmount = a.RequestedAmount
-        //    }).ToList();
-        //} TODO : Remove
-        public async Task<Guid> CreateManagerAsync(CreateEmployeeRequestDto dto)
-        {
-            var emp = new Employee
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                Password = dto.Password,//TODO : Hash Password
-                Role = EmployeeRole.Manager
-            };
+        //        Id = Guid.NewGuid(),
+        //        Name = dto.Name,
+        //        Email = dto.Email,
+        //        PhoneNumber = dto.PhoneNumber,
+        //        Password = dto.Password,//TODO : Hash Password
+        //        Role = EmployeeRole.Manager
+        //    };
 
-            await _employeeRepo.AddAsync(emp);
-            await _employeeRepo.SaveChangesAsync();
+        //    await _employeeRepo.AddAsync(emp);
+        //    await _employeeRepo.SaveChangesAsync();
 
-            return emp.Id;
-        }
+        //    return emp.Id;
+        //}
 
         //public async Task<Guid> CreateLoanTypeAsync(CreateLoanTypeRequestDto dto)
         //{

@@ -1,4 +1,6 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Exceptions;
+using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.Customer;
@@ -21,50 +23,53 @@ namespace EasyLoan.Business.Services
             _customerRepo = customerRepo;
         }
 
-        public async Task<Guid> RegisterAsync(RegisterCustomerRequestDto dto)
-        {
-            if (await _customerRepo.ExistsByEmailAsync(dto.Email))
-                throw new InvalidOperationException("Email already exists");
+        //public async Task<Guid> RegisterAsync(RegisterCustomerRequestDto dto)
+        //{
+        //    if (await _customerRepo.ExistsByEmailAsync(dto.Email))
+        //        throw new ValidationException(ErrorMessages.EmailAlreadyExists);
 
-            if (await _customerRepo.ExistsByPanAsync(dto.PanNumber))
-                throw new InvalidOperationException("PAN already exists");
+        //    if (await _customerRepo.ExistsByPanAsync(dto.PanNumber))
+        //        throw new ValidationException(ErrorMessages.PanAlreadyExists);
 
-            var customer = new Customer
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                DateOfBirth = dto.DateOfBirth,
-                AnnualSalary = dto.AnnualSalary,
-                PanNumber = dto.PanNumber,
-                Password = dto.Password,//TODO:Hash Password
-                CreditScore = 800,
-                CreatedDate = DateTime.UtcNow
-            };
+        //    if (dto.DateOfBirth > DateTime.UtcNow.AddYears(-18))
+        //        throw new BusinessRuleViolationException("Customer must be at least 18 years old.");
 
-            await _customerRepo.AddAsync(customer);
-            await _customerRepo.SaveChangesAsync();
+        //    var customer = new Customer
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        Name = dto.Name,
+        //        Email = dto.Email,
+        //        PhoneNumber = dto.PhoneNumber,
+        //        DateOfBirth = dto.DateOfBirth,
+        //        AnnualSalary = dto.AnnualSalary,
+        //        PanNumber = dto.PanNumber,
+        //        Password = dto.Password,//TODO:Hash Password
+        //        CreditScore = 800,
+        //        CreatedDate = DateTime.UtcNow
+        //    };
 
-            return customer.Id;
-        }
+        //    await _customerRepo.AddAsync(customer);
+        //    await _customerRepo.SaveChangesAsync();
 
-        public async Task<string> LoginAsync(CustomerLoginRequestDto dto)
-        {
-            var customer = await _customerRepo.GetByEmailAsync(dto.Email)
-                ?? throw new UnauthorizedAccessException("Invalid credentials");
+        //    return customer.Id;
+        //}
 
-            if (dto.Password != customer.Password) //TODO : Comapre using hash library
-                throw new UnauthorizedAccessException("Invalid credentials");
+        //public async Task<string> LoginAsync(CustomerLoginRequestDto dto)
+        //{
+        //    var customer = await _customerRepo.GetByEmailAsync(dto.Email)
+        //        ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-            //return _tokenService.GenerateCustomerToken(customer);//Generate token
-            return "Created";
-        }
+        //    if (dto.Password != customer.Password) //TODO : Comapre using hash library
+        //        throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+
+        //    //return _tokenService.GenerateCustomerToken(customer);//Generate token
+        //    return "Created";
+        //}
 
         public async Task<CustomerProfileResponseDto> GetProfileAsync(Guid customerId)
         {
             var c = await _customerRepo.GetByIdAsync(customerId)
-                ?? throw new KeyNotFoundException();
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             return new CustomerProfileResponseDto
             {
@@ -81,7 +86,7 @@ namespace EasyLoan.Business.Services
         public async Task UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto)
         {
             var customer = await _customerRepo.GetByIdAsync(customerId)
-                ?? throw new KeyNotFoundException();
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             customer.Name = dto.Name;
             customer.PhoneNumber = dto.PhoneNumber;
@@ -94,7 +99,7 @@ namespace EasyLoan.Business.Services
         public async Task<CustomerDashboardResponseDto> GetDashboardAsync(Guid customerId)
         {
             var customer = await _customerRepo.GetByIdAsync(customerId)
-                ?? throw new KeyNotFoundException();
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             var today = DateTime.UtcNow.Date;
 
@@ -112,8 +117,7 @@ namespace EasyLoan.Business.Services
                 TotalNumberOfClosedLoans = customer.Loans.Count(l => l.Status == LoanStatus.Closed),
                 TotalNumberOfPendingApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Pending),
                 TotalNumberOfApprovedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Approved),
-                TotalNumberOfRejectedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Rejected),
-                NumberOfPendingPayments = pendingPayments
+                TotalNumberOfRejectedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Rejected)
             };
         }
     }

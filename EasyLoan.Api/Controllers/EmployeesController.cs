@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EasyLoan.Api.Controllers
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("api/employees")]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -19,59 +19,26 @@ namespace EasyLoan.Api.Controllers
             _employeeService = service;
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult<ApiResponseDto<string>>> Login(EmployeeLoginRequestDto request)
-        {
-            var token = await _employeeService.LoginAsync(request);
-            return Ok(new ApiResponseDto<string> { Success = true, Data = token });
-        }
-
-        ////[Authorize(Roles = "Manager")]
-        //[HttpGet("assigned-loan-applications/{managerId}")]
-        //public async Task<ActionResult<ApiResponseDto<List<AssignedLoanApplicationsResponseDto>>>>GetAssignedLoanApplications(Guid managerId)
+        //[HttpPost("login")]
+        //[ProducesResponseType(typeof(ApiResponseDto<string>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status401Unauthorized)]
+        //public async Task<ActionResult<ApiResponseDto<string>>> Login(EmployeeLoginRequestDto request)
         //{
-        //    //var apps = await _employeeService.GetAssignedApplicationsAsync(User.GetUserId());
-        //    var applications = await _employeeService.GetAssignedApplicationsAsync(managerId);
-        //    return Ok(new ApiResponseDto<List<AssignedLoanApplicationsResponseDto>> { Success = true, Data = applications });
+        //    var token = await _employeeService.LoginAsync(request);
+        //    return Ok(new ApiResponseDto<string> { Success = true, Data = token });
         //}
 
-        //[Authorize(Roles ="Admin")]
-        [HttpPost]
-        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateManager(CreateEmployeeRequestDto request)
-        {
-            var id = await _employeeService.CreateManagerAsync(request);
-            return Ok(new ApiResponseDto<Guid> { Success = true, Data = id });
-        }
-
-        //[Authorize(Roles ="Admin")]
-        //[HttpPost("loan-types")]
-        //public async Task<ActionResult<ApiResponseDto<Guid>>> CreateLoanType(
-        //    CreateLoanTypeRequestDto request)
+        ////[Authorize(Roles ="Admin")]
+        //[HttpPost]
+        //[ProducesResponseType(typeof(ApiResponseDto<Guid>), StatusCodes.Status201Created)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        //public async Task<ActionResult<ApiResponseDto<Guid>>> CreateManager(CreateEmployeeRequestDto request)
         //{
-        //    var id = await _employeeService.CreateLoanTypeAsync(request);
+        //    var id = await _employeeService.CreateManagerAsync(request);
         //    return Ok(new ApiResponseDto<Guid> { Success = true, Data = id });
-        //}
-
-        //[HttpPut("loan-types/{loanTypeId}")]//TODO : How to implement patch
-        //public async Task<ActionResult<ApiResponseDto<bool>>> UpdateLoanType(
-        //    Guid loanTypeId, UpdateLoanTypeRequestDto request)
-        //{
-        //    await _employeeService.UpdateLoanTypeAsync(loanTypeId, request);
-        //    return Ok(new ApiResponseDto<bool> { Success = true, Data = true });
-        //}
-
-        //[HttpGet("loan-types")]
-        //public async Task<ActionResult<ApiResponseDto<List<LoanTypeResponseDto>>>> GetLoanTypes()
-        //{
-        //    var types = await _employeeService.GetLoanTypesAsync();
-        //    return Ok(new ApiResponseDto<List<LoanTypeResponseDto>> { Success = true, Data = types });
-        //}
-
-        //[HttpGet("applications")]
-        //public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseDto>>>> Applications()
-        //{
-        //    var applications = await _employeeService.GetPendingApplications();
-        //    return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseDto>> { Success = true, Data = applications });
         //}
     }
 }
+//Implement get profile and update profile here

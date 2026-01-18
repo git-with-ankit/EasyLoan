@@ -1,4 +1,7 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Exceptions;
+using EasyLoan.Business.Helper;
+using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.LoanPayment;
@@ -14,27 +17,31 @@ namespace EasyLoan.Business.Services
     {
         private readonly ILoanPaymentRepository _paymentRepo;
         private readonly ILoanDetailsRepository _loanRepo;
+        private readonly ICustomerRepository _customerRepo;
 
         public LoanPaymentService(
             ILoanPaymentRepository repo,
-            ILoanDetailsRepository loanRepo)
+            ILoanDetailsRepository loanRepo,
+            ICustomerRepository customerRepo)
         {
             _paymentRepo = repo;
             _loanRepo = loanRepo;
+            _customerRepo = customerRepo;
         }
 
-        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, LoanPaymentHistoryRequestDto dto)//TODO : Review
+        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, Guid loanId)//TODO : Review
         {
-            var loan = await _loanRepo.GetByIdAsync(dto.LoanId) ?? throw new KeyNotFoundException("Loan not found");
+            var loan = await _loanRepo.GetByIdAsync(loanId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
-                throw new UnauthorizedAccessException("Access denied to loan payments");
-            var payments = await _paymentRepo.GetByLoanIdAsync(dto.LoanId);
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+            var payments = await _paymentRepo.GetByLoanIdAsync(loanId);
+
             return payments
                 .Where(p => p.Status == LoanPaymentStatus.Paid)
                 .OrderBy(p => p.DueDate)
                 .Select(p => new LoanPaymentHistoryResponseDto
                 {
-                    DueDate = p.DueDate,
                     PaymentDate = p.PaymentDate,
                     Amount = p.Amount,
                     Status = p.Status.ToString()
@@ -42,99 +49,268 @@ namespace EasyLoan.Business.Services
                 .ToList();
         }
 
-        public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)//TODO : Review
+        //public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)
+        //{
+        //    var loan = await _loanRepo.GetByIdAsync(dto.LoanId)
+        //        ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+
+        //    if (loan.CustomerId != customerId)
+        //        throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+        //    if (loan.Status != LoanStatus.Active)
+        //        throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+
+        //    var customer = await _customerRepo.GetByIdAsync(customerId)
+        //        ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+        //    var monthlyRate = loan.InterestRate / 12 / 100;
+
+        //    var requiredEmi = (loan.PrincipalRemaining * monthlyRate *
+        //                      (decimal)Math.Pow(1 + (double)monthlyRate, loan.TenureInMonths)) /
+        //                      ((decimal)Math.Pow(1 + (double)monthlyRate, loan.TenureInMonths) - 1);
+
+        //    if (dto.Amount < requiredEmi)
+        //    {
+        //        customer.CreditScore -= 10;
+        //    }
+        //    else if (dto.Amount == requiredEmi)
+        //    {
+        //        customer.CreditScore += 2;
+        //    }
+        //    else // dto.Amount > requiredEmi
+        //    {
+        //        customer.CreditScore += 5;
+        //    }
+
+        //    // Clamp credit score (important)
+        //    customer.CreditScore = Math.Clamp(customer.CreditScore, 300, 900);
+
+        //    var interestDue = loan.PrincipalRemaining * monthlyRate;
+
+        //    var interestPaid = Math.Min(dto.Amount, interestDue);
+        //    var principalPaid = dto.Amount - interestPaid;
+
+        //    if (principalPaid < 0)
+        //        principalPaid = 0;
+
+        //    loan.PrincipalRemaining -= principalPaid;
+
+        //    if (loan.PrincipalRemaining <= 0)
+        //    {
+        //        loan.PrincipalRemaining = 0;
+        //        loan.Status = LoanStatus.Closed;
+        //    }
+
+        //    var payment = new LoanPayment
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        LoanDetailsId = loan.Id,
+        //        CustomerId = customerId,
+        //        Amount = dto.Amount,
+        //        PaymentDate = DateTime.UtcNow,
+        //        TransactionId = Guid.NewGuid(),
+        //        Status = LoanPaymentStatus.Paid
+        //    };
+
+        //    await _paymentRepo.AddAsync(payment);
+        //    await _loanRepo.UpdateAsync(loan);
+        //    await _customerRepo.UpdateAsync(customer);
+
+        //    await _paymentRepo.SaveChangesAsync();
+        //}
+
+        public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)
         {
             var loan = await _loanRepo.GetByIdAsync(dto.LoanId)
-                ?? throw new KeyNotFoundException("Loan not found");
+                ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             if (loan.Status != LoanStatus.Active)
-                throw new InvalidOperationException("Loan is not active");
+                throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
 
+            var customer = await _customerRepo.GetByIdAsync(customerId)
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+            var unpaidEmis = loan.Emis
+                .Where(e => !e.IsPaid)
+                .OrderBy(e => e.DueDate)
+                .ToList();
+
+            if (!unpaidEmis.Any())
+                throw new BusinessRuleViolationException("All EMIs are already paid.");
+
+            var paymentAmount = dto.Amount;
             var monthlyRate = loan.InterestRate / 12 / 100;
-            var interestDue = loan.PrincipalRemaining * monthlyRate;
 
-            var interestPaid = Math.Min(dto.Amount, interestDue);
-            var principalPaid = dto.Amount - interestPaid;
-
-            if (principalPaid < 0)
-                principalPaid = 0;
-
-            loan.PrincipalRemaining -= principalPaid;
-
-            if (loan.PrincipalRemaining <= 0)
+            foreach (var emi in unpaidEmis)
             {
-                loan.PrincipalRemaining = 0;
-                loan.Status = LoanStatus.Closed;
+                if (paymentAmount <= 0)
+                    break;
+
+                //  Calculate interest on CURRENT principal
+                var interestDue = loan.PrincipalRemaining * monthlyRate;
+
+                var interestPaid = Math.Min(paymentAmount, interestDue);
+                paymentAmount -= interestPaid;
+
+                //Remaining goes to principal
+                var principalPaid = Math.Min(paymentAmount, emi.RemainingAmount - interestPaid);
+                if (principalPaid < 0)
+                    principalPaid = 0;
+
+                paymentAmount -= principalPaid;
+
+                // Update balances
+                loan.PrincipalRemaining -= principalPaid;
+                emi.RemainingAmount -= (interestPaid + principalPaid);
+
+                if (emi.RemainingAmount <= 0)
+                {
+                    emi.RemainingAmount = 0;
+                }
+
+                if (loan.PrincipalRemaining <= 0)
+                {
+                    loan.PrincipalRemaining = 0;
+                    loan.Status = LoanStatus.Closed;
+                    break;
+                }
             }
-            
+
+            //Credit score logic based on FIRST unpaid EMI only
+            var firstEmi = unpaidEmis.First();
+
+            if (dto.Amount < firstEmi.TotalAmount)
+                customer.CreditScore -= 10;
+            else if (dto.Amount == firstEmi.TotalAmount)
+                customer.CreditScore += 2;
+            else
+                customer.CreditScore += 5;
+
+            customer.CreditScore = Math.Clamp(customer.CreditScore, 300, 900);
+
+            // Close loan if everything is paid
+            if (loan.Emis.All(e => e.IsPaid))
+                loan.Status = LoanStatus.Closed;
+
             var payment = new LoanPayment
             {
                 Id = Guid.NewGuid(),
                 LoanDetailsId = loan.Id,
-                CustomerId = loan.CustomerId,
+                CustomerId = customerId,
                 Amount = dto.Amount,
-                InterestPaid = Math.Round(interestPaid, 2),
-                PrincipalPaid = Math.Round(principalPaid, 2),
                 PaymentDate = DateTime.UtcNow,
                 TransactionId = Guid.NewGuid(),
                 Status = LoanPaymentStatus.Paid
             };
 
             await _paymentRepo.AddAsync(payment);
+            await _customerRepo.UpdateAsync(customer);
             await _loanRepo.UpdateAsync(loan);
             await _paymentRepo.SaveChangesAsync();
         }
-        public async Task<NextEmiPaymentResponseDto> GetNextPaymentAsync(
-    Guid customerId,
-    Guid loanId)
+
+
+        //    public async Task<NextEmiPaymentResponseDto> GetNextPaymentAsync(
+        //Guid customerId,
+        //Guid loanId)
+        //    {
+        //        var loan = await _loanRepo.GetByIdAsync(loanId)
+        //            ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+
+        //        if (loan.CustomerId != customerId)
+        //            throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+        //        if (loan.Status != LoanStatus.Active)
+        //            throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+
+        //        //Should i check for if (monthsElapsed >= loan.TenureInMonths) throw new BusinessRuleViolationException( "All EMIs for this loan have already been completed.");
+
+        //        var today = DateTime.UtcNow.Date;
+
+        //        //Months elapsed since loan start
+        //        var monthsElapsed =
+        //            ((today.Year - loan.CreatedDate.Year) * 12) +
+        //            (today.Month - loan.CreatedDate.Month);
+
+        //        if (today.Day < loan.CreatedDate.Day)
+        //            monthsElapsed--;
+
+        //        //Next due date
+        //        var nextDueDate = loan.CreatedDate.AddMonths(monthsElapsed + 1);
+
+        //       var emiSchedule = EmiCalculator.GenerateSchedule(loan.PrincipalRemaining, loan.InterestRate, loan.TenureInMonths, nextDueDate.AddMonths(-1));
+
+        //        return new NextEmiPaymentResponseDto
+        //        {
+        //            DueDate = nextDueDate,
+        //            EmiAmount = emiSchedule[0].TotalEmiAmount,
+        //            InterestComponent = emiSchedule[0].InterestComponent,
+        //            PrincipalComponent = emiSchedule[0].PrincipalComponent,
+        //            PrincipalRemainingAfterPayment =
+        //                emiSchedule[0].PrincipalRemainingAfterPayment
+        //        };
+        //    }
+        public async Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(
+     Guid customerId,
+     Guid loanId)
         {
             var loan = await _loanRepo.GetByIdAsync(loanId)
-                ?? throw new KeyNotFoundException("Loan not found");
+                ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
-                throw new UnauthorizedAccessException();
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             if (loan.Status != LoanStatus.Active)
-                throw new InvalidOperationException("Loan is not active");
+                throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
 
-            var today = DateTime.UtcNow.Date;
+            var unpaidEmis = loan.Emis
+                .Where(e => !e.IsPaid)
+                .OrderBy(e => e.DueDate)
+                .ToList();
 
-            // 1️⃣ Months elapsed since loan start
-            var monthsElapsed =
-                ((today.Year - loan.CreatedDate.Year) * 12) +
-                (today.Month - loan.CreatedDate.Month);
+            if (!unpaidEmis.Any())
+                throw new BusinessRuleViolationException("No pending EMIs.");
 
-            if (today.Day < loan.CreatedDate.Day)
-                monthsElapsed--;
+            var response = new List<NextEmiPaymentResponseDto>();
 
-            // 2️⃣ Next due date
-            var nextDueDate = loan.CreatedDate.AddMonths(monthsElapsed + 1);
-
-            // 3️⃣ EMI calculation based on CURRENT principal
+            var principalSnapshot = loan.PrincipalRemaining;
             var monthlyRate = loan.InterestRate / 12 / 100;
 
-            var emi = (loan.PrincipalRemaining * monthlyRate *
-                      (decimal)Math.Pow(1 + (double)monthlyRate, loan.TenureInMonths)) /
-                      ((decimal)Math.Pow(1 + (double)monthlyRate, loan.TenureInMonths) - 1);
-
-            var interest = loan.PrincipalRemaining * monthlyRate;
-            var principal = emi - interest;
-
-            if (principal > loan.PrincipalRemaining)
-                principal = loan.PrincipalRemaining;
-
-            return new NextEmiPaymentResponseDto
+            foreach (var emi in unpaidEmis)
             {
-                DueDate = nextDueDate,
-                EmiAmount = Math.Round(emi, 2),
-                InterestComponent = Math.Round(interest, 2),
-                PrincipalComponent = Math.Round(principal, 2),
-                PrincipalRemainingAfterPayment =
-                    Math.Round(loan.PrincipalRemaining - principal, 2)
-            };
+                if (principalSnapshot <= 0)
+                    break;
+
+                // Interest on CURRENT remaining principal
+                var interest = principalSnapshot * monthlyRate;
+
+                // Principal limited by EMI bucket
+                var principal = emi.RemainingAmount - interest;
+                if (principal < 0)
+                    principal = 0;
+
+                if (principal > principalSnapshot)
+                    principal = principalSnapshot;
+
+                response.Add(new NextEmiPaymentResponseDto
+                {
+                    DueDate = emi.DueDate,
+                    EmiAmount = Math.Round(interest + principal, 2),
+                    InterestComponent = Math.Round(interest, 2),
+                    PrincipalComponent = Math.Round(principal, 2),
+                    PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+                    RemainingEmiAmount = emi.RemainingAmount,
+                    IsOverdue = emi.DueDate.Date < DateTime.UtcNow.Date
+                });
+
+                // Simulate payment for next EMI preview
+                principalSnapshot -= principal;
+            }
+
+            return response;
         }
 
     }
