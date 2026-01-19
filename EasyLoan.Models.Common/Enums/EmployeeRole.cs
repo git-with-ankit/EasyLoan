@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EasyLoan.DataAccess.Models
+namespace EasyLoan.Models.Common.Enums
 {
     public enum EmployeeRole
     {

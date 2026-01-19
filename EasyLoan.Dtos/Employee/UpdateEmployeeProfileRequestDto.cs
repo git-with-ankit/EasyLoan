@@ -5,19 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EasyLoan.Dtos.Customer
+namespace EasyLoan.Dtos.Employee
 {
-    public class UpdateCustomerProfileRequestDto
+    public class UpdateEmployeeProfileRequestDto
     {
         [Required]
-        [ MaxLength(100)]
+        [MaxLength(100)]
         public string Name { get; set; }
 
         [Required]
-        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Please enter correct Indian phone number.")]
+        [RegularExpression(@"^[6-9]\d{9}$",ErrorMessage = "Please enter correct Indian phone number.")]
         public string PhoneNumber { get; set; }
 
-        [Required]
-        public decimal AnnualSalary { get; set; }
     }
 }

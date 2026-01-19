@@ -62,6 +62,19 @@ namespace EasyLoan.DataAccess.Models
 //enums in dtos
 //db enum stored as int - add a migration and done
 //saare required payment store kar lo pehle se hee and then override the status and amount - done
-//hash password
+//hash password - done
 //review dtos
-//question - should i remove customerId if i am getting from jwt
+//trim the fields - done
+//add 1:1 relationship between loan application and loan details (also include .Include in the repository) - done
+//isPaid ?? - done
+//public facing loan id and readable loan application id
+//EasyLoan.Models.Common - done
+//employee features - done
+//max age?
+//logout
+//question - should i remove customerId if i am getting from jwt - not req
+//problem details class
+//in make payment controller pass the loanId in the url and after creating something instead of returning id , return the created object
+//separate response patterns
+//on the basis of status no different controller .. take an enum for it in the query param
+//dont seed data , or change password on first login

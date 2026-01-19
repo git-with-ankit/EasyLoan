@@ -27,8 +27,8 @@ namespace EasyLoan.Api.Controllers
         public async Task<ActionResult<ApiResponseDto<string>>> Create(CreateLoanApplicationRequestDto request)
         {
             var customerId = User.GetUserId();
-            var applicationId = await _service.CreateAsync(customerId, request);
-            return CreatedAtAction(nameof(GetByApplicationId), new { applicationId }, new ApiResponseDto<string> { Success = true, Data = applicationId });
+            var applicationNumber = await _service.CreateAsync(customerId, request);
+            return CreatedAtAction(nameof(GetByApplicationNumber), new { applicationNumber }, new ApiResponseDto<string> { Success = true, Data = applicationNumber });
         }
 
         [Authorize(Roles = "Customer")]
@@ -57,42 +57,44 @@ namespace EasyLoan.Api.Controllers
         [Authorize(Roles = "Admin")]
         [HttpGet("pending")]
         [ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationListItemResponseDto>>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseDto>>>> GetAllPendingApplications()
+        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseForAdminDto>>>> GetAllPendingApplications()
         {
             var assignedApplications = await _service.GetAllPendingApplicationsAsync();
-            return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseDto>> { Success = true, Data = assignedApplications });
+            return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseForAdminDto>> { Success = true, Data = assignedApplications });
         }
 
         [Authorize(Roles= "Customer")]
-        [HttpGet("{applicationId}")]
+        [HttpGet("{applicationNumber}")]
         [ProducesResponseType(typeof(ApiResponseDto<LoanApplicationDetailsResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // App not found
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
-        public async Task<ActionResult<ApiResponseDto<LoanApplicationDetailsResponseDto>>> GetByApplicationId(string applicationId)
+        public async Task<ActionResult<ApiResponseDto<LoanApplicationDetailsResponseDto>>> GetByApplicationNumber(string applicationNumber)
         {
-            var details = await _service.GetByApplicationIdAsync(applicationId);
+            var details = await _service.GetByApplicationNumberAsync(applicationNumber);
             return Ok(new ApiResponseDto<LoanApplicationDetailsResponseDto> { Success = true, Data = details });
         }
 
         [Authorize(Roles = "Manager")]
-        [HttpPost("{applicationId}/review")]
+        [HttpPost("{applicationNumber}/review")]
         [ProducesResponseType(typeof(ApiResponseDto<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // App not found
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not assigned manager
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)] // Invalid approval
-        public async Task<ActionResult<ApiResponseDto<bool>>> UpdateReview(string applicationId,ReviewLoanApplicationRequestDto request )
+        public async Task<ActionResult<ApiResponseDto<bool>>> UpdateReview(string applicationNumber,ReviewLoanApplicationRequestDto request )
         {
-            await _service.UpdateReviewAsync(applicationId, request);
+            var managerId = User.GetUserId();
+            await _service.UpdateReviewAsync(applicationNumber, managerId, request);
             return Ok(new ApiResponseDto<bool> { Success = true, Data = true });
         }
         [Authorize(Roles = "Manager")]
-        [HttpGet("{applicationId}/review")]
+        [HttpGet("{applicationNumber}/review")]
         [ProducesResponseType(typeof(ApiResponseDto<LoanApplicationDetailsWithCustomerDataResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<LoanApplicationDetailsWithCustomerDataResponseDto>>> GetApplicationDetailsForReview(string applicationId )
+        public async Task<ActionResult<ApiResponseDto<LoanApplicationDetailsWithCustomerDataResponseDto>>> GetApplicationDetailsForReview(string applicationNumber )
         {
-            var applicationDetails = await _service.GetApplicationDetailsForReview(applicationId);
+            var managerId = User.GetUserId();
+            var applicationDetails = await _service.GetApplicationDetailsForReview(applicationNumber, managerId);
             return Ok(new ApiResponseDto<LoanApplicationDetailsWithCustomerDataResponseDto> { Success = true, Data = applicationDetails });
         }
     }

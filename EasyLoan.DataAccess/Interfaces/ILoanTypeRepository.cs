@@ -9,6 +9,6 @@ namespace EasyLoan.DataAccess.Interfaces
 {
     public interface ILoanTypeRepository : IRepository<LoanType>
     {
-        Task UpdateAsync(LoanType loanType);
+
     }
 }

@@ -2,6 +2,7 @@
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
+using EasyLoan.Models.Common.Enums;
 using EasyLoan.Dtos.Loan;
 
 namespace EasyLoan.Business.Services
@@ -15,10 +16,9 @@ namespace EasyLoan.Business.Services
             _repo = repo;
         }
 
-        public async Task<LoanDetailsResponseDto>
-    GetLoanDetailsAsync(Guid customerId, Guid loanId)
+        public async Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, string loanNumber)
         {
-            var loan = await _repo.GetByIdAsync(loanId)
+            var loan = await _repo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -26,28 +26,27 @@ namespace EasyLoan.Business.Services
 
             return new LoanDetailsResponseDto
             {
-                LoanId = loan.Id,
+                LoanNumber = loan.LoanNumber,
                 LoanType = loan.LoanType.Name,
                 ApprovedAmount = loan.ApprovedAmount,
                 PrincipalRemaining = loan.PrincipalRemaining,
                 TenureInMonths = loan.TenureInMonths,
                 InterestRate = loan.InterestRate,
-                Status = loan.Status.ToString()
+                Status = loan.Status
             };
         }
 
         public async Task<List<LoanSummaryResponseDto>> GetAllCustomerLoansAsync(Guid customerId)
         {
             var loans = await _repo.GetLoansByCustomerIdAsync(customerId);
-            /*if (!loans.Any())
-                throw new NotFoundException(ErrorMessages.LoanNotFound);*/ //return empty collection
+
             return loans
                 .Select(l => new LoanSummaryResponseDto
                 {
-                    LoanId = l.Id,
+                    LoanNumber = l.LoanNumber,
                     PrincipalRemaining = l.PrincipalRemaining,
                     InterestRate = l.InterestRate,
-                    Status = l.Status.ToString()
+                    Status = l.Status
                 }).ToList();
         }
 

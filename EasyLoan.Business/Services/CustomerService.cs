@@ -2,13 +2,8 @@
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
-using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.Customer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Services
 {
@@ -88,8 +83,8 @@ namespace EasyLoan.Business.Services
             var customer = await _customerRepo.GetByIdAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
-            customer.Name = dto.Name;
-            customer.PhoneNumber = dto.PhoneNumber;
+            customer.Name = dto.Name.Trim();
+            customer.PhoneNumber = dto.PhoneNumber.Trim();
             customer.AnnualSalary = dto.AnnualSalary;
 
             await _customerRepo.UpdateAsync(customer);

@@ -9,7 +9,8 @@ namespace EasyLoan.Dtos.Customer
 {
     public class CustomerLoginRequestDto
     {
-        [Required, EmailAddress]
+        [Required]
+        [EmailAddress]
         public string Email { get; set; }
 
         [Required]

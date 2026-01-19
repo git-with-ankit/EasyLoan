@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace EasyLoan.Api
 {
@@ -40,6 +41,7 @@ namespace EasyLoan.Api
             builder.Services.AddScoped<ILoanTypeService, LoanTypeService>();
             builder.Services.AddScoped<IJwtTokenGeneratorService, JwtTokenGeneratorService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddSingleton<IPublicIdService, PublicIdService>();
 
             builder.Services.PostConfigure<ApiBehaviorOptions>(options =>
             {
@@ -84,7 +86,14 @@ namespace EasyLoan.Api
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+             .AddJsonOptions(options =>
+             {
+                 options.JsonSerializerOptions.Converters.Add(
+                     new JsonStringEnumConverter()
+                 );
+             });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(opt =>
@@ -92,7 +101,7 @@ namespace EasyLoan.Api
                 // JWT Swagger Support
                 opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using Bearer scheme. Example: \"Bearer {token}\"",
+                    Description = "JWT Authorization header using Bearer scheme. Example: \"{token}\"",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,

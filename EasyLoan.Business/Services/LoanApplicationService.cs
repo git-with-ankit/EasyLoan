@@ -5,11 +5,7 @@ using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.LoanApplication;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Services
 {
@@ -20,19 +16,22 @@ namespace EasyLoan.Business.Services
         private readonly IEmployeeRepository _employeeRepo;
         private readonly ILoanDetailsRepository _loanDetailsRepo;
         private readonly ILoanTypeRepository _loanTypeRepo;
+        private readonly IPublicIdService _publicIdService;
 
         public LoanApplicationService(
             ILoanApplicationRepository repo,
             ICustomerRepository customerRepo,
             IEmployeeRepository employeeRepo,
             ILoanDetailsRepository loanDetailsRepo,
-            ILoanTypeRepository loanTypeRepo)
+            ILoanTypeRepository loanTypeRepo,
+            IPublicIdService publicIdService)
         {
             _loanApplicationrepo = repo;
             _customerRepo = customerRepo;
             _employeeRepo = employeeRepo;
             _loanDetailsRepo = loanDetailsRepo;
             _loanTypeRepo = loanTypeRepo;
+            _publicIdService = publicIdService;
         }
 
         public async Task<string> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
@@ -63,7 +62,7 @@ namespace EasyLoan.Business.Services
             var application = new LoanApplication
             {
                 Id = Guid.NewGuid(),
-                ApplicationId = $"{customerId}_{DateTime.UtcNow:yyyyMMddHHmmss}",
+                ApplicationNumber = _publicIdService.GenerateApplicationNumber(),
                 CustomerId = customerId,
                 LoanTypeId = dto.LoanTypeId,
                 ApprovedAmount = 0,
@@ -77,14 +76,15 @@ namespace EasyLoan.Business.Services
             await _loanApplicationrepo.AddAsync(application);
             await _loanApplicationrepo.SaveChangesAsync();
 
-            return application.ApplicationId;
+            return application.ApplicationNumber;
         }
 
-        public async Task UpdateReviewAsync(string applicationId, ReviewLoanApplicationRequestDto dto)
+        public async Task UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
         {
-            var application = await _loanApplicationrepo.GetByApplicationIdAsync(applicationId)
+            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
                 ?? throw new KeyNotFoundException();
-
+            if (application.AssignedEmployeeId != managerId)
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
             if (application.Status != LoanApplicationStatus.Pending)
                 throw new BusinessRuleViolationException(ErrorMessages.LoanApplicationAlreadyReviewed);
 
@@ -98,15 +98,17 @@ namespace EasyLoan.Business.Services
 
                 application.Status = LoanApplicationStatus.Approved;
                 application.ApprovedAmount = dto.ApprovedAmount;
-                application.ManagerComments = dto.ManagerComments;
+                application.ManagerComments = dto.ManagerComments?.Trim();
 
                 var newLoan = new LoanDetails()
                 {
                     Id = Guid.NewGuid(),
                     Status = LoanStatus.Active,
                     ApprovedAmount = dto.ApprovedAmount,
+                    LoanApplicationNumber = application.Id,
                     ApprovedByEmployeeId = application.AssignedEmployeeId,
                     CustomerId = application.CustomerId,
+                    LoanNumber = _publicIdService.GenerateLoanNumber(),
                     InterestRate = application.LoanType.InterestRate,
                     LoanTypeId = application.LoanTypeId,
                     PrincipalRemaining = application.ApprovedAmount,
@@ -149,17 +151,20 @@ namespace EasyLoan.Business.Services
             await _loanDetailsRepo.SaveChangesAsync();
             await _loanApplicationrepo.SaveChangesAsync();
         }
-        public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationId)
+        public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId)
         {
-            var application = await _loanApplicationrepo.GetByApplicationIdAsync(applicationId)
+            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+
+            if (application.AssignedEmployeeId != managerId)
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             var customer = application.Customer;
             var loanType = application.LoanType;
 
             return new LoanApplicationDetailsWithCustomerDataResponseDto
             {
-                ApplicationId = application.ApplicationId,
+                ApplicationNumber = application.ApplicationNumber,
                 CustomerName = customer.Name,
                 AnnualSalaryOfCustomer = customer.AnnualSalary,
                 PhoneNumber = customer.PhoneNumber,
@@ -170,7 +175,7 @@ namespace EasyLoan.Business.Services
                 RequestedAmount = application.RequestedAmount,
                 AppprovedAmount = application.ApprovedAmount,
                 InterestRate = loanType.InterestRate,
-                Status = application.Status.ToString(),
+                Status = application.Status,
                 ManagerComments = application.ManagerComments
             };
         }
@@ -183,31 +188,31 @@ namespace EasyLoan.Business.Services
 
             return apps.Select(a => new LoanApplicationListItemResponseDto
             {
-                ApplicationId = a.ApplicationId,
+                ApplicationNumber = a.ApplicationNumber,
                 LoanTypeName = a.LoanType.Name,
                 RequestedAmount = a.RequestedAmount,
-                AssignedEmployeeId = a.AssignedEmployeeId,
                 TenureInMonths = a.RequestedTenureInMonths,
-                Status = a.Status.ToString(),
+                Status = a.Status,
                 CreatedDate = a.CreatedDate
             }).ToList();
         }
 
-        public async Task<LoanApplicationDetailsResponseDto> GetByApplicationIdAsync(string applicationId)
+        public async Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber)
         {
-            var application = await _loanApplicationrepo.GetByApplicationIdAsync(applicationId)
+            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             return new LoanApplicationDetailsResponseDto
-            {//TODO : EMI Plan
-                ApplicationId = application.ApplicationId,
+            {
+                ApplicationNumber = application.ApplicationNumber,
                 CustomerName = application.Customer.Name,
                 LoanType = application.LoanType.Name,
                 RequestedAmount = application.RequestedAmount,
                 InterestRate = application.LoanType.InterestRate,
                 AppprovedAmount = application.ApprovedAmount,
+                AssignedEmployeeId = application.AssignedEmployeeId,
                 RequestedTenureInMonths = application.RequestedTenureInMonths,
-                Status = application.Status.ToString(),
+                Status = application.Status,
                 ManagerComments = application.ManagerComments
             };
         }
@@ -220,7 +225,7 @@ namespace EasyLoan.Business.Services
         //        .Where(a => a.Status == LoanApplicationStatus.Pending)
         //        .Select(a => new LoanApplicationListItemResponseDto
         //        {
-        //            ApplicationId = a.ApplicationId,
+        //            ApplicationNumber = a.ApplicationNumber,
         //            LoanTypeName = a.LoanType.Name,
         //            RequestedAmount = a.RequestedAmount,
         //            Status = a.Status.ToString(),
@@ -229,18 +234,18 @@ namespace EasyLoan.Business.Services
         //        .ToList();
         //}
 
-        public async Task<List<LoanApplicationListItemResponseDto>> GetAllPendingApplicationsAsync()
+        public async Task<List<LoanApplicationListItemResponseForAdminDto>> GetAllPendingApplicationsAsync()
         {
             var apps = await _loanApplicationrepo.GetAllAsync();
 
-            return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationListItemResponseDto
+            return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationListItemResponseForAdminDto
             {
-                ApplicationId = a.ApplicationId,
+                ApplicationNumber = a.ApplicationNumber,
                 AssignedEmployeeId = a.AssignedEmployeeId,
                 TenureInMonths = a.RequestedTenureInMonths,
                 LoanTypeName = a.LoanType.Name,
                 RequestedAmount = a.RequestedAmount,
-                Status = a.Status.ToString(),
+                Status = a.Status,
                 CreatedDate = a.CreatedDate
             }).ToList();
         }
@@ -254,10 +259,10 @@ namespace EasyLoan.Business.Services
                 Select(a => new LoanApplicationListItemResponseDto
             {
                 TenureInMonths = a.RequestedTenureInMonths,
-                ApplicationId = a.ApplicationId,
+                ApplicationNumber = a.ApplicationNumber,
                 LoanTypeName = a.LoanType.Name,
                 RequestedAmount = a.RequestedAmount,
-                Status = a.Status.ToString(),
+                Status = a.Status,
                 CreatedDate = a.CreatedDate
             }).ToList();
         }

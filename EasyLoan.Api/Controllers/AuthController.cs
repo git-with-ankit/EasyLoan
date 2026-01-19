@@ -59,7 +59,7 @@ namespace EasyLoan.Api.Controllers
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateManager(CreateEmployeeRequestDto request)
+        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateManager(CreateManagerRequestDto request)
         {
             var id = await _authService.RegisterManagerAsync(request);
             //return CreatedAtAction(nameof(EmployeesController), new { }, new ApiResponseDto<Guid> { Success = true, Data = id });//EmployeeController.GetProfile

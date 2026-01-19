@@ -11,10 +11,10 @@ namespace EasyLoan.Business.Interfaces
     {
         Task<string> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto);
         Task<List<LoanApplicationListItemResponseDto>> GetCustomerApplicationsAsync(Guid customerId);
-        Task<LoanApplicationDetailsResponseDto> GetByApplicationIdAsync(string applicationId);
-        Task UpdateReviewAsync(string applicationId, ReviewLoanApplicationRequestDto dto);
-        Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationId);
-        Task<List<LoanApplicationListItemResponseDto>> GetAllPendingApplicationsAsync();
+        Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber);
+        Task UpdateReviewAsync(string applicationNumber, Guid managerId, ReviewLoanApplicationRequestDto dto);
+        Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId);
+        Task<List<LoanApplicationListItemResponseForAdminDto>> GetAllPendingApplicationsAsync();
         Task<List<LoanApplicationListItemResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId);
     }
 }

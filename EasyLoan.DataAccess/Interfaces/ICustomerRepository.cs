@@ -12,6 +12,5 @@ namespace EasyLoan.DataAccess.Interfaces
         Task<Customer?> GetByEmailAsync(string email);
         Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByPanAsync(string panNumber);
-        Task UpdateAsync(Customer customer);
     }
 }

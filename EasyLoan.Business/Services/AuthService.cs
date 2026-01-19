@@ -6,11 +6,7 @@ using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Services
 {
@@ -42,13 +38,13 @@ namespace EasyLoan.Business.Services
             var customer = new Customer
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
+                Name = dto.Name.Trim(),
+                Email = dto.Email.ToLower().Trim(),
+                PhoneNumber = dto.PhoneNumber.Trim(),
                 DateOfBirth = dto.DateOfBirth,
                 AnnualSalary = dto.AnnualSalary,
-                PanNumber = dto.PanNumber,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),//TODO:Hash Password
+                PanNumber = dto.PanNumber.Trim(),
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 CreditScore = 800,
                 CreatedDate = DateTime.UtcNow
             };
@@ -61,7 +57,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto)
         {
-            var customer = await _customerRepo.GetByEmailAsync(dto.Email)
+            var customer = await _customerRepo.GetByEmailAsync(dto.Email.ToLower().Trim())
                 ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
             var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, customer.Password);
@@ -71,15 +67,15 @@ namespace EasyLoan.Business.Services
             return _tokenGenerator.GenerateToken(customer.Id , Role.Customer);//Generate token
         }
 
-        public async Task<Guid> RegisterManagerAsync(CreateEmployeeRequestDto dto)
+        public async Task<Guid> RegisterManagerAsync(CreateManagerRequestDto dto)
         {
             var emp = new Employee
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                Password =  BCrypt.Net.BCrypt.HashPassword(dto.Password),//TODO : Hash Password
+                Name = dto.Name.Trim(),
+                Email = dto.Email.ToLower().Trim(),
+                PhoneNumber = dto.PhoneNumber.Trim(),
+                Password =  BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = EmployeeRole.Manager
             };
 
@@ -90,7 +86,7 @@ namespace EasyLoan.Business.Services
         }
         public async Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto)
         {
-            var emp = await _employeeRepo.GetByEmailAsync(dto.Email)
+            var emp = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim())
                 ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
             var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, emp.Password);

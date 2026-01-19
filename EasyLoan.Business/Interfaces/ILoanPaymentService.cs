@@ -10,7 +10,7 @@ namespace EasyLoan.Business.Interfaces
     public interface ILoanPaymentService
     {
         Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto);
-        Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, Guid loanId);
-        Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(Guid customerId, Guid loanId);
+        Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, string loanNumber);
+        Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(Guid customerId, string loanNumber);
     }
 }

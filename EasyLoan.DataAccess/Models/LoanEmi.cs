@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using EasyLoan.Models.Common.Enums;
 using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Models
@@ -36,7 +37,7 @@ namespace EasyLoan.DataAccess.Models
         [Range(0, double.MaxValue)]
         public decimal RemainingAmount { get; set; }
 
-        [Required]
+        [NotMapped]
         public bool IsPaid => RemainingAmount <= 0;
 
         public DateTime? PaidDate { get; set; }

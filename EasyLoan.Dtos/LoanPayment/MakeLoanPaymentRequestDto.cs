@@ -10,7 +10,7 @@ namespace EasyLoan.Dtos.LoanPayment
     public class MakeLoanPaymentRequestDto
     {
         [Required]
-        public Guid LoanId { get; set; }
+        public string LoanNumber { get; set; }
 
         [Required]
         [Range(0,Double.MaxValue)]

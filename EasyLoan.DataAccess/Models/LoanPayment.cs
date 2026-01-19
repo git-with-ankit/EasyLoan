@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using EasyLoan.Models.Common.Enums;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;

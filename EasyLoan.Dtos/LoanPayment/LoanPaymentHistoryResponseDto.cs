@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EasyLoan.Models.Common.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,6 @@ namespace EasyLoan.Dtos.LoanPayment
     {
         public DateTime? PaymentDate { get; set; }
         public decimal Amount { get; set; }
-        public string Status { get; set; }
+        public LoanPaymentStatus Status { get; set; }
     }
 }

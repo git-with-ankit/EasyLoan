@@ -9,7 +9,7 @@ namespace EasyLoan.Dtos.Loan
         public decimal Amount { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Tenure must be between 1 and 480 months.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Tenure must be a integer .")]
         public int TenureInMonths { get; set; }
     }
 }

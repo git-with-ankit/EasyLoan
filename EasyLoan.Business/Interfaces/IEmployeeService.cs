@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.Employee;
+﻿using EasyLoan.Dtos.Customer;
+using EasyLoan.Dtos.Employee;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Dtos.LoanType;
 using System;
@@ -13,5 +14,7 @@ namespace EasyLoan.Business.Interfaces
     {
         //Task<string> LoginAsync(EmployeeLoginRequestDto dto);
         //Task<Guid> CreateManagerAsync(CreateEmployeeRequestDto dto);
+        Task<EmployeeProfileResponseDto> GetProfileAsync(Guid employeeId);
+        Task UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto updateProfile);
     }
 }

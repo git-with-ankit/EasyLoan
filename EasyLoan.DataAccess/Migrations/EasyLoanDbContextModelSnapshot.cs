@@ -112,10 +112,10 @@ namespace EasyLoan.DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("2ea87707-9c78-49c6-aeb9-a3e43869be9a"),
+                            Id = new Guid("0730a01e-5fa3-41c9-86ab-848f297e86cd"),
                             Email = "ankitkumarsingh018@gmail.com",
                             Name = "Ankit",
-                            Password = "$2a$11$GgUWkoX.jauryG30CR.VzO8qdxnF08Kuq0KZylsK1hYnvKFX2/xv2",
+                            Password = "$2a$11$XJJcBdKAVXeHAy.weZQJN.1k6onGuOal8s03LGm8vSmPU4IuAnO1C",
                             PhoneNumber = "1234567890",
                             Role = "Admin"
                         });
@@ -127,9 +127,10 @@ namespace EasyLoan.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ApplicationId")
+                    b.Property<string>("ApplicationNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<decimal>("ApprovedAmount")
                         .HasPrecision(18, 2)
@@ -164,6 +165,9 @@ namespace EasyLoan.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApplicationNumber")
+                        .IsUnique();
+
                     b.HasIndex("AssignedEmployeeId");
 
                     b.HasIndex("CustomerId");
@@ -196,6 +200,14 @@ namespace EasyLoan.DataAccess.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<Guid>("LoanApplicationNumber")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LoanNumber")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
                     b.Property<Guid>("LoanTypeId")
                         .HasColumnType("uniqueidentifier");
 
@@ -215,6 +227,12 @@ namespace EasyLoan.DataAccess.Migrations
                     b.HasIndex("ApprovedByEmployeeId");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("LoanApplicationNumber")
+                        .IsUnique();
+
+                    b.HasIndex("LoanNumber")
+                        .IsUnique();
 
                     b.HasIndex("LoanTypeId");
 
@@ -374,6 +392,12 @@ namespace EasyLoan.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("EasyLoan.DataAccess.Models.LoanApplication", "LoanApplication")
+                        .WithOne("LoanDetails")
+                        .HasForeignKey("EasyLoan.DataAccess.Models.LoanDetails", "LoanApplicationNumber")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("EasyLoan.DataAccess.Models.LoanType", "LoanType")
                         .WithMany("Loans")
                         .HasForeignKey("LoanTypeId")
@@ -383,6 +407,8 @@ namespace EasyLoan.DataAccess.Migrations
                     b.Navigation("ApprovedByEmployee");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("LoanApplication");
 
                     b.Navigation("LoanType");
                 });
@@ -431,6 +457,11 @@ namespace EasyLoan.DataAccess.Migrations
                     b.Navigation("ApprovedLoans");
 
                     b.Navigation("AssignedLoanApplications");
+                });
+
+            modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanApplication", b =>
+                {
+                    b.Navigation("LoanDetails");
                 });
 
             modelBuilder.Entity("EasyLoan.DataAccess.Models.LoanDetails", b =>

@@ -1,9 +1,10 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Exceptions;
+using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
-using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
-using EasyLoan.Dtos.LoanApplication;
-using EasyLoan.Dtos.LoanType;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Services
 {
@@ -21,6 +22,39 @@ namespace EasyLoan.Business.Services
             _employeeRepo = employeeRepo;
             _loanTypeRepo = loanTypeRepo;
             _loanApplicationRepo = loanApplicationRepo;
+        }
+
+        public async Task<EmployeeProfileResponseDto> GetProfileAsync(Guid employeeId)
+        {
+            var employee = await _employeeRepo.GetByIdAsync(employeeId)
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+            if(employee.Id != employeeId) 
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+            return new EmployeeProfileResponseDto
+            {
+                EmployeeId = employee.Id,
+                Name = employee.Name,
+                Email = employee.Email,
+                PhoneNumber = employee.PhoneNumber,
+                Role = employee.Role,
+            };
+        }
+
+        public async Task UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto dto)
+        {
+            var employee = await _employeeRepo.GetByIdAsync(employeeId)
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+            if(employee.Id != employeeId)
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+            employee.Name = dto.Name.Trim();
+            employee.PhoneNumber = dto.PhoneNumber.Trim();
+
+            await _employeeRepo.UpdateAsync(employee);
+            await _employeeRepo.SaveChangesAsync();
         }
 
         //public async Task<string> LoginAsync(EmployeeLoginRequestDto dto)
@@ -42,7 +76,7 @@ namespace EasyLoan.Business.Services
 
         ////    return manager.AssignedLoanApplications.Select(a => new AssignedLoanApplicationsResponseDto
         ////    {
-        ////        ApplicationId = a.ApplicationId,
+        ////        ApplicationNumber = a.ApplicationNumber,
         ////        Status = a.Status.ToString(),
         ////        LoanTypeName = a.LoanType.Name,
         ////        CreatedDate = a.CreatedDate,
@@ -120,7 +154,7 @@ namespace EasyLoan.Business.Services
         //    return applications
         //        .Select(a => new LoanApplicationListItemResponseDto
         //        {
-        //            ApplicationId = a.ApplicationId,
+        //            ApplicationNumber = a.ApplicationNumber,
         //            Status = a.Status.ToString(),
         //            LoanTypeName = a.LoanType.Name,
         //            CreatedDate = a.CreatedDate,

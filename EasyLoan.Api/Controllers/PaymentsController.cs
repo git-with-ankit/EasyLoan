@@ -33,26 +33,26 @@ namespace EasyLoan.Api.Controllers
         }
 
         [Authorize(Roles ="Customer")]
-        [HttpGet("{loanId}")]
+        [HttpGet("{loanNumber}")]
         [ProducesResponseType(typeof(ApiResponseDto<NextEmiPaymentResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<ActionResult<ApiResponseDto<List<NextEmiPaymentResponseDto>>>> GetNextPaymentAsync(Guid loanId)
+        public async Task<ActionResult<ApiResponseDto<List<NextEmiPaymentResponseDto>>>> GetNextPaymentAsync(string loanNumber)
         {
             var customerId = User.GetUserId();
-            var payment = await _service.GetNextPaymentAsync(customerId, loanId);
+            var payment = await _service.GetNextPaymentAsync(customerId, loanNumber);
             return Ok(new ApiResponseDto<List<NextEmiPaymentResponseDto>> { Success = true, Data = payment });
         }
 
         [Authorize(Roles = "Customer")]
-        [HttpGet("{loanId}/history")]
+        [HttpGet("{loanNumber}/history")]
         [ProducesResponseType(typeof(ApiResponseDto<List<LoanPaymentHistoryResponseDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ApiResponseDto<List<LoanPaymentHistoryResponseDto>>>> GetHistory(Guid loanId)
+        public async Task<ActionResult<ApiResponseDto<List<LoanPaymentHistoryResponseDto>>>> GetHistory(string loanNumber)
         {
             var customerId = User.GetUserId();
-            var history = await _service.GetPaymentHistoryAsync(customerId, loanId);
+            var history = await _service.GetPaymentHistoryAsync(customerId, loanNumber);
             return Ok(new ApiResponseDto<List<LoanPaymentHistoryResponseDto>> { Success = true, Data = history });
         }
     }

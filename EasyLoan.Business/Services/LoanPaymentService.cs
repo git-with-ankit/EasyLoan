@@ -1,15 +1,10 @@
 ﻿using EasyLoan.Business.Constants;
 using EasyLoan.Business.Exceptions;
-using EasyLoan.Business.Helper;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.LoanPayment;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Services
 {
@@ -29,13 +24,13 @@ namespace EasyLoan.Business.Services
             _customerRepo = customerRepo;
         }
 
-        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, Guid loanId)//TODO : Review
+        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
         {
-            var loan = await _loanRepo.GetByIdAsync(loanId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
-            var payments = await _paymentRepo.GetByLoanIdAsync(loanId);
+            var payments = await _paymentRepo.GetByLoanIdAsync(loan.Id);
 
             return payments
                 .Where(p => p.Status == LoanPaymentStatus.Paid)
@@ -44,7 +39,7 @@ namespace EasyLoan.Business.Services
                 {
                     PaymentDate = p.PaymentDate,
                     Amount = p.Amount,
-                    Status = p.Status.ToString()
+                    Status = p.Status
                 })
                 .ToList();
         }
@@ -121,7 +116,7 @@ namespace EasyLoan.Business.Services
 
         public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)
         {
-            var loan = await _loanRepo.GetByIdAsync(dto.LoanId)
+            var loan = await _loanRepo.GetByLoanNumberAsync(dto.LoanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -253,11 +248,9 @@ namespace EasyLoan.Business.Services
         //                emiSchedule[0].PrincipalRemainingAfterPayment
         //        };
         //    }
-        public async Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(
-     Guid customerId,
-     Guid loanId)
+        public async Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(Guid customerId,string loanNumber)
         {
-            var loan = await _loanRepo.GetByIdAsync(loanId)
+            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)

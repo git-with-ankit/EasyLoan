@@ -1,6 +1,7 @@
 ﻿using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.DataAccess.Repositories
 {
@@ -35,6 +36,12 @@ namespace EasyLoan.DataAccess.Repositories
             return await _context.Employees
                 .Where(e => e.Role == EmployeeRole.Manager)
                 .ToListAsync();
+        }
+
+        public Task UpdateAsync(Employee employee)
+        {
+            _context.Employees.Update(employee);
+            return Task.CompletedTask;
         }
 
         public async Task AddAsync(Employee employee)

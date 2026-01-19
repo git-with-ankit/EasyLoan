@@ -1,5 +1,8 @@
-﻿using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Api.Extensions;
+using EasyLoan.Business.Interfaces;
+using EasyLoan.Business.Services;
 using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Dtos.LoanType;
@@ -17,6 +20,31 @@ namespace EasyLoan.Api.Controllers
         public EmployeesController(IEmployeeService service)
         {
             _employeeService = service;
+        }
+
+        [Authorize(Roles = "Manager,Admin")]
+        [HttpGet("profile")]
+        [ProducesResponseType(typeof(ApiResponseDto<CustomerProfileResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<EmployeeProfileResponseDto>>> GetProfile()
+        {
+            var employeeId = User.GetUserId();
+            var profile = await _employeeService.GetProfileAsync(employeeId);
+            return Ok(new ApiResponseDto<EmployeeProfileResponseDto> { Success = true, Data = profile });
+        }
+
+        [Authorize(Roles = "Manager,Admin")]
+        [HttpPatch("profile")]
+        [ProducesResponseType(typeof(ApiResponseDto<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<bool>>> UpdateProfile(UpdateEmployeeProfileRequestDto updateProfile)
+        {
+            var employeeId = User.GetUserId();
+            await _employeeService.UpdateProfileAsync(employeeId, updateProfile);
+            return Ok(new ApiResponseDto<bool> { Success = true, Data = true });
         }
 
         //[HttpPost("login")]

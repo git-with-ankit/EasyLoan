@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EasyLoan.DataAccess\EasyLoan.DataAccess.csproj" />
     <ProjectReference Include="..\EasyLoan.Dtos\EasyLoan.Dtos.csproj" />
+    <ProjectReference Include="..\EasyLoan.Models.Common\EasyLoan.Models.Common.csproj" />
   </ItemGroup>
 
 </Project>

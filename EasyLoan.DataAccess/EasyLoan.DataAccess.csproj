@@ -17,4 +17,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EasyLoan.Models.Common\EasyLoan.Models.Common.csproj" />
+  </ItemGroup>
+
 </Project>

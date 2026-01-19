@@ -40,14 +40,14 @@ namespace EasyLoan.Api.Controllers
         //}
 
         [Authorize(Roles = "Customer")]
-        [HttpGet("{loanId}")]
+        [HttpGet("{loanNumber}")]
         [ProducesResponseType(typeof(ApiResponseDto<LoanDetailsResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<LoanDetailsResponseDto>>> GetDetails(Guid loanId)
+        public async Task<ActionResult<ApiResponseDto<LoanDetailsResponseDto>>> GetDetails(string loanNumber)
         {
             var customerId = User.GetUserId();
-            var loan = await _service.GetLoanDetailsAsync(customerId, loanId);
+            var loan = await _service.GetLoanDetailsAsync(customerId, loanNumber);
             return Ok(new ApiResponseDto<LoanDetailsResponseDto> { Success = true, Data = loan });
         }
     }

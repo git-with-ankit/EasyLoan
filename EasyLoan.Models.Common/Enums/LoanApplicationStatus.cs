@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EasyLoan.DataAccess.Models
+namespace EasyLoan.Models.Common.Enums
 {
-    public enum LoanPaymentStatus
+    public enum LoanApplicationStatus
     {
         Pending = 1,
-        Paid = 2,
-        Missed = 3
+        Approved = 2,
+        Rejected = 3
     }
 }

@@ -67,7 +67,7 @@ namespace EasyLoan.DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ApplicationId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ApplicationNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LoanTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AssignedEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -106,7 +106,9 @@ namespace EasyLoan.DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoanNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoanApplicationNumber = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LoanTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ApprovedByEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ApprovedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
@@ -129,6 +131,12 @@ namespace EasyLoan.DataAccess.Migrations
                         name: "FK_Loans_Employees_ApprovedByEmployeeId",
                         column: x => x.ApprovedByEmployeeId,
                         principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Loans_LoanApplications_LoanApplicationNumber",
+                        column: x => x.LoanApplicationNumber,
+                        principalTable: "LoanApplications",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -197,7 +205,7 @@ namespace EasyLoan.DataAccess.Migrations
             migrationBuilder.InsertData(
                 table: "Employees",
                 columns: new[] { "Id", "Email", "Name", "Password", "PhoneNumber", "Role" },
-                values: new object[] { new Guid("2ea87707-9c78-49c6-aeb9-a3e43869be9a"), "ankitkumarsingh018@gmail.com", "Ankit", "$2a$11$GgUWkoX.jauryG30CR.VzO8qdxnF08Kuq0KZylsK1hYnvKFX2/xv2", "1234567890", "Admin" });
+                values: new object[] { new Guid("0730a01e-5fa3-41c9-86ab-848f297e86cd"), "ankitkumarsingh018@gmail.com", "Ankit", "$2a$11$XJJcBdKAVXeHAy.weZQJN.1k6onGuOal8s03LGm8vSmPU4IuAnO1C", "1234567890", "Admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Customers_Email_PanNumber",
@@ -209,6 +217,12 @@ namespace EasyLoan.DataAccess.Migrations
                 name: "IX_Employees_Email",
                 table: "Employees",
                 column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoanApplications_ApplicationNumber",
+                table: "LoanApplications",
+                column: "ApplicationNumber",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -258,6 +272,18 @@ namespace EasyLoan.DataAccess.Migrations
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Loans_LoanApplicationNumber",
+                table: "Loans",
+                column: "LoanApplicationNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Loans_LoanNumber",
+                table: "Loans",
+                column: "LoanNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Loans_LoanTypeId",
                 table: "Loans",
                 column: "LoanTypeId");
@@ -273,9 +299,6 @@ namespace EasyLoan.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "LoanApplications");
-
-            migrationBuilder.DropTable(
                 name: "LoanEmis");
 
             migrationBuilder.DropTable(
@@ -283,6 +306,9 @@ namespace EasyLoan.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "Loans");
+
+            migrationBuilder.DropTable(
+                name: "LoanApplications");
 
             migrationBuilder.DropTable(
                 name: "Customers");

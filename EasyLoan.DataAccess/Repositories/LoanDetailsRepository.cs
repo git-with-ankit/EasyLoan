@@ -16,6 +16,7 @@ namespace EasyLoan.DataAccess.Repositories
         public async Task<LoanDetails?> GetByIdAsync(Guid id)
         {
             return await _context.Loans
+                     .Include(l => l.LoanApplication)
                      .Include(l => l.LoanType)
                      .Include(l => l.LoanPayments)
                      .Include(l => l.Emis)
@@ -31,9 +32,19 @@ namespace EasyLoan.DataAccess.Repositories
         {
             return await _context.Loans
                 .Where(l => l.CustomerId == customerId)
+                .Include(l => l.LoanApplication)
                 .Include(l => l.LoanType)
                 .Include(l => l.Emis)
                 .ToListAsync();
+        }
+
+        public async Task<LoanDetails?> GetByLoanNumberAsync(string loanNumber)
+        {
+            return await _context.Loans
+                .Include(l => l.LoanApplication)
+                .Include(l => l.LoanType)
+                .Include(l => l.Emis)
+                .FirstOrDefaultAsync(l => l.LoanNumber == loanNumber);
         }
 
         public async Task AddAsync(LoanDetails loan)

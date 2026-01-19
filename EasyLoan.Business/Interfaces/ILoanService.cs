@@ -10,6 +10,6 @@ namespace EasyLoan.Business.Interfaces
     public interface ILoanService
     {
         Task<List<LoanSummaryResponseDto>> GetAllCustomerLoansAsync(Guid customerId);
-        Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, Guid loanId);
+        Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, string loanNumber);
     }
 }

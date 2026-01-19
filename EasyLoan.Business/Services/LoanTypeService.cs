@@ -3,6 +3,7 @@ using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Helper;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Models.Common.Enums;
 using EasyLoan.Dtos.LoanType;
 
 public class LoanTypeService : ILoanTypeService
@@ -47,7 +48,7 @@ public class LoanTypeService : ILoanTypeService
         var type = new LoanType
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
+            Name = dto.Name.Trim(),
             InterestRate = dto.InterestRate,
             MinAmount = dto.MinAmount,
             MaxTenureInMonths = dto.MaxTenureInMonths
@@ -85,10 +86,7 @@ public class LoanTypeService : ILoanTypeService
             MaxTenureInMonths = t.MaxTenureInMonths
         }).ToList();
     }
-    public async Task<List<EmiScheduleItemResponseDto>> PreviewEmiAsync(
-       Guid loanTypeId,
-       decimal amount,
-       int tenureInMonths)
+    public async Task<List<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths)
     {
         var loanType = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);

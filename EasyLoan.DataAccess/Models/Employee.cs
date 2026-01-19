@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using EasyLoan.Models.Common.Enums;
 using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Models

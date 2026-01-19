@@ -12,7 +12,7 @@ namespace EasyLoan.Business.Interfaces
     {
         Task<Guid> RegisterCustomerAsync(RegisterCustomerRequestDto dto);
         Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto);
-        Task<Guid> RegisterManagerAsync(CreateEmployeeRequestDto dto);
+        Task<Guid> RegisterManagerAsync(CreateManagerRequestDto dto);
         Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto);
     }
 }

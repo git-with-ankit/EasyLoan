@@ -2,7 +2,7 @@
 
 namespace EasyLoan.Dtos.Employee
 {
-    public class CreateEmployeeRequestDto
+    public class CreateManagerRequestDto
     {
         [Required]
         [MaxLength(100)]
@@ -14,7 +14,7 @@ namespace EasyLoan.Dtos.Employee
         public string Email { get; set; }
 
         [Required]
-        [RegularExpression(@"^[6-9]\d{9}$")]
+        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Phone Number is not valid indian phone number.")]
         public string PhoneNumber { get; set; }
 
         [Required]

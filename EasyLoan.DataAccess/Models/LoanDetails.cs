@@ -1,16 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.DataAccess.Models
 {
+    [Index(nameof(LoanNumber),IsUnique = true)]
     public class LoanDetails
     {
         [Key]
         public Guid Id { get; set; }
 
         [Required]
+        [MaxLength(15)]
+        [RegularExpression("^[LN]-[A-Za-z0-9]{8}$")]
+        public string LoanNumber { get; set; }
+
+        [Required]
         public Guid CustomerId { get; set; }
+
+        [Required]
+        public Guid LoanApplicationNumber { get; set; }
 
         [Required]
         public Guid LoanTypeId { get; set; }
@@ -49,8 +59,11 @@ namespace EasyLoan.DataAccess.Models
 
         [ForeignKey(nameof(ApprovedByEmployeeId))]
         [DeleteBehavior(DeleteBehavior.Restrict)]
-        public Employee ApprovedByEmployee { get; set; } 
+        public Employee ApprovedByEmployee { get; set; }
 
+        [ForeignKey(nameof(LoanApplicationNumber))]
+        [DeleteBehavior(DeleteBehavior.Restrict)]
+        public LoanApplication LoanApplication { get; set; }
         public ICollection<LoanPayment> LoanPayments { get; set; } = new List<LoanPayment>();
         public ICollection<LoanEmi> Emis { get; set; } = new List<LoanEmi>();
     }
