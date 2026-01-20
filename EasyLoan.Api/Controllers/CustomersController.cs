@@ -65,7 +65,7 @@ namespace EasyLoan.Api.Controllers
         }
 
         [Authorize(Roles = "Customer")]
-        [HttpGet("dashboard")]
+        [HttpGet("summary")]
         [ProducesResponseType(typeof(ApiResponseDto<CustomerDashboardResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]

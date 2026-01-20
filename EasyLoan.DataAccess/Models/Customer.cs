@@ -81,3 +81,5 @@ namespace EasyLoan.DataAccess.Models
 //types of code coverage
 //api testing
 //change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service
+//on loan details for a particular loan next emi amount and due date
+//one more which will have all the active loans along with their next payment to be made

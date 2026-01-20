@@ -1,4 +1,5 @@
 ﻿using EasyLoan.Dtos.Loan;
+using EasyLoan.Models.Common.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace EasyLoan.Business.Interfaces
 {
     public interface ILoanService
     {
-        Task<List<LoanSummaryResponseDto>> GetAllCustomerLoansAsync(Guid customerId);
+        Task<List<LoanSummaryResponseDto>> GetCustomerLoansAsync(Guid customerId, LoanStatus status);
         Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, string loanNumber);
     }
 }

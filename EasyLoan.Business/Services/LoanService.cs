@@ -36,11 +36,12 @@ namespace EasyLoan.Business.Services
             };
         }
 
-        public async Task<List<LoanSummaryResponseDto>> GetAllCustomerLoansAsync(Guid customerId)
+        public async Task<List<LoanSummaryResponseDto>> GetCustomerLoansAsync(Guid customerId, LoanStatus status)
         {
             var loans = await _repo.GetLoansByCustomerIdAsync(customerId);
 
             return loans
+                .Where(l => l.Status == status)
                 .Select(l => new LoanSummaryResponseDto
                 {
                     LoanNumber = l.LoanNumber,

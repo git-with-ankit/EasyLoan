@@ -181,23 +181,23 @@ namespace EasyLoan.Business.Services
                 ManagerComments = application.ManagerComments
             };
         }
-        public async Task<List<LoanApplicationListItemResponseDto>> GetCustomerApplicationsAsync(Guid customerId)
-        {
-            var apps = await _loanApplicationrepo.GetByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+        //public async Task<List<LoanApplicationsResponseDto>> GetCustomerApplicationsAsync(Guid customerId)
+        //{
+        //    var apps = await _loanApplicationrepo.GetByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
-            if (apps.Any(a => a.CustomerId != customerId))
-                throw new ForbiddenException(ErrorMessages.AccessDenied);
+        //    if (apps.Any(a => a.CustomerId != customerId))
+        //        throw new ForbiddenException(ErrorMessages.AccessDenied);
 
-            return apps.Select(a => new LoanApplicationListItemResponseDto
-            {
-                ApplicationNumber = a.ApplicationNumber,
-                LoanTypeName = a.LoanType.Name,
-                RequestedAmount = a.RequestedAmount,
-                TenureInMonths = a.RequestedTenureInMonths,
-                Status = a.Status,
-                CreatedDate = a.CreatedDate
-            }).ToList();
-        }
+        //    return apps.Select(a => new LoanApplicationsResponseDto
+        //    {
+        //        ApplicationNumber = a.ApplicationNumber,
+        //        LoanTypeName = a.LoanType.Name,
+        //        RequestedAmount = a.RequestedAmount,
+        //        TenureInMonths = a.RequestedTenureInMonths,
+        //        Status = a.Status,
+        //        CreatedDate = a.CreatedDate
+        //    }).ToList();
+        //}
 
         public async Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber)
         {
@@ -236,38 +236,38 @@ namespace EasyLoan.Business.Services
         //        .ToList();
         //}
 
-        public async Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync()
-        {
-            var apps = await _loanApplicationrepo.GetAllAsync();
+        //public async Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync()
+        //{
+        //    var apps = await _loanApplicationrepo.GetAllAsync();
 
-            return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationsAdminResponseDto
-            {
-                ApplicationNumber = a.ApplicationNumber,
-                AssignedEmployeeId = a.AssignedEmployeeId,
-                TenureInMonths = a.RequestedTenureInMonths,
-                LoanTypeName = a.LoanType.Name,
-                RequestedAmount = a.RequestedAmount,
-                Status = a.Status,
-                CreatedDate = a.CreatedDate
-            }).ToList();
-        }
+        //    return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationsAdminResponseDto
+        //    {
+        //        ApplicationNumber = a.ApplicationNumber,
+        //        AssignedEmployeeId = a.AssignedEmployeeId,
+        //        TenureInMonths = a.RequestedTenureInMonths,
+        //        LoanTypeName = a.LoanType.Name,
+        //        RequestedAmount = a.RequestedAmount,
+        //        Status = a.Status,
+        //        CreatedDate = a.CreatedDate
+        //    }).ToList();
+        //}
 
-        public async Task<List<LoanApplicationListItemResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId){
-            var applications = await _loanApplicationrepo.GetAllAsync();
+        //public async Task<List<LoanApplicationsResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId){
+        //    var applications = await _loanApplicationrepo.GetAllAsync();
 
-            if (!applications.Any())
-                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
-            return applications.Where(a => a.AssignedEmployeeId == assignedManagerId).
-                Select(a => new LoanApplicationListItemResponseDto
-            {
-                TenureInMonths = a.RequestedTenureInMonths,
-                ApplicationNumber = a.ApplicationNumber,
-                LoanTypeName = a.LoanType.Name,
-                RequestedAmount = a.RequestedAmount,
-                Status = a.Status,
-                CreatedDate = a.CreatedDate
-            }).ToList();
-        }
+        //    if (!applications.Any())
+        //        throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+        //    return applications.Where(a => a.AssignedEmployeeId == assignedManagerId).
+        //        Select(a => new LoanApplicationsResponseDto
+        //    {
+        //        TenureInMonths = a.RequestedTenureInMonths,
+        //        ApplicationNumber = a.ApplicationNumber,
+        //        LoanTypeName = a.LoanType.Name,
+        //        RequestedAmount = a.RequestedAmount,
+        //        Status = a.Status,
+        //        CreatedDate = a.CreatedDate
+        //    }).ToList();
+        //}
 
         public async Task<IEnumerable<object>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status)
         {
@@ -277,7 +277,7 @@ namespace EasyLoan.Business.Services
                     await GetApplicationsForAdminAsync(status),
 
                 Role.Manager =>
-                    await GetAssignedApplicationsForManagerAsync(userId),
+                    await GetAssignedApplicationsForManagerAsync(userId, status),
 
                 Role.Customer =>
                     await GetApplicationsForCustomerAsync(userId, status),
@@ -286,10 +286,12 @@ namespace EasyLoan.Business.Services
                     throw new ForbiddenException(ErrorMessages.AccessDenied)
             };
         }
-
         private async Task<IEnumerable<LoanApplicationsAdminResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
         {
             var applications = await _loanApplicationrepo.GetAllAsync();
+
+            if (!applications.Any())
+                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsAdminResponseDto
             {
@@ -298,6 +300,44 @@ namespace EasyLoan.Business.Services
                 TenureInMonths = a.RequestedTenureInMonths,
                 LoanTypeName = a.LoanType.Name,
                 RequestedAmount = a.RequestedAmount,
+                Status = a.Status,
+                CreatedDate = a.CreatedDate
+            });
+        }
+        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetAssignedApplicationsForManagerAsync(Guid managerId, LoanApplicationStatus status)
+        {
+
+            var applications = await _loanApplicationrepo.GetAllAsync();
+
+            if (!applications.Any())
+                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+
+            return applications.Where(a => a.AssignedEmployeeId == managerId && a.Status == status).
+                Select(a => new LoanApplicationsResponseDto
+                {
+                    TenureInMonths = a.RequestedTenureInMonths,
+                    ApplicationNumber = a.ApplicationNumber,
+                    LoanTypeName = a.LoanType.Name,
+                    RequestedAmount = a.RequestedAmount,
+                    AssignedEmployeeId = a.AssignedEmployeeId,
+                    Status = a.Status,
+                    CreatedDate = a.CreatedDate
+                });
+        }
+        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForCustomerAsync(Guid customerId, LoanApplicationStatus status)
+        {
+            var applications = await _loanApplicationrepo.GetByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+
+            if (applications.Any(a => a.CustomerId != customerId))
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsResponseDto
+            {
+                ApplicationNumber = a.ApplicationNumber,
+                LoanTypeName = a.LoanType.Name,
+                RequestedAmount = a.RequestedAmount,
+                AssignedEmployeeId = a.AssignedEmployeeId,
+                TenureInMonths = a.RequestedTenureInMonths,
                 Status = a.Status,
                 CreatedDate = a.CreatedDate
             });

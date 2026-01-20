@@ -32,39 +32,43 @@ namespace EasyLoan.Api.Controllers
             return CreatedAtAction(nameof(GetByApplicationNumber), new { applicationNumber }, new ApiResponseDto<string> { Success = true, Data = applicationNumber });
         }
 
-        [Authorize(Roles = "Customer")]
-        [HttpGet]
-        [ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationListItemResponseDto>>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // Customer not found
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
-        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseDto>>>> GetCustomerApplications()
-        {
-            var customerId = User.GetUserId();
-            var applications = await _service.GetCustomerApplicationsAsync(customerId);
-            return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseDto>> { Success = true, Data = applications });
-        }
+        //[Authorize(Roles = "Customer")]
+        //[HttpGet]
+        //[ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // Customer not found
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
+        //public async Task<ActionResult<ApiResponseDto<List<LoanApplicationsResponseDto>>>> GetCustomerApplications()
+        //{
+        //    var customerId = User.GetUserId();
+        //    var applications = await _service.GetCustomerApplicationsAsync(customerId);
+        //    return Ok(new ApiResponseDto<List<LoanApplicationsResponseDto>> { Success = true, Data = applications });
+        //}
 
-        [Authorize(Roles = "Manager")]
-        [HttpGet("assigned")]
-        [ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationListItemResponseDto>>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] 
-        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseDto>>>> GetAssignedApplications()
-        {
-            var managerId = User.GetUserId();
-            var assignedApplications = await _service.GetAssignedApplicationsAsync(managerId);
-            return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseDto>> { Success = true, Data = assignedApplications });
-        }
-        [Authorize(Roles = "Admin")]
-        [HttpGet("pending")]
-        [ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationListItemResponseDto>>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationsAdminResponseDto>>>> GetAllPendingApplications()
-        {
-            var assignedApplications = await _service.GetAllPendingApplicationsAsync();
-            return Ok(new ApiResponseDto<List<LoanApplicationsAdminResponseDto>> { Success = true, Data = assignedApplications });
-        }
+        //[Authorize(Roles = "Manager")]
+        //[HttpGet("assigned")]
+        //[ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] 
+        //public async Task<ActionResult<ApiResponseDto<List<LoanApplicationsResponseDto>>>> GetAssignedApplications()
+        //{
+        //    var managerId = User.GetUserId();
+        //    var assignedApplications = await _service.GetAssignedApplicationsAsync(managerId);
+        //    return Ok(new ApiResponseDto<List<LoanApplicationsResponseDto>> { Success = true, Data = assignedApplications });
+        //}
+        //[Authorize(Roles = "Admin")]
+        //[HttpGet("pending")]
+        //[ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
+        //public async Task<ActionResult<ApiResponseDto<List<LoanApplicationsAdminResponseDto>>>> GetAllPendingApplications()
+        //{
+        //    var assignedApplications = await _service.GetAllPendingApplicationsAsync();
+        //    return Ok(new ApiResponseDto<List<LoanApplicationsAdminResponseDto>> { Success = true, Data = assignedApplications });
+        //}
         [Authorize(Roles ="Admin,Manager,Customer")]
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsAdminResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // Customer not found
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
         public async Task<ActionResult<ApiResponseDto<IEnumerable<object>>>> GetApplications([FromQuery] LoanApplicationStatus status)
         {
             var userId = User.GetUserId();
