@@ -1,4 +1,5 @@
 ﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
 using System.Security.Claims;
 
@@ -16,6 +17,23 @@ namespace EasyLoan.Api.Extensions
             }
 
             return userId;
+        }
+
+        public static Role GetRole(this ClaimsPrincipal user)
+        {
+            var roleClaim = user.FindFirstValue(ClaimTypes.Role);
+
+            if (string.IsNullOrWhiteSpace(roleClaim))
+            {
+                throw new AuthenticationFailedException(ErrorMessages.InvalidToken);
+            }
+
+            if (!Enum.TryParse<Role>(roleClaim, ignoreCase: true, out var role))
+            {
+                throw new AuthenticationFailedException(ErrorMessages.InvalidToken);
+            }
+
+            return role;
         }
     }
 }

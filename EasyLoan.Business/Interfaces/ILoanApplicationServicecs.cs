@@ -1,4 +1,6 @@
-﻿using EasyLoan.Dtos.LoanApplication;
+﻿using EasyLoan.Business.Enums;
+using EasyLoan.Dtos.LoanApplication;
+using EasyLoan.Models.Common.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +16,8 @@ namespace EasyLoan.Business.Interfaces
         Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber);
         Task UpdateReviewAsync(string applicationNumber, Guid managerId, ReviewLoanApplicationRequestDto dto);
         Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId);
-        Task<List<LoanApplicationListItemResponseForAdminDto>> GetAllPendingApplicationsAsync();
+        Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync();
         Task<List<LoanApplicationListItemResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId);
+        Task<IEnumerable<object>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status);
     }
 }

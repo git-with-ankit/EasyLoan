@@ -1,9 +1,11 @@
 ﻿using EasyLoan.Business.Constants;
+using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Helper;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.DataAccess.Repositories;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
 
@@ -234,11 +236,11 @@ namespace EasyLoan.Business.Services
         //        .ToList();
         //}
 
-        public async Task<List<LoanApplicationListItemResponseForAdminDto>> GetAllPendingApplicationsAsync()
+        public async Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync()
         {
             var apps = await _loanApplicationrepo.GetAllAsync();
 
-            return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationListItemResponseForAdminDto
+            return apps.Where(a => a.Status == LoanApplicationStatus.Pending).Select(a => new LoanApplicationsAdminResponseDto
             {
                 ApplicationNumber = a.ApplicationNumber,
                 AssignedEmployeeId = a.AssignedEmployeeId,
@@ -266,6 +268,41 @@ namespace EasyLoan.Business.Services
                 CreatedDate = a.CreatedDate
             }).ToList();
         }
+
+        public async Task<IEnumerable<object>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status)
+        {
+            return userRole switch
+            {
+                Role.Admin =>
+                    await GetApplicationsForAdminAsync(status),
+
+                Role.Manager =>
+                    await GetAssignedApplicationsForManagerAsync(userId),
+
+                Role.Customer =>
+                    await GetApplicationsForCustomerAsync(userId, status),
+
+                _ =>
+                    throw new ForbiddenException(ErrorMessages.AccessDenied)
+            };
+        }
+
+        private async Task<IEnumerable<LoanApplicationsAdminResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
+        {
+            var applications = await _loanApplicationrepo.GetAllAsync();
+
+            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsAdminResponseDto
+            {
+                ApplicationNumber = a.ApplicationNumber,
+                AssignedEmployeeId = a.AssignedEmployeeId,
+                TenureInMonths = a.RequestedTenureInMonths,
+                LoanTypeName = a.LoanType.Name,
+                RequestedAmount = a.RequestedAmount,
+                Status = a.Status,
+                CreatedDate = a.CreatedDate
+            });
+        }
+
     }
 }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.Dtos.LoanApplication
 {
-    public class LoanApplicationListItemResponseForAdminDto
+    public class LoanApplicationsAdminResponseDto
     {
         public string ApplicationNumber { get; set; }
         public string LoanTypeName { get; set; }

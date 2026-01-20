@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EasyLoan.Api
@@ -64,10 +65,30 @@ namespace EasyLoan.Api
                 };
             });
 
+            //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //.AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuer = true,
+            //        ValidateAudience = true,
+            //        ValidateLifetime = true,
+            //        ValidateIssuerSigningKey = true,
+
+            //        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            //        ValidAudience = builder.Configuration["Jwt:Audience"],
+            //        IssuerSigningKey = new SymmetricSecurityKey(
+            //            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            //        ),
+
+            //        ClockSkew = TimeSpan.Zero
+            //    };
+            //});
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+            .AddJwtBearer(opt =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
+                opt.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -76,11 +97,41 @@ namespace EasyLoan.Api
 
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-                    ),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                };
+                opt.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        // stop the default behaviour
+                        context.HandleResponse();
 
-                    ClockSkew = TimeSpan.Zero
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+
+                        var result = JsonSerializer.Serialize(new
+                        {
+                            success = false,
+                            message = "Please authenticate yourself."
+                        });
+
+                        await context.Response.WriteAsync(result);
+                    },
+
+                    OnForbidden = async context =>
+                    {
+                        // This will trigger when user is logged in but doesn't have access (role etc.)
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        context.Response.ContentType = "application/json";
+
+                        var result = JsonSerializer.Serialize(new
+                        {
+                            success = false,
+                            message = "You are not authorized to access this resource."
+                        });
+
+                        await context.Response.WriteAsync(result);
+                    }
                 };
             });
 

@@ -78,3 +78,6 @@ namespace EasyLoan.DataAccess.Models
 //separate response patterns
 //on the basis of status no different controller .. take an enum for it in the query param
 //dont seed data , or change password on first login
+//types of code coverage
+//api testing
+//change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service

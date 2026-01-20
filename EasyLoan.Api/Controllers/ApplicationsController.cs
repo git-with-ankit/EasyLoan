@@ -2,6 +2,7 @@
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.LoanApplication;
+using EasyLoan.Models.Common.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -57,11 +58,24 @@ namespace EasyLoan.Api.Controllers
         [Authorize(Roles = "Admin")]
         [HttpGet("pending")]
         [ProducesResponseType(typeof(ApiResponseDto<List<LoanApplicationListItemResponseDto>>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationListItemResponseForAdminDto>>>> GetAllPendingApplications()
+        public async Task<ActionResult<ApiResponseDto<List<LoanApplicationsAdminResponseDto>>>> GetAllPendingApplications()
         {
             var assignedApplications = await _service.GetAllPendingApplicationsAsync();
-            return Ok(new ApiResponseDto<List<LoanApplicationListItemResponseForAdminDto>> { Success = true, Data = assignedApplications });
+            return Ok(new ApiResponseDto<List<LoanApplicationsAdminResponseDto>> { Success = true, Data = assignedApplications });
         }
+        [Authorize(Roles ="Admin,Manager,Customer")]
+        [HttpGet]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<object>>>> GetApplications([FromQuery] LoanApplicationStatus status)
+        {
+            var userId = User.GetUserId();
+            var userRole = User.GetRole();
+
+            var applications = await _service.GetApplicationsAsync(userId, userRole, status);
+
+            return Ok(new ApiResponseDto<IEnumerable<object>> { Success = true, Data = applications });
+
+        }
+
 
         [Authorize(Roles= "Customer")]
         [HttpGet("{applicationNumber}")]
