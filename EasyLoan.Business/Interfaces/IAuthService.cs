@@ -10,9 +10,9 @@ namespace EasyLoan.Business.Interfaces
 {
     public interface IAuthService
     {
-        Task<Guid> RegisterCustomerAsync(RegisterCustomerRequestDto dto);
+        Task<RegisterCustomerResponseDto> RegisterCustomerAsync(RegisterCustomerRequestDto dto);
         Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto);
-        Task<Guid> RegisterManagerAsync(CreateManagerRequestDto dto);
+        Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto);
         Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto);
     }
 }

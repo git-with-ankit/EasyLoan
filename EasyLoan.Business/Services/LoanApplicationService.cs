@@ -269,7 +269,7 @@ namespace EasyLoan.Business.Services
         //    }).ToList();
         //}
 
-        public async Task<IEnumerable<object>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status)
+        public async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status)
         {
             return userRole switch
             {
@@ -286,14 +286,14 @@ namespace EasyLoan.Business.Services
                     throw new ForbiddenException(ErrorMessages.AccessDenied)
             };
         }
-        private async Task<IEnumerable<LoanApplicationsAdminResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
+        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
         {
             var applications = await _loanApplicationrepo.GetAllAsync();
 
             if (!applications.Any())
                 throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
-            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsAdminResponseDto
+            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsResponseDto
             {
                 ApplicationNumber = a.ApplicationNumber,
                 AssignedEmployeeId = a.AssignedEmployeeId,

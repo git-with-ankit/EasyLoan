@@ -18,6 +18,6 @@ namespace EasyLoan.Business.Interfaces
         Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId);
         //Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync();
         //Task<List<LoanApplicationsResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId);
-        Task<IEnumerable<object>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status);
+        Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status);
     }
 }

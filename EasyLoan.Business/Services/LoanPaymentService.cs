@@ -24,7 +24,7 @@ namespace EasyLoan.Business.Services
             _customerRepo = customerRepo;
         }
 
-        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
+        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
         {
             var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
@@ -114,9 +114,9 @@ namespace EasyLoan.Business.Services
         //    await _paymentRepo.SaveChangesAsync();
         //}
 
-        public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)
+        public async Task MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
         {
-            var loan = await _loanRepo.GetByLoanNumberAsync(dto.LoanNumber)
+            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -248,7 +248,7 @@ namespace EasyLoan.Business.Services
         //                emiSchedule[0].PrincipalRemainingAfterPayment
         //        };
         //    }
-        public async Task<List<NextEmiPaymentResponseDto>> GetNextPaymentAsync(Guid customerId,string loanNumber)
+        public async Task<List<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
         {
             var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
@@ -267,7 +267,7 @@ namespace EasyLoan.Business.Services
             if (!unpaidEmis.Any())
                 throw new BusinessRuleViolationException("No pending EMIs.");
 
-            var response = new List<NextEmiPaymentResponseDto>();
+            var response = new List<DueEmisResponseDto>();
 
             var principalSnapshot = loan.PrincipalRemaining;
             var monthlyRate = loan.InterestRate / 12 / 100;
@@ -277,10 +277,8 @@ namespace EasyLoan.Business.Services
                 if (principalSnapshot <= 0)
                     break;
 
-                // Interest on CURRENT remaining principal
                 var interest = principalSnapshot * monthlyRate;
 
-                // Principal limited by EMI bucket
                 var principal = emi.RemainingAmount - interest;
                 if (principal < 0)
                     principal = 0;
@@ -288,23 +286,55 @@ namespace EasyLoan.Business.Services
                 if (principal > principalSnapshot)
                     principal = principalSnapshot;
 
-                response.Add(new NextEmiPaymentResponseDto
+                if (status == EmiDueStatus.Overdue && emi.DueDate.Date < DateTime.UtcNow.Date)
                 {
-                    DueDate = emi.DueDate,
-                    EmiAmount = Math.Round(interest + principal, 2),
-                    InterestComponent = Math.Round(interest, 2),
-                    PrincipalComponent = Math.Round(principal, 2),
-                    PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
-                    RemainingEmiAmount = emi.RemainingAmount,
-                    IsOverdue = emi.DueDate.Date < DateTime.UtcNow.Date
-                });
+                    response.Add(new DueEmisResponseDto
+                    {
+                        DueDate = emi.DueDate,
+                        EmiAmount = Math.Round(interest + principal, 2),
+                        InterestComponent = Math.Round(interest, 2),
+                        PrincipalComponent = Math.Round(principal, 2),
+                        PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+                        RemainingEmiAmount = emi.RemainingAmount
+                    });
+                }
+                else if (status == EmiDueStatus.Upcoming && emi.DueDate.Date >= DateTime.UtcNow.Date)
+                {
 
-                // Simulate payment for next EMI preview
+                    response.Add(new DueEmisResponseDto
+                    {
+                        DueDate = emi.DueDate,
+                        EmiAmount = Math.Round(interest + principal, 2),
+                        InterestComponent = Math.Round(interest, 2),
+                        PrincipalComponent = Math.Round(principal, 2),
+                        PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+                        RemainingEmiAmount = emi.RemainingAmount
+                    });
+                }
+                    
                 principalSnapshot -= principal;
+                
             }
 
             return response;
         }
+        public async Task<List<List<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
+        {
+            var customerLoans = await _loanRepo.GetLoansByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
+            var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
+
+            var response = new List<List<DueEmisResponseDto>>();
+
+            foreach (var loan in activeLoans)
+            {
+                var loanNumber = loan.LoanNumber;
+
+                var emi = await GetDueEmisAsync(customerId, loanNumber, status);
+                response.Add(emi);
+            }
+
+            return response;            
+        }
     }
 }

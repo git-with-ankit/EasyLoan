@@ -1,5 +1,6 @@
 ﻿using EasyLoan.Api.Extensions;
 using EasyLoan.Business.Interfaces;
+using EasyLoan.Business.Services;
 using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Customer;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,12 @@ namespace EasyLoan.Api.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerService _customerservice;
+        private readonly IAuthService _authService;
 
-        public CustomersController(ICustomerService service)
+        public CustomersController(ICustomerService customerService, IAuthService authService)
         {
-            _customerservice = service;
+            _customerservice = customerService;
+            _authService = authService;
         }
 
         //[HttpPost("register")]
@@ -69,11 +72,34 @@ namespace EasyLoan.Api.Controllers
         [ProducesResponseType(typeof(ApiResponseDto<CustomerDashboardResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<CustomerDashboardResponseDto>>> GetDashboard()
+        public async Task<ActionResult<ApiResponseDto<CustomerDashboardResponseDto>>> GetDashboard()//TODO : Work on this
         {
             var customerId = User.GetUserId();
-            var dashboard = await _customerservice.GetDashboardAsync(customerId);
-            return Ok(new ApiResponseDto<CustomerDashboardResponseDto> { Success = true, Data = dashboard });
+            var summary = await _customerservice.GetDashboardAsync(customerId);
+            return Ok(new ApiResponseDto<CustomerDashboardResponseDto> { Success = true, Data = summary });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        [ProducesResponseType(typeof(ApiResponseDto<RegisterCustomerResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<ActionResult<ApiResponseDto<RegisterCustomerResponseDto>>> Register(
+            RegisterCustomerRequestDto request)
+        {
+            var customer = await _authService.RegisterCustomerAsync(request);
+            return CreatedAtAction(nameof(GetProfile),  new { }, new ApiResponseDto<RegisterCustomerResponseDto> { Success = true, Data = customer });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponseDto<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ApiResponseDto<string>>> Login(
+           CustomerLoginRequestDto request)
+        {
+            var token = await _authService.LoginCustomerAsync(request);
+            return Ok(new ApiResponseDto<string> { Success = true, Data = token });
         }
     }
 }

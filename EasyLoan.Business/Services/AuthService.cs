@@ -24,7 +24,7 @@ namespace EasyLoan.Business.Services
             _tokenGenerator = tokenGenerator;
         }
 
-        public async Task<Guid> RegisterCustomerAsync(RegisterCustomerRequestDto dto)
+        public async Task<RegisterCustomerResponseDto> RegisterCustomerAsync(RegisterCustomerRequestDto dto)
         {
             if (await _customerRepo.ExistsByEmailAsync(dto.Email))
                 throw new ValidationException(ErrorMessages.EmailAlreadyExists);
@@ -52,7 +52,16 @@ namespace EasyLoan.Business.Services
             await _customerRepo.AddAsync(customer);
             await _customerRepo.SaveChangesAsync();
 
-            return customer.Id;
+            return new RegisterCustomerResponseDto()
+            {
+                Name = customer.Name,
+                Email = customer.Email,
+                PhoneNumber = customer.PhoneNumber,
+                DateOfBirth = customer.DateOfBirth,
+                AnnualSalary = customer.AnnualSalary,
+                CreditScore = customer.CreditScore,
+                PanNumber = customer.PanNumber
+            };
         }
 
         public async Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto)
@@ -67,7 +76,7 @@ namespace EasyLoan.Business.Services
             return _tokenGenerator.GenerateToken(customer.Id , Role.Customer);//Generate token
         }
 
-        public async Task<Guid> RegisterManagerAsync(CreateManagerRequestDto dto)
+        public async Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto)
         {
             var emp = new Employee
             {
@@ -82,7 +91,13 @@ namespace EasyLoan.Business.Services
             await _employeeRepo.AddAsync(emp);
             await _employeeRepo.SaveChangesAsync();
 
-            return emp.Id;
+            return new RegisterManagerResponseDto() 
+            { 
+                Name = emp.Name,
+                Email = emp.Email,
+                PhoneNumber = emp.PhoneNumber,
+                Role = emp.Role
+            };
         }
         public async Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto)
         {

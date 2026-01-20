@@ -65,18 +65,17 @@ namespace EasyLoan.Api.Controllers
         //}
         [Authorize(Roles ="Admin,Manager,Customer")]
         [HttpGet]
-        [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsAdminResponseDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // Customer not found
         [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<object>>>> GetApplications([FromQuery] LoanApplicationStatus status)
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>>> GetApplications([FromQuery] LoanApplicationStatus status)
         {
             var userId = User.GetUserId();
             var userRole = User.GetRole();
 
             var applications = await _service.GetApplicationsAsync(userId, userRole, status);
 
-            return Ok(new ApiResponseDto<IEnumerable<object>> { Success = true, Data = applications });
+            return Ok(new ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>> { Success = true, Data = applications });
 
         }
 

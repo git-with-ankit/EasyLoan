@@ -63,23 +63,26 @@ namespace EasyLoan.DataAccess.Models
 //db enum stored as int - add a migration and done
 //saare required payment store kar lo pehle se hee and then override the status and amount - done
 //hash password - done
-//review dtos
+//review dtos >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 //trim the fields - done
 //add 1:1 relationship between loan application and loan details (also include .Include in the repository) - done
 //isPaid ?? - done
 //public facing loan id and readable loan application id
 //EasyLoan.Models.Common - done
 //employee features - done
-//max age?
+//max age? - done
 //logout
-//question - should i remove customerId if i am getting from jwt - not req
+//question - should i remove customerId if i am getting from jwt - not req - yes
 //problem details class
-//in make payment controller pass the loanId in the url and after creating something instead of returning id , return the created object
+//in make payment controller pass the loanId in the url - done
 //separate response patterns
-//on the basis of status no different controller .. take an enum for it in the query param
+//after creating something instead of returning id , return the created object and same in patch
 //dont seed data , or change password on first login
 //types of code coverage
 //api testing
 //change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service
-//on loan details for a particular loan next emi amount and due date
-//one more which will have all the active loans along with their next payment to be made
+//on loan details for a particular loan next emi amount and due date - done
+//one which will fetch all the overdue payments - done
+//pagination
+//filter in db only and IQueryable so that .... one generic repo....filteration on db side
+//auth controller single - done

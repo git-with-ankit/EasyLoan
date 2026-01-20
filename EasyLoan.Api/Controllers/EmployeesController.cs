@@ -16,10 +16,12 @@ namespace EasyLoan.Api.Controllers
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
+        private readonly IAuthService _authService;
 
-        public EmployeesController(IEmployeeService service)
+        public EmployeesController(IEmployeeService service , IAuthService authService)
         {
             _employeeService = service;
+            _authService = authService;
         }
 
         [Authorize(Roles = "Manager,Admin")]
@@ -47,14 +49,15 @@ namespace EasyLoan.Api.Controllers
             return Ok(new ApiResponseDto<bool> { Success = true, Data = true });
         }
 
-        //[HttpPost("login")]
-        //[ProducesResponseType(typeof(ApiResponseDto<string>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status401Unauthorized)]
-        //public async Task<ActionResult<ApiResponseDto<string>>> Login(EmployeeLoginRequestDto request)
-        //{
-        //    var token = await _employeeService.LoginAsync(request);
-        //    return Ok(new ApiResponseDto<string> { Success = true, Data = token });
-        //}
+        [AllowAnonymous]
+        [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponseDto<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ApiResponseDto<string>>> Login(EmployeeLoginRequestDto request)
+        {
+            var token = await _authService.LoginEmployeeAsync(request);
+            return Ok(new ApiResponseDto<string> { Success = true, Data = token });
+        }
 
         ////[Authorize(Roles ="Admin")]
         //[HttpPost]
@@ -67,6 +70,17 @@ namespace EasyLoan.Api.Controllers
         //    var id = await _employeeService.CreateManagerAsync(request);
         //    return Ok(new ApiResponseDto<Guid> { Success = true, Data = id });
         //}
+
+        [Authorize(Roles ="Admin")]
+        [HttpPost("manager/register")]
+        [ProducesResponseType(typeof(ApiResponseDto<RegisterManagerResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<RegisterManagerResponseDto>>> CreateManager(CreateManagerRequestDto request)
+        {
+            var manager = await _authService.RegisterManagerAsync(request);
+            return CreatedAtAction(nameof(GetProfile), new { }, new ApiResponseDto<RegisterManagerResponseDto> { Success = true, Data = manager });
+        }
     }
 }
-//Implement get profile and update profile here

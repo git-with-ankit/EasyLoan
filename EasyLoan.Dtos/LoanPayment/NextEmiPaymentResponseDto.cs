@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.Dtos.LoanPayment
 {
-    public class NextEmiPaymentResponseDto
+    public class DueEmisResponseDto
     {
         public DateTime DueDate { get; set; }
         public decimal EmiAmount { get; set; }
@@ -14,7 +14,6 @@ namespace EasyLoan.Dtos.LoanPayment
         public decimal PrincipalComponent { get; set; }
         public decimal PrincipalRemainingAfterPayment { get; set; }
         public decimal RemainingEmiAmount { get; set; }
-        public bool IsOverdue { get; set; }
     }
 
 }

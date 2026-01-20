@@ -9,8 +9,6 @@ namespace EasyLoan.Dtos.LoanPayment
 {
     public class MakeLoanPaymentRequestDto
     {
-        [Required]
-        public string LoanNumber { get; set; }
 
         [Required]
         [Range(0,Double.MaxValue)]

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EasyLoan.Dtos.Attributes;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -26,6 +27,7 @@ namespace EasyLoan.Dtos.Customer
         public string PhoneNumber { get; set; }
 
         [Required]
+        [MaxAgeAttribute(150)]
         public DateTime DateOfBirth { get; set; }
 
         [Required]
