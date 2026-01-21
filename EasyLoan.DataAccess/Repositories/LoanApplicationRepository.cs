@@ -4,39 +4,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EasyLoan.DataAccess.Repositories
 {
-    public class LoanApplicationRepository : ILoanApplicationRepository
+    public class LoanApplicationRepository : GenericRepository<LoanApplication>, ILoanApplicationRepository
     {
-        private readonly EasyLoanDbContext _context;
+        public LoanApplicationRepository(EasyLoanDbContext context) : base(context) { }
 
-        public LoanApplicationRepository(EasyLoanDbContext context)
-        {
-            _context = context;
-        }
+        //public async Task<LoanApplication?> GetByIdAsync(Guid id)
+        //{
+        //    return await _context.LoanApplications
+        //        .Include(a => a.Customer)
+        //        .Include(a => a.LoanType)
+        //        .Include(a => a.ApprovedByEmployee)
+        //        .Include(a => a.LoanDetails)
+        //        .FirstOrDefaultAsync(a => a.Id == id);
+        //}
 
-        public async Task<LoanApplication?> GetByIdAsync(Guid id)
-        {
-            return await _context.LoanApplications
-                .Include(a => a.Customer)
-                .Include(a => a.LoanType)
-                .Include(a => a.ApprovedByEmployee)
-                .Include(a => a.LoanDetails)
-                .FirstOrDefaultAsync(a => a.Id == id);
-        }
-
-        public async Task<IEnumerable<LoanApplication>> GetAllAsync()
+        public async Task<IEnumerable<LoanApplication>> GetAllWithDetailsAsync()
         {
             return await _context.LoanApplications.Include(a => a.LoanType)
                     .Include(a => a.Customer).Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails).ToListAsync();
         }
 
-        public async Task<LoanApplication?> GetByApplicationNumberAsync(string applicationNumber)
+        public async Task<LoanApplication?> GetByApplicationNumberWithDetailsAsync(string applicationNumber)
         {
             return await _context.LoanApplications.Include(a => a.LoanType)
                     .Include(a => a.Customer).Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails)
                 .FirstOrDefaultAsync(a => a.ApplicationNumber == applicationNumber);
         }
 
-        public async Task<IEnumerable<LoanApplication>> GetByCustomerIdAsync(Guid customerId)
+        public async Task<IEnumerable<LoanApplication>> GetByCustomerIdWithDetailsAsync(Guid customerId)
         {
             return await _context.LoanApplications
                 .Where(a => a.CustomerId == customerId)
@@ -45,20 +40,20 @@ namespace EasyLoan.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task AddAsync(LoanApplication application)
-        {
-            await _context.LoanApplications.AddAsync(application);
-        }
+        //public async Task AddAsync(LoanApplication application)
+        //{
+        //    await _context.LoanApplications.AddAsync(application);
+        //}
 
-        public Task UpdateAsync(LoanApplication application)
-        {
-            _context.LoanApplications.Update(application);
-            return Task.CompletedTask;
-        }
+        //public Task UpdateAsync(LoanApplication application)
+        //{
+        //    _context.LoanApplications.Update(application);
+        //    return Task.CompletedTask;
+        //}
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

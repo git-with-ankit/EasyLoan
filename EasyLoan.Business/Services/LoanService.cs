@@ -18,7 +18,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, string loanNumber)
         {
-            var loan = await _repo.GetByLoanNumberAsync(loanNumber)
+            var loan = await _repo.GetByLoanNumberWithDetailsAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -38,7 +38,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<IEnumerable<LoanSummaryResponseDto>> GetCustomerLoansAsync(Guid customerId, LoanStatus status)
         {
-            var loans = await _repo.GetLoansByCustomerIdAsync(customerId);
+            var loans = await _repo.GetLoansByCustomerIdWithDetailsAsync(customerId);
 
             return loans
                 .Where(l => l.Status == status)

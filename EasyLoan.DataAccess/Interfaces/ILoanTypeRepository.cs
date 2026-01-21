@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Interfaces
 {
-    public interface ILoanTypeRepository : IRepository<LoanType>
+    public interface ILoanTypeRepository : IGenericRepository<LoanType>
     {
 
     }

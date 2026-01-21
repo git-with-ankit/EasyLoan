@@ -63,7 +63,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<CustomerProfileResponseDto> GetProfileAsync(Guid customerId)
         {
-            var c = await _customerRepo.GetByIdAsync(customerId)
+            var c = await _customerRepo.GetByIdWithDetailsAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             return new CustomerProfileResponseDto
@@ -80,7 +80,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<CustomerProfileResponseDto> UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId)
+            var customer = await _customerRepo.GetByIdWithDetailsAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             customer.Name = dto.Name?.Trim() ?? customer.Name;

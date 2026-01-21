@@ -1,5 +1,4 @@
 ﻿using EasyLoan.Business.Exceptions;
-using EasyLoan.Dtos.Common;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;

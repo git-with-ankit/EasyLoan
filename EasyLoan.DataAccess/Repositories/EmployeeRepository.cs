@@ -5,22 +5,17 @@ using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.DataAccess.Repositories
 {
-    public class EmployeeRepository : IEmployeeRepository
+    public class EmployeeRepository : GenericRepository<Employee>, IEmployeeRepository
     {
-        private readonly EasyLoanDbContext _context;
+        public EmployeeRepository(EasyLoanDbContext context) : base(context) { }
 
-        public EmployeeRepository(EasyLoanDbContext context)
-        {
-            _context = context;
-        }
+        //public async Task<Employee?> GetByIdAsync(Guid id)
+        //{
+        //    return await _context.Employees
+        //        .FirstOrDefaultAsync(e => e.Id == id);
+        //}
 
-        public async Task<Employee?> GetByIdAsync(Guid id)
-        {
-            return await _context.Employees
-                .FirstOrDefaultAsync(e => e.Id == id);
-        }
-
-        public async Task<IEnumerable<Employee>> GetAllAsync()
+        public async Task<IEnumerable<Employee>> GetAllWithDetailsAsync()
         {
             return await _context.Employees.Include(e => e.AssignedLoanApplications).ToListAsync();
         }
@@ -38,20 +33,20 @@ namespace EasyLoan.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public Task UpdateAsync(Employee employee)
-        {
-            _context.Employees.Update(employee);
-            return Task.CompletedTask;
-        }
+        //public Task UpdateAsync(Employee employee)
+        //{
+        //    _context.Employees.Update(employee);
+        //    return Task.CompletedTask;
+        //}
 
-        public async Task AddAsync(Employee employee)
-        {
-            await _context.Employees.AddAsync(employee);
-        }
+        //public async Task AddAsync(Employee employee)
+        //{
+        //    await _context.Employees.AddAsync(employee);
+        //}
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

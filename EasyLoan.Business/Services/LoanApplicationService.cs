@@ -38,7 +38,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<CreatedApplicationResponseDto> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
         {
-            var customer = await _customerRepo.GetByIdAsync(customerId)
+            var customer = await _customerRepo.GetByIdWithDetailsAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             if (customer.CreditScore <= 300)
@@ -51,7 +51,7 @@ namespace EasyLoan.Business.Services
             if (dto.RequestedTenureInMonths > loanType.MaxTenureInMonths)
                 throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxTenure);
 
-            var managers = await _employeeRepo.GetAllAsync();
+            var managers = await _employeeRepo.GetAllWithDetailsAsync();
 
             var assignedEmployeeId = managers
                     .OrderBy(m => m.AssignedLoanApplications.Count)
@@ -88,7 +88,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanApplicationReviewResponseDto> UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
         {
-            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
+            var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new KeyNotFoundException();
             if (application.AssignedEmployeeId != managerId)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
@@ -168,7 +168,7 @@ namespace EasyLoan.Business.Services
         }
         public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId)
         {
-            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
+            var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             if (application.AssignedEmployeeId != managerId)
@@ -214,7 +214,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber)
         {
-            var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
+            var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             return new LoanApplicationDetailsResponseDto
@@ -301,7 +301,7 @@ namespace EasyLoan.Business.Services
         }
         private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
         {
-            var applications = await _loanApplicationrepo.GetAllAsync();
+            var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
 
             if (!applications.Any())
                 throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
@@ -320,7 +320,7 @@ namespace EasyLoan.Business.Services
         private async Task<IEnumerable<LoanApplicationsResponseDto>> GetAssignedApplicationsForManagerAsync(Guid managerId, LoanApplicationStatus status)
         {
 
-            var applications = await _loanApplicationrepo.GetAllAsync();
+            var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
 
             if (!applications.Any())
                 throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
@@ -339,7 +339,7 @@ namespace EasyLoan.Business.Services
         }
         private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForCustomerAsync(Guid customerId, LoanApplicationStatus status)
         {
-            var applications = await _loanApplicationrepo.GetByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+            var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             if (applications.Any(a => a.CustomerId != customerId))
                 throw new ForbiddenException(ErrorMessages.AccessDenied);

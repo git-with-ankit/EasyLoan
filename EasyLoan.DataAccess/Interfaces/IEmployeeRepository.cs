@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Interfaces
 {
-    public interface IEmployeeRepository : IRepository<Employee>
+    public interface IEmployeeRepository : IGenericRepository<Employee>
     {
+        Task<IEnumerable<Employee>> GetAllWithDetailsAsync();
         Task<Employee?> GetByEmailAsync(string email);
         Task<IEnumerable<Employee>> GetManagersAsync();
     }

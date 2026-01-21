@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
 
-namespace EasyLoan.Dtos.Common
-{
-    public class ApiResponseDto<T>
-    {
-        public bool Success { get; set; }
-        public string? Message { get; set; }
-        public T? Data { get; set; }
-        public IDictionary<string, string[]>? ValidationErrors { get; set; }
-    }
-}
+//namespace EasyLoan.Dtos.Common
+//{
+//    public class ApiResponseDto<T>
+//    {
+//        public bool Success { get; set; }
+//        public string? Message { get; set; }
+//        public T? Data { get; set; }
+//        public IDictionary<string, string[]>? ValidationErrors { get; set; }
+//    }
+//}

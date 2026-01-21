@@ -1,7 +1,5 @@
 ﻿using EasyLoan.Api.Extensions;
 using EasyLoan.Business.Interfaces;
-using EasyLoan.Business.Services;
-using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Customer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,29 +42,29 @@ namespace EasyLoan.Api.Controllers
 
         [Authorize(Roles = "Customer")]
         [HttpGet("profile")]
-        [ProducesResponseType(typeof(ApiResponseDto<CustomerProfileResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<CustomerProfileResponseDto>>> GetProfile()
+        [ProducesResponseType(typeof(CustomerProfileResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<CustomerProfileResponseDto>> GetProfile()
         {
             var customerId = User.GetUserId();
             var profile = await _customerservice.GetProfileAsync(customerId);
-            return Ok(new ApiResponseDto<CustomerProfileResponseDto> { Success = true, Data = profile });
+            return Ok(profile);
         }
 
         [Authorize(Roles = "Customer")]
         [HttpPatch("profile")]
-        [ProducesResponseType(typeof(ApiResponseDto<CustomerProfileResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CustomerProfileResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<CustomerProfileResponseDto>>> UpdateProfile(UpdateCustomerProfileRequestDto updateProfile)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<CustomerProfileResponseDto>> UpdateProfile(UpdateCustomerProfileRequestDto updateProfile)
         {
             var customerId = User.GetUserId();
             var customerProfile = await _customerservice.UpdateProfileAsync(customerId, updateProfile);
-            return Ok(new ApiResponseDto<CustomerProfileResponseDto> { Success = true, Data = customerProfile });
+            return Ok(customerProfile);
         }
 
         //[Authorize(Roles = "Customer")]
@@ -83,25 +81,25 @@ namespace EasyLoan.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("register")]
-        [ProducesResponseType(typeof(ApiResponseDto<CustomerProfileResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CustomerProfileResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<ActionResult<ApiResponseDto<CustomerProfileResponseDto>>> Register(
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<ActionResult<CustomerProfileResponseDto>> Register(
             RegisterCustomerRequestDto request)
         {
             var customer = await _authService.RegisterCustomerAsync(request);
-            return CreatedAtAction(nameof(GetProfile),  new { }, new ApiResponseDto<CustomerProfileResponseDto> { Success = true, Data = customer });
+            return CreatedAtAction(nameof(GetProfile),  new { }, customer);
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        [ProducesResponseType(typeof(ApiResponseDto<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponseDto<string>>> Login(
+        public async Task<ActionResult<string>> Login(
            CustomerLoginRequestDto request)
         {
             var token = await _authService.LoginCustomerAsync(request);
-            return Ok(new ApiResponseDto<string> { Success = true, Data = token });
+            return Ok(token);
         }
     }
 }

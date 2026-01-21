@@ -75,7 +75,7 @@ namespace EasyLoan.DataAccess.Models
 //question - should i remove customerId if i am getting from jwt - not req - yes
 //problem details class
 //in make payment controller pass the loanId in the url - done
-//separate response patterns
+//separate response patterns - done
 //after creating something instead of returning id , return the created object and same in patch - done
 //dont seed data , or change password on first login
 //types of code coverage
@@ -84,8 +84,10 @@ namespace EasyLoan.DataAccess.Models
 //on loan details for a particular loan next emi amount and due date - done
 //one which will fetch all the overdue payments - done
 //pagination
-//filter in db only and IQueryable so that .... one generic repo....filteration on db side
+//filter in db only and IQueryable so that ....filteration on db side
+//one generic repo - done 
 //auth controller single - done
 //migrate db - done
 //application number make dto and regex and for loan number
-//Remove api dto
+//Remove api dto - done
+//check whether it required GetIdWithDetails or it should just call GetId

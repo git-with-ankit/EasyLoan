@@ -4,16 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EasyLoan.DataAccess.Repositories
 {
-    public class CustomerRepository : ICustomerRepository
+    public class CustomerRepository : GenericRepository<Customer>, ICustomerRepository
     {
-        private readonly EasyLoanDbContext _context;
+        public CustomerRepository(EasyLoanDbContext context) : base(context) { }
 
-        public CustomerRepository(EasyLoanDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<Customer?> GetByIdAsync(Guid id)
+        public async Task<Customer?> GetByIdWithDetailsAsync(Guid id)
         {
             return await _context.Customers
                 .Include(c => c.Loans)
@@ -22,10 +17,10 @@ namespace EasyLoan.DataAccess.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<IEnumerable<Customer>> GetAllAsync()
-        {
-            return await _context.Customers.ToListAsync();
-        }
+        //public async Task<IEnumerable<Customer>> GetAllAsync()
+        //{
+        //    return await _context.Customers.ToListAsync();
+        //}
 
         public async Task<Customer?> GetByEmailAsync(string email)
         {
@@ -45,20 +40,20 @@ namespace EasyLoan.DataAccess.Repositories
                 .AnyAsync(c => c.PanNumber == panNumber);
         }
 
-        public async Task AddAsync(Customer customer)
-        {
-            await _context.Customers.AddAsync(customer);
-        }
+        //public async Task AddAsync(Customer customer)
+        //{
+        //    await _context.Customers.AddAsync(customer);
+        //}
 
-        public Task UpdateAsync(Customer customer)
-        {
-            _context.Customers.Update(customer);
-            return Task.CompletedTask;
-        }
+        //public Task UpdateAsync(Customer customer)
+        //{
+        //    _context.Customers.Update(customer);
+        //    return Task.CompletedTask;
+        //}
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

@@ -1,19 +1,15 @@
-
 using EasyLoan.Api.Middleware;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Business.Services;
 using EasyLoan.DataAccess;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Repositories;
-using EasyLoan.Dtos.Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EasyLoan.Api

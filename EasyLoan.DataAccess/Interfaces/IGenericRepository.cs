@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Interfaces
 {
-    public interface IRepository<T> where T : class
+    public interface IGenericRepository<T> where T : class
     {
         public Task<T?> GetByIdAsync(Guid id);
         public Task<IEnumerable<T>> GetAllAsync();
@@ -16,6 +16,3 @@ namespace EasyLoan.DataAccess.Interfaces
         public Task UpdateAsync(T entity);
     }
 }
-//can add update
-//Dtos review
-//IRepository to keep or not

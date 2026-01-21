@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Interfaces
 {
-    public interface ILoanPaymentRepository : IRepository<LoanPayment>
+    public interface ILoanPaymentRepository : IGenericRepository<LoanPayment>
     {
         Task<IEnumerable<LoanPayment>> GetByLoanIdAsync(Guid loanId);
     }

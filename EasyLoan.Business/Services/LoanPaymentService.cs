@@ -26,7 +26,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<IEnumerable<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
         {
-            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+            var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
@@ -115,7 +115,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
         {
-            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
+            var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -124,7 +124,7 @@ namespace EasyLoan.Business.Services
             if (loan.Status != LoanStatus.Active)
                 throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
 
-            var customer = await _customerRepo.GetByIdAsync(customerId)
+            var customer = await _customerRepo.GetByIdWithDetailsAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             var unpaidEmis = loan.Emis
@@ -256,7 +256,7 @@ namespace EasyLoan.Business.Services
         //    }
         public async Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
         {
-            var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
+            var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             if (loan.CustomerId != customerId)
@@ -326,7 +326,7 @@ namespace EasyLoan.Business.Services
         }
         public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
         {
-            var customerLoans = await _loanRepo.GetLoansByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+            var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
 

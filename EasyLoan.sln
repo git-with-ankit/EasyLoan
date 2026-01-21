@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Dtos", "EasyLoan.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Models.Common", "EasyLoan.Models.Common\EasyLoan.Models.Common.csproj", "{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Api.Tests", "EasyLoan.Api.Tests\EasyLoan.Api.Tests.csproj", "{B335FFB4-7F4F-4B8E-8C03-125783966763}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
