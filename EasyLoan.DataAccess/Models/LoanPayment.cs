@@ -1,12 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using EasyLoan.Models.Common.Enums;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Models
 {
@@ -22,9 +17,6 @@ namespace EasyLoan.DataAccess.Models
         [Required]
         public Guid CustomerId { get; set; }
 
-        [Required]
-        public DateTime DueDate { get; set; }
-
         public DateTime? PaymentDate { get; set; }
 
         [Required]
@@ -33,14 +25,6 @@ namespace EasyLoan.DataAccess.Models
 
         [Required]
         public Guid TransactionId { get; set; }
-
-        [Required]
-        [Precision(5,2)]
-        public decimal InterestPaid { get; set; }
-
-        [Required]
-        [Precision(18, 2)]
-        public decimal PrincipalPaid { get; set; }
 
         [Required]
         public LoanPaymentStatus Status { get; set; }

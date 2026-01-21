@@ -10,7 +10,7 @@ namespace EasyLoan.DataAccess.Interfaces
     public interface IRepository<T> where T : class
     {
         public Task<T?> GetByIdAsync(Guid id);
-        public Task<List<T>> GetAllAsync();
+        public Task<IEnumerable<T>> GetAllAsync();
         Task AddAsync(T entity);
         public Task SaveChangesAsync();
         public Task UpdateAsync(T entity);

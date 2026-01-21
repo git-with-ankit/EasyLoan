@@ -36,7 +36,7 @@ namespace EasyLoan.Business.Services
             _publicIdService = publicIdService;
         }
 
-        public async Task<string> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
+        public async Task<CreatedApplicationResponseDto> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
         {
             var customer = await _customerRepo.GetByIdAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
@@ -78,10 +78,15 @@ namespace EasyLoan.Business.Services
             await _loanApplicationrepo.AddAsync(application);
             await _loanApplicationrepo.SaveChangesAsync();
 
-            return application.ApplicationNumber;
+            return new CreatedApplicationResponseDto()
+            {
+                ApplicationNumber = application.ApplicationNumber,
+                Status = application.Status,
+                CreatedDate = application.CreatedDate
+            };
         }
 
-        public async Task UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
+        public async Task<LoanApplicationReviewResponseDto> UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
         {
             var application = await _loanApplicationrepo.GetByApplicationNumberAsync(applicationNumber)
                 ?? throw new KeyNotFoundException();
@@ -152,6 +157,14 @@ namespace EasyLoan.Business.Services
             await _loanApplicationrepo.UpdateAsync(application);
             await _loanDetailsRepo.SaveChangesAsync();
             await _loanApplicationrepo.SaveChangesAsync();
+
+            return new LoanApplicationReviewResponseDto()
+            {
+                ApplicationNumber = application.ApplicationNumber,
+                ApprovedAmount = application.ApprovedAmount,
+                ManagerComments = application.ManagerComments,
+                Status = application.Status
+            };
         }
         public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId)
         {

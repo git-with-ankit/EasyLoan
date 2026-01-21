@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EasyLoan.Dtos.LoanType
 {
-    public class CreateLoanTypeRequestDto
+    public class LoanTypeRequestDto
     {
         [Required]
         [MaxLength(100)]

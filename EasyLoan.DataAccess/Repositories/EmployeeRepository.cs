@@ -20,7 +20,7 @@ namespace EasyLoan.DataAccess.Repositories
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public async Task<List<Employee>> GetAllAsync()
+        public async Task<IEnumerable<Employee>> GetAllAsync()
         {
             return await _context.Employees.Include(e => e.AssignedLoanApplications).ToListAsync();
         }
@@ -31,7 +31,7 @@ namespace EasyLoan.DataAccess.Repositories
                 .FirstOrDefaultAsync(e => e.Email == email);
         }
 
-        public async Task<List<Employee>> GetManagersAsync()
+        public async Task<IEnumerable<Employee>> GetManagersAsync()
         {
             return await _context.Employees
                 .Where(e => e.Role == EmployeeRole.Manager)

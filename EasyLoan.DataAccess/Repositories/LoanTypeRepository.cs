@@ -19,7 +19,7 @@ namespace EasyLoan.DataAccess.Repositories
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
 
-        public async Task<List<LoanType>> GetAllAsync()
+        public async Task<IEnumerable<LoanType>> GetAllAsync()
         {
             return await _context.LoanTypes.ToListAsync();
         }

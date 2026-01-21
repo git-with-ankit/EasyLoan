@@ -36,7 +36,7 @@ namespace EasyLoan.Business.Services
             };
         }
 
-        public async Task<List<LoanSummaryResponseDto>> GetCustomerLoansAsync(Guid customerId, LoanStatus status)
+        public async Task<IEnumerable<LoanSummaryResponseDto>> GetCustomerLoansAsync(Guid customerId, LoanStatus status)
         {
             var loans = await _repo.GetLoansByCustomerIdAsync(customerId);
 
@@ -48,7 +48,7 @@ namespace EasyLoan.Business.Services
                     PrincipalRemaining = l.PrincipalRemaining,
                     InterestRate = l.InterestRate,
                     Status = l.Status
-                }).ToList();
+                });
         }
 
         //public async Task<List<EmiScheduleItemResponseDto>>GetEmiScheduleAsync(Guid customerId, Guid loanId)//TODO : Review

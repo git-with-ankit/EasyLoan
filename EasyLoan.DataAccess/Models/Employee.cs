@@ -26,7 +26,7 @@ namespace EasyLoan.DataAccess.Models
         [MaxLength(20)]
         public string PhoneNumber { get; set; }
         [Required]
-        [DataType(DataType.Password)]
+        [RegularExpression("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,16}$/")]
         public string Password { get; set; }
         [Required]
         public EmployeeRole Role { get; set; }

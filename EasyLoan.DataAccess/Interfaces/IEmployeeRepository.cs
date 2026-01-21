@@ -10,6 +10,6 @@ namespace EasyLoan.DataAccess.Interfaces
     public interface IEmployeeRepository : IRepository<Employee>
     {
         Task<Employee?> GetByEmailAsync(string email);
-        Task<List<Employee>> GetManagersAsync();
+        Task<IEnumerable<Employee>> GetManagersAsync();
     }
 }

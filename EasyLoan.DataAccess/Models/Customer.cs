@@ -67,7 +67,7 @@ namespace EasyLoan.DataAccess.Models
 //trim the fields - done
 //add 1:1 relationship between loan application and loan details (also include .Include in the repository) - done
 //isPaid ?? - done
-//public facing loan id and readable loan application id
+//public facing loan id and readable loan application id - done
 //EasyLoan.Models.Common - done
 //employee features - done
 //max age? - done
@@ -76,13 +76,16 @@ namespace EasyLoan.DataAccess.Models
 //problem details class
 //in make payment controller pass the loanId in the url - done
 //separate response patterns
-//after creating something instead of returning id , return the created object and same in patch
+//after creating something instead of returning id , return the created object and same in patch - done
 //dont seed data , or change password on first login
 //types of code coverage
 //api testing
-//change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service
+//change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service - done
 //on loan details for a particular loan next emi amount and due date - done
 //one which will fetch all the overdue payments - done
 //pagination
 //filter in db only and IQueryable so that .... one generic repo....filteration on db side
 //auth controller single - done
+//migrate db - done
+//application number make dto and regex and for loan number
+//Remove api dto

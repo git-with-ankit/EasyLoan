@@ -15,6 +15,6 @@ namespace EasyLoan.Business.Interfaces
         //Task<string> LoginAsync(EmployeeLoginRequestDto dto);
         //Task<Guid> CreateManagerAsync(CreateEmployeeRequestDto dto);
         Task<EmployeeProfileResponseDto> GetProfileAsync(Guid employeeId);
-        Task UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto updateProfile);
+        Task<EmployeeProfileResponseDto> UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto updateProfile);
     }
 }

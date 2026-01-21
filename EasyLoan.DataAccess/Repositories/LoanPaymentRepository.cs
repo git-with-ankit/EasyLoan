@@ -19,12 +19,12 @@ namespace EasyLoan.DataAccess.Repositories
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<List<LoanPayment>> GetAllAsync()
+        public async Task<IEnumerable<LoanPayment>> GetAllAsync()
         {
             return await _context.LoanPayments.ToListAsync();
         }
 
-        public async Task<List<LoanPayment>> GetByLoanIdAsync(Guid loanId)
+        public async Task<IEnumerable<LoanPayment>> GetByLoanIdAsync(Guid loanId)
         {
             return await _context.LoanPayments
                 .Where(p => p.LoanDetailsId == loanId)

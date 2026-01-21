@@ -7,6 +7,7 @@ using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Repositories;
 using EasyLoan.Dtos.Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -48,20 +49,18 @@ namespace EasyLoan.Api
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {
-                    var errors = context.ModelState
-                        .Where(e => e.Value.Errors.Count > 0)
-                        .ToDictionary(
-                            e => e.Key,
-                            e => e.Value.Errors.Select(x => x.ErrorMessage).ToArray()
-                        );
-
-                    return new BadRequestObjectResult(new ApiResponseDto<object>
+                    var problemDetails = new ValidationProblemDetails(context.ModelState)
                     {
-                        Success = false,
-                        Message = "Validation failed",
-                        Data = null,
-                        ValidationErrors = errors
-                    });
+                        Status = StatusCodes.Status400BadRequest,
+                        Title = "Validation failed",
+                        Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
+                        Instance = context.HttpContext.Request.Path
+                    };
+
+                    return new BadRequestObjectResult(problemDetails)
+                    {
+                        ContentTypes = { "application/problem+json" }
+                    };
                 };
             });
 
@@ -97,7 +96,8 @@ namespace EasyLoan.Api
 
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+                    ClockSkew = TimeSpan.Zero
                 };
                 opt.Events = new JwtBearerEvents
                 {
@@ -107,30 +107,37 @@ namespace EasyLoan.Api
                         context.HandleResponse();
 
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/json";
+                        context.Response.ContentType = "application/problem+json";
 
-                        var result = JsonSerializer.Serialize(new
+                        var problem = new ProblemDetails
                         {
-                            success = false,
-                            message = "Please authenticate yourself."
-                        });
+                            Status = StatusCodes.Status401Unauthorized,
+                            Title = "Authentication failed",
+                            Type = "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1",
+                            Detail = "The access token is missing, invalid, or expired.",
+                            Instance = context.Request.Path
+                        };
 
-                        await context.Response.WriteAsync(result);
+                        await context.Response.WriteAsJsonAsync(problem);
                     },
 
                     OnForbidden = async context =>
                     {
                         // This will trigger when user is logged in but doesn't have access (role etc.)
                         context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        context.Response.ContentType = "application/json";
+                        context.Response.ContentType = "application/problem+json";
 
-                        var result = JsonSerializer.Serialize(new
+                        var problem = new ProblemDetails
                         {
-                            success = false,
-                            message = "You are not authorized to access this resource."
-                        });
+                            Status = StatusCodes.Status403Forbidden,
+                            Title = "Access denied",
+                            Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.3",
+                            Detail = "You do not have permission to perform this action.",
+                            Instance = context.Request.Path
+                        };
 
-                        await context.Response.WriteAsync(result);
+
+                        await context.Response.WriteAsJsonAsync(problem);
                     }
                 };
             });

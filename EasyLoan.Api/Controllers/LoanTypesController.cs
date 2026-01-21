@@ -20,11 +20,12 @@ namespace EasyLoan.Api.Controllers
         
         [HttpGet]
         [Authorize(Roles = "Customer,Manager,Admin")]
-        [ProducesResponseType(typeof(ApiResponseDto<List<LoanTypeResponseDto>>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponseDto<List<LoanTypeResponseDto>>>> GetAllLoanTypes()
+        [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanTypeResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<LoanTypeResponseDto>>>> GetAllLoanTypes()
         {
             var loanTypes = await _service.GetAllAsync();
-            return Ok(new ApiResponseDto<List<LoanTypeResponseDto>>
+            return Ok(new ApiResponseDto<IEnumerable<LoanTypeResponseDto>>
             {
                 Success = true,
                 Data = loanTypes
@@ -34,7 +35,9 @@ namespace EasyLoan.Api.Controllers
         [HttpGet("{loanTypeId}")]
         [Authorize(Roles = "Customer,Manager,Admin")]
         [ProducesResponseType(typeof(ApiResponseDto<LoanTypeResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ApiResponseDto<LoanTypeResponseDto>>> GetLoanTypesById(Guid loanTypeId)
         {
             var loanType = await _service.GetByIdAsync(loanTypeId);
@@ -47,30 +50,47 @@ namespace EasyLoan.Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        [ProducesResponseType(typeof(ApiResponseDto<Guid>), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<ApiResponseDto<Guid>>> CreateLoanType(CreateLoanTypeRequestDto request)
+        [ProducesResponseType(typeof(ApiResponseDto<LoanTypeResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<ActionResult<ApiResponseDto<LoanTypeResponseDto>>> CreateLoanType(LoanTypeRequestDto request)
         {
-            var id = await _service.CreateLoanTypeAsync(request);
-            return CreatedAtAction(nameof(GetLoanTypesById), new { loanTypeId = id },new ApiResponseDto<Guid> { Success = true, Data = id });
+            var newLoanType = await _service.CreateLoanTypeAsync(request);
+            return CreatedAtAction(nameof(GetLoanTypesById), new { loanTypeId = newLoanType.Id },new ApiResponseDto<LoanTypeResponseDto> { Success = true, Data = newLoanType });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("{loanTypeId}")]
+        [ProducesResponseType(typeof(ApiResponseDto<LoanTypeResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponseDto<LoanTypeResponseDto>>> CreateLoanType(Guid loanTypeId, LoanTypeRequestDto request)
+        {
+            var updatedLoanType = await _service.UpdateLoanTypeAsync(loanTypeId, request);
+            return Ok(new ApiResponseDto<LoanTypeResponseDto> { Success = true, Data = updatedLoanType });
         }
 
         [Authorize(Roles = "Customer,Manager")]
         [HttpGet("{loanTypeId}/emi-plan")]
-        [ProducesResponseType(typeof(ApiResponseDto<List<EmiScheduleItemResponseDto>>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<ActionResult<ApiResponseDto<List<EmiScheduleItemResponseDto>>>> PreviewEmiPlan(Guid loanTypeId,[FromQuery] PreviewEmiQueryDto query)
+        [ProducesResponseType(typeof(ApiResponseDto<IEnumerable<EmiScheduleItemResponseDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponseDto<ProblemDetails>), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<EmiScheduleItemResponseDto>>>> PreviewEmiPlan(Guid loanTypeId,[FromQuery] PreviewEmiQueryDto query)
         {
             var plan = await _service.PreviewEmiAsync(
                 loanTypeId,
                 query.Amount,
                 query.TenureInMonths);
 
-            return Ok(new ApiResponseDto<List<EmiScheduleItemResponseDto>>
+            return Ok(new ApiResponseDto<IEnumerable<EmiScheduleItemResponseDto>>
             {
                 Success = true,
                 Data = plan

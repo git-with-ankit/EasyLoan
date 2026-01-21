@@ -10,7 +10,7 @@ namespace EasyLoan.Business.Helper
 {
     public static class EmiCalculator
     {
-        public static List<EmiScheduleItemResponseDto> GenerateSchedule(
+        public static IEnumerable<EmiScheduleItemResponseDto> GenerateSchedule(
             decimal principal,
             decimal annualInterestRate,
             int tenureInMonths,

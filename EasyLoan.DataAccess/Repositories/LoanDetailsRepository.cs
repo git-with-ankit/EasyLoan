@@ -23,12 +23,12 @@ namespace EasyLoan.DataAccess.Repositories
                      .FirstOrDefaultAsync(l => l.Id == id);
         }
 
-        public async Task<List<LoanDetails>> GetAllAsync()
+        public async Task<IEnumerable<LoanDetails>> GetAllAsync()
         {
             return await _context.Loans.ToListAsync();
         }
 
-        public async Task<List<LoanDetails>> GetLoansByCustomerIdAsync(Guid customerId)
+        public async Task<IEnumerable<LoanDetails>> GetLoansByCustomerIdAsync(Guid customerId)
         {
             return await _context.Loans
                 .Where(l => l.CustomerId == customerId)

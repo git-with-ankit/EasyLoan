@@ -9,6 +9,6 @@ namespace EasyLoan.DataAccess.Interfaces
 {
     public interface ILoanPaymentRepository : IRepository<LoanPayment>
     {
-        Task<List<LoanPayment>> GetByLoanIdAsync(Guid loanId);
+        Task<IEnumerable<LoanPayment>> GetByLoanIdAsync(Guid loanId);
     }
 }

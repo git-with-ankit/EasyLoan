@@ -15,7 +15,7 @@ public class LoanTypeService : ILoanTypeService
         _loanTypeRepo = loanTypeRepository;
     }
 
-    public async Task<List<LoanTypeResponseDto>> GetAllAsync()
+    public async Task<IEnumerable<LoanTypeResponseDto>> GetAllAsync()
     {
         var loanTypes = await _loanTypeRepo.GetAllAsync();
 
@@ -26,7 +26,7 @@ public class LoanTypeService : ILoanTypeService
             InterestRate = lt.InterestRate,
             MinAmount = lt.MinAmount,
             MaxTenureInMonths = lt.MaxTenureInMonths
-        }).ToList();
+        });
     }
 
     public async Task<LoanTypeResponseDto> GetByIdAsync(Guid loanTypeId)
@@ -43,7 +43,7 @@ public class LoanTypeService : ILoanTypeService
             MaxTenureInMonths = loanType.MaxTenureInMonths
         };
     }
-    public async Task<Guid> CreateLoanTypeAsync(CreateLoanTypeRequestDto dto)
+    public async Task<LoanTypeResponseDto> CreateLoanTypeAsync(LoanTypeRequestDto dto)
     {
         var type = new LoanType
         {
@@ -57,10 +57,17 @@ public class LoanTypeService : ILoanTypeService
         await _loanTypeRepo.AddAsync(type);
         await _loanTypeRepo.SaveChangesAsync();
 
-        return type.Id;
+        return new LoanTypeResponseDto()
+        {
+            Name = type.Name,
+            MinAmount = type.MinAmount,
+            Id = type.Id,
+            InterestRate = type.InterestRate,
+            MaxTenureInMonths = type.MaxTenureInMonths
+        };
     }
 
-    public async Task UpdateLoanTypeAsync(Guid loanTypeId, UpdateLoanTypeRequestDto dto)
+    public async Task<LoanTypeResponseDto> UpdateLoanTypeAsync(Guid loanTypeId, LoanTypeRequestDto dto)
     {
         var type = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
@@ -71,9 +78,18 @@ public class LoanTypeService : ILoanTypeService
 
         await _loanTypeRepo.UpdateAsync(type);
         await _loanTypeRepo.SaveChangesAsync();
+
+        return new LoanTypeResponseDto()
+        {
+            Name = type.Name,
+            MinAmount = type.MinAmount,
+            Id = type.Id,
+            InterestRate = type.InterestRate,
+            MaxTenureInMonths = type.MaxTenureInMonths
+        };
     }
 
-    public async Task<List<LoanTypeResponseDto>> GetLoanTypesAsync()
+    public async Task<IEnumerable<LoanTypeResponseDto>> GetLoanTypesAsync()
     {
         var types = await _loanTypeRepo.GetAllAsync();
 
@@ -84,9 +100,9 @@ public class LoanTypeService : ILoanTypeService
             InterestRate = t.InterestRate,
             MinAmount = t.MinAmount,
             MaxTenureInMonths = t.MaxTenureInMonths
-        }).ToList();
+        });
     }
-    public async Task<List<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths)
+    public async Task<IEnumerable<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths)
     {
         var loanType = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);

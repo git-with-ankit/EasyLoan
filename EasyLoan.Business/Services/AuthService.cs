@@ -24,13 +24,13 @@ namespace EasyLoan.Business.Services
             _tokenGenerator = tokenGenerator;
         }
 
-        public async Task<RegisterCustomerResponseDto> RegisterCustomerAsync(RegisterCustomerRequestDto dto)
+        public async Task<CustomerProfileResponseDto> RegisterCustomerAsync(RegisterCustomerRequestDto dto)
         {
             if (await _customerRepo.ExistsByEmailAsync(dto.Email))
-                throw new ValidationException(ErrorMessages.EmailAlreadyExists);
+                throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
 
             if (await _customerRepo.ExistsByPanAsync(dto.PanNumber))
-                throw new ValidationException(ErrorMessages.PanAlreadyExists);
+                throw new BusinessRuleViolationException(ErrorMessages.PanAlreadyExists);
 
             if (dto.DateOfBirth > DateTime.UtcNow.AddYears(-18))
                 throw new BusinessRuleViolationException("Customer must be at least 18 years old.");
@@ -52,7 +52,7 @@ namespace EasyLoan.Business.Services
             await _customerRepo.AddAsync(customer);
             await _customerRepo.SaveChangesAsync();
 
-            return new RegisterCustomerResponseDto()
+            return new CustomerProfileResponseDto()
             {
                 Name = customer.Name,
                 Email = customer.Email,

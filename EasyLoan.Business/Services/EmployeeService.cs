@@ -34,7 +34,6 @@ namespace EasyLoan.Business.Services
 
             return new EmployeeProfileResponseDto
             {
-                EmployeeId = employee.Id,
                 Name = employee.Name,
                 Email = employee.Email,
                 PhoneNumber = employee.PhoneNumber,
@@ -42,7 +41,7 @@ namespace EasyLoan.Business.Services
             };
         }
 
-        public async Task UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto dto)
+        public async Task<EmployeeProfileResponseDto> UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto dto)
         {
             var employee = await _employeeRepo.GetByIdAsync(employeeId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
@@ -50,11 +49,19 @@ namespace EasyLoan.Business.Services
             if(employee.Id != employeeId)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
-            employee.Name = dto.Name.Trim();
-            employee.PhoneNumber = dto.PhoneNumber.Trim();
+            employee.Name = dto.Name?.Trim() ?? employee.Name;
+            employee.PhoneNumber = dto.PhoneNumber?.Trim() ?? employee.PhoneNumber;
 
             await _employeeRepo.UpdateAsync(employee);
             await _employeeRepo.SaveChangesAsync();
+
+            return new EmployeeProfileResponseDto()
+            {
+                Name = employee.Name,
+                PhoneNumber = employee.PhoneNumber,
+                Email = employee.Email,
+                Role = employee.Role,
+            };
         }
 
         //public async Task<string> LoginAsync(EmployeeLoginRequestDto dto)

@@ -24,7 +24,7 @@ namespace EasyLoan.Business.Services
             _customerRepo = customerRepo;
         }
 
-        public async Task<List<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
+        public async Task<IEnumerable<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
         {
             var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
@@ -34,14 +34,13 @@ namespace EasyLoan.Business.Services
 
             return payments
                 .Where(p => p.Status == LoanPaymentStatus.Paid)
-                .OrderBy(p => p.DueDate)
+                .OrderBy(p => p.PaymentDate)
                 .Select(p => new LoanPaymentHistoryResponseDto
                 {
                     PaymentDate = p.PaymentDate,
                     Amount = p.Amount,
                     Status = p.Status
-                })
-                .ToList();
+                });
         }
 
         //public async Task MakePaymentAsync(Guid customerId, MakeLoanPaymentRequestDto dto)
@@ -114,7 +113,7 @@ namespace EasyLoan.Business.Services
         //    await _paymentRepo.SaveChangesAsync();
         //}
 
-        public async Task MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
+        public async Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
         {
             var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
@@ -205,6 +204,13 @@ namespace EasyLoan.Business.Services
             await _customerRepo.UpdateAsync(customer);
             await _loanRepo.UpdateAsync(loan);
             await _paymentRepo.SaveChangesAsync();
+
+            return new LoanPaymentResponseDto()
+            {
+                PaymentDate = payment.PaymentDate,
+                Amount = payment.Amount,
+                TransactionId = payment.TransactionId
+            };
         }
 
 
@@ -248,7 +254,7 @@ namespace EasyLoan.Business.Services
         //                emiSchedule[0].PrincipalRemainingAfterPayment
         //        };
         //    }
-        public async Task<List<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
+        public async Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
         {
             var loan = await _loanRepo.GetByLoanNumberAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
@@ -318,13 +324,13 @@ namespace EasyLoan.Business.Services
 
             return response;
         }
-        public async Task<List<List<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
+        public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
         {
             var customerLoans = await _loanRepo.GetLoansByCustomerIdAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
 
-            var response = new List<List<DueEmisResponseDto>>();
+            var response = new List<IEnumerable<DueEmisResponseDto>>();
 
             foreach (var loan in activeLoans)
             {

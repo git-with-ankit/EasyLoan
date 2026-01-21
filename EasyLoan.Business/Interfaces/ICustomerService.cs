@@ -13,7 +13,7 @@ namespace EasyLoan.Business.Interfaces
         //Task<Guid> RegisterAsync(RegisterCustomerRequestDto dto);
         //Task<string> LoginAsync(CustomerLoginRequestDto dto);
         Task<CustomerProfileResponseDto> GetProfileAsync(Guid customerId);
-        Task UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto);
-        Task<CustomerDashboardResponseDto> GetDashboardAsync(Guid customerId);
+        Task<CustomerProfileResponseDto> UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto);
+        //Task<CustomerDashboardResponseDto> GeFinancialOverviewAsync(Guid customerId);
     }
 }

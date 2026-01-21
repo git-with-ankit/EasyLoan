@@ -68,52 +68,63 @@ namespace EasyLoan.Business.Services
 
             return new CustomerProfileResponseDto
             {
-                CustomerId = c.Id,
                 Name = c.Name,
                 Email = c.Email,
                 PhoneNumber = c.PhoneNumber,
+                DateOfBirth = c.DateOfBirth,
                 CreditScore = c.CreditScore,
                 AnnualSalary = c.AnnualSalary,
                 PanNumber = c.PanNumber
             };
         }
 
-        public async Task UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto)
+        public async Task<CustomerProfileResponseDto> UpdateProfileAsync(Guid customerId, UpdateCustomerProfileRequestDto dto)
         {
             var customer = await _customerRepo.GetByIdAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
-            customer.Name = dto.Name.Trim();
-            customer.PhoneNumber = dto.PhoneNumber.Trim();
+            customer.Name = dto.Name?.Trim() ?? customer.Name;
+            customer.PhoneNumber = dto.PhoneNumber?.Trim() ?? customer.PhoneNumber;
             customer.AnnualSalary = dto.AnnualSalary;
 
             await _customerRepo.UpdateAsync(customer);
             await _customerRepo.SaveChangesAsync();
-        }
 
-        public async Task<CustomerDashboardResponseDto> GetDashboardAsync(Guid customerId)
-        {
-            var customer = await _customerRepo.GetByIdAsync(customerId)
-                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
-
-            var today = DateTime.UtcNow.Date;
-
-            var pendingPayments = customer.Loans
-                .Where(l => l.Status == LoanStatus.Active)
-                .SelectMany(l => l.LoanPayments)
-                .Count(p =>
-                    p.PaymentDate == null &&
-                    p.DueDate.Date <= today);
-
-            return new CustomerDashboardResponseDto
+            return new CustomerProfileResponseDto()
             {
+                Email = customer.Email,
+                PhoneNumber = customer.PhoneNumber,
+                AnnualSalary = customer.AnnualSalary,
+                PanNumber = customer.PanNumber,
                 CreditScore = customer.CreditScore,
-                TotalNumberOfActiveLoans = customer.Loans.Count(l => l.Status == LoanStatus.Active),
-                TotalNumberOfClosedLoans = customer.Loans.Count(l => l.Status == LoanStatus.Closed),
-                TotalNumberOfPendingApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Pending),
-                TotalNumberOfApprovedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Approved),
-                TotalNumberOfRejectedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Rejected)
+                DateOfBirth = customer.DateOfBirth,
+                Name = customer.Name
             };
         }
+
+        //public async Task<CustomerDashboardResponseDto> GeFinancialOverviewAsync(Guid customerId)
+        //{
+        //    var customer = await _customerRepo.GetByIdAsync(customerId)
+        //        ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+        //    var today = DateTime.UtcNow.Date;
+
+        //    var pendingPayments = customer.Loans
+        //        .Where(l => l.Status == LoanStatus.Active)
+        //        .SelectMany(l => l.LoanPayments)
+        //        .Count(p =>
+        //            p.PaymentDate == null &&
+        //            p.DueDate.Date <= today);
+
+        //    return new CustomerDashboardResponseDto
+        //    {
+        //        CreditScore = customer.CreditScore,
+        //        TotalNumberOfActiveLoans = customer.Loans.Count(l => l.Status == LoanStatus.Active),
+        //        TotalNumberOfClosedLoans = customer.Loans.Count(l => l.Status == LoanStatus.Closed),
+        //        TotalNumberOfPendingApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Pending),
+        //        TotalNumberOfApprovedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Approved),
+        //        TotalNumberOfRejectedApplications = customer.LoanApplications.Count(a => a.Status == LoanApplicationStatus.Rejected)
+        //    };
+        //}
     }
 }
