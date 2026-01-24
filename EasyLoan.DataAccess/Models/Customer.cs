@@ -73,7 +73,7 @@ namespace EasyLoan.DataAccess.Models
 //max age? - done
 //logout
 //question - should i remove customerId if i am getting from jwt - not req - yes
-//problem details class
+//problem details class - done
 //in make payment controller pass the loanId in the url - done
 //separate response patterns - done
 //after creating something instead of returning id , return the created object and same in patch - done
@@ -83,11 +83,19 @@ namespace EasyLoan.DataAccess.Models
 //change return type to IENumerbale in repo , in services and controller change List to IEnumerable and also remove .ToListAsync from service - done
 //on loan details for a particular loan next emi amount and due date - done
 //one which will fetch all the overdue payments - done
-//pagination
-//filter in db only and IQueryable so that ....filteration on db side
+//pagination - if time permits
+//filter in db only and IQueryable so that ....filteration on db side - if time permits
 //one generic repo - done 
 //auth controller single - done
 //migrate db - done
-//application number make dto and regex and for loan number
+//application number make dto and regex and for loan number - done
 //Remove api dto - done
-//check whether it required GetIdWithDetails or it should just call GetId
+//check whether it required GetIdWithDetails or it should just call GetId - done
+//review dto
+//LoanPaymentStatus - done
+//NoTracking or Update - done
+//TokenGeneratorService move to controllers - rejected
+//make payment and emi functions shorten them , use private functions - done
+//Testing use in memory for repo
+//the date of birth should be till now - done
+//use helper-setuser instead of creating a separate setuser in each class(tests)

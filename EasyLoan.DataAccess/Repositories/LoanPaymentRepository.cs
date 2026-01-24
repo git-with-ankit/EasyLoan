@@ -22,6 +22,7 @@ namespace EasyLoan.DataAccess.Repositories
         public async Task<IEnumerable<LoanPayment>> GetByLoanIdAsync(Guid loanId)
         {
             return await _context.LoanPayments
+                .AsNoTracking()
                 .Where(p => p.LoanDetailsId == loanId)
                 .ToListAsync();
         }

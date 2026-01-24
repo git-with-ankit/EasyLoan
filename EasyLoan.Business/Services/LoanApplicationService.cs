@@ -8,6 +8,7 @@ using EasyLoan.DataAccess.Models;
 using EasyLoan.DataAccess.Repositories;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
+using System.Text.RegularExpressions;
 
 namespace EasyLoan.Business.Services
 {
@@ -19,6 +20,7 @@ namespace EasyLoan.Business.Services
         private readonly ILoanDetailsRepository _loanDetailsRepo;
         private readonly ILoanTypeRepository _loanTypeRepo;
         private readonly IPublicIdService _publicIdService;
+        private static readonly Regex ApplicationNumberRegex = new(@"^LA-[0-9A-Za-z]{8}$", RegexOptions.Compiled);
 
         public LoanApplicationService(
             ILoanApplicationRepository repo,
@@ -38,7 +40,7 @@ namespace EasyLoan.Business.Services
 
         public async Task<CreatedApplicationResponseDto> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
         {
-            var customer = await _customerRepo.GetByIdWithDetailsAsync(customerId)
+            var customer = await _customerRepo.GetByIdAsync(customerId)
                 ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
             if (customer.CreditScore <= 300)
@@ -88,6 +90,10 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanApplicationReviewResponseDto> UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
         {
+            if (!ApplicationNumberRegex.IsMatch(applicationNumber ))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanApplication);
+            }
             var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new KeyNotFoundException();
             if (application.AssignedEmployeeId != managerId)
@@ -154,7 +160,7 @@ namespace EasyLoan.Business.Services
             }
 
 
-            await _loanApplicationrepo.UpdateAsync(application);
+            //await _loanApplicationrepo.UpdateAsync(application);
             await _loanDetailsRepo.SaveChangesAsync();
             await _loanApplicationrepo.SaveChangesAsync();
 
@@ -168,6 +174,10 @@ namespace EasyLoan.Business.Services
         }
         public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId)
         {
+            if (!ApplicationNumberRegex.IsMatch(applicationNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanApplication);
+            }
             var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
@@ -191,7 +201,8 @@ namespace EasyLoan.Business.Services
                 AppprovedAmount = application.ApprovedAmount,
                 InterestRate = loanType.InterestRate,
                 Status = application.Status,
-                ManagerComments = application.ManagerComments
+                ManagerComments = application.ManagerComments,
+                TotalOngoingLoans = customer.Loans.Where(l => l.Status == LoanStatus.Active).Count(),
             };
         }
         //public async Task<List<LoanApplicationsResponseDto>> GetCustomerApplicationsAsync(Guid customerId)
@@ -214,6 +225,10 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanApplicationDetailsResponseDto> GetByApplicationNumberAsync(string applicationNumber)
         {
+            if (!ApplicationNumberRegex.IsMatch(applicationNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanApplication);
+            }
             var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
@@ -310,7 +325,7 @@ namespace EasyLoan.Business.Services
             {
                 ApplicationNumber = a.ApplicationNumber,
                 AssignedEmployeeId = a.AssignedEmployeeId,
-                TenureInMonths = a.RequestedTenureInMonths,
+                TenureInMonths = a.RequestedTenureInMonths, 
                 LoanTypeName = a.LoanType.Name,
                 RequestedAmount = a.RequestedAmount,
                 Status = a.Status,

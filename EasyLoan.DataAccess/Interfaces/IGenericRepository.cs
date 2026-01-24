@@ -13,6 +13,6 @@ namespace EasyLoan.DataAccess.Interfaces
         public Task<IEnumerable<T>> GetAllAsync();
         Task AddAsync(T entity);
         public Task SaveChangesAsync();
-        public Task UpdateAsync(T entity);
+        //public Task UpdateAsync(T entity);
     }
 }

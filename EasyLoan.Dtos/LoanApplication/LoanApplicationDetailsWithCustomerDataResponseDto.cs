@@ -20,9 +20,9 @@ namespace EasyLoan.Dtos.LoanApplication
         public decimal RequestedAmount { get; set; }
         public decimal AppprovedAmount { get; set; }
         public decimal InterestRate { get; set; }
-        //public EmiPlan EmiPlan { get; set; }TODO : Implement
         public int RequestedTenureInMonths { get; set; }
         public LoanApplicationStatus Status { get; set; }
         public string? ManagerComments { get; set; }
+        public int TotalOngoingLoans { get; set; }
     }
 }

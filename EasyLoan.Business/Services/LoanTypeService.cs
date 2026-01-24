@@ -76,7 +76,7 @@ public class LoanTypeService : ILoanTypeService
         type.MinAmount = dto.MinAmount;
         type.MaxTenureInMonths = dto.MaxTenureInMonths;
 
-        await _loanTypeRepo.UpdateAsync(type);
+        //await _loanTypeRepo.UpdateAsync(type);
         await _loanTypeRepo.SaveChangesAsync();
 
         return new LoanTypeResponseDto()

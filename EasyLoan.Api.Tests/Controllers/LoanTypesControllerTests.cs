@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Security.Claims;
 
-namespace EasyLoan.Api.Tests.Controllers
+namespace EasyLoan.UnitTest.Controllers
 {
     [TestClass]
     public class LoanTypesControllerTests

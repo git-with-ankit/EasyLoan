@@ -2,15 +2,16 @@
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
-using EasyLoan.Models.Common.Enums;
 using EasyLoan.Dtos.Loan;
+using EasyLoan.Models.Common.Enums;
+using System.Text.RegularExpressions;
 
 namespace EasyLoan.Business.Services
 {
     public class LoanService : ILoanService
     {
         private readonly ILoanDetailsRepository _repo;
-
+        private static readonly Regex LoanNumberRegex = new(@"^LN-[0-9A-Za-z]{8}$", RegexOptions.Compiled);
         public LoanService(ILoanDetailsRepository repo)
         {
             _repo = repo;
@@ -18,6 +19,10 @@ namespace EasyLoan.Business.Services
 
         public async Task<LoanDetailsResponseDto> GetLoanDetailsAsync(Guid customerId, string loanNumber)
         {
+            if (!LoanNumberRegex.IsMatch(loanNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+            }
             var loan = await _repo.GetByLoanNumberWithDetailsAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 

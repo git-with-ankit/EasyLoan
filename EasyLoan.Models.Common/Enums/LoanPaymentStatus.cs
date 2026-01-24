@@ -9,7 +9,6 @@ namespace EasyLoan.Models.Common.Enums
     public enum LoanPaymentStatus
     {
         Pending = 1,
-        Paid = 2,
-        Missed = 3
+        Paid = 2
     }
 }

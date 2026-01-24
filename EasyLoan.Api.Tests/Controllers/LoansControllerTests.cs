@@ -3,17 +3,12 @@ using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Loan;
 using EasyLoan.Dtos.LoanPayment;
 using EasyLoan.Models.Common.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.UnitTest.Helpers;
+using EasyLoan.Business.Enums;
 
-namespace EasyLoan.Api.Tests.Controllers
+namespace EasyLoan.UnitTest.Controllers
 {
     public class LoansControllerTests
     {
@@ -27,31 +22,31 @@ namespace EasyLoan.Api.Tests.Controllers
             _mockPaymentService = new Mock<ILoanPaymentService>();
             _controller = new LoansController(_mockLoanService.Object, _mockPaymentService.Object);
         }
-        private void SetCustomerUser(Guid customerId)
-        {
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
-        new Claim(ClaimTypes.Role, "Customer")
-    };
+    //    private void ControllerTestHelper.SetUser(Guid customerId)
+    //    {
+    //        var claims = new List<Claim>
+    //{
+    //    new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
+    //    new Claim(ClaimTypes.Role, "Customer")
+    //};
 
-            _controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(
-                        new ClaimsIdentity(claims, "TestAuth")
-                    )
-                }
-            };
-        }
+    //        _controller.ControllerContext = new ControllerContext
+    //        {
+    //            HttpContext = new DefaultHttpContext
+    //            {
+    //                User = new ClaimsPrincipal(
+    //                    new ClaimsIdentity(claims, "TestAuth")
+    //                )
+    //            }
+    //        };
+    //    }
 
         [TestMethod]
         public async Task GetCustomerLoans_ValidStatusForCustomer_ReturnsOkWithLoans()
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var status = LoanStatus.Active;
 
@@ -87,7 +82,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var loanNumber = "LN-001";
 
@@ -123,7 +118,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var loanNumber = "LN-001";
             var request = new MakeLoanPaymentRequestDto { Amount = 10000 };
@@ -156,7 +151,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller,customerId,Role.Customer);
 
             var status = EmiDueStatus.Overdue;
 
@@ -222,7 +217,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var status = EmiDueStatus.Upcoming;
 
@@ -289,8 +284,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
-
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
             var loanNumber = "LN-001";
             var status = EmiDueStatus.Overdue;
 
@@ -322,7 +316,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var loanNumber = "LN-001";
             var status = EmiDueStatus.Upcoming;
@@ -356,7 +350,7 @@ namespace EasyLoan.Api.Tests.Controllers
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            SetCustomerUser(customerId);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             var loanNumber = "LN-001";
 

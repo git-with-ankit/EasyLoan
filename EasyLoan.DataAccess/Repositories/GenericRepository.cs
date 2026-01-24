@@ -21,7 +21,7 @@ namespace EasyLoan.DataAccess.Repositories
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.AsNoTracking().ToListAsync();
         }
 
         public async Task AddAsync(T entity)
@@ -29,11 +29,11 @@ namespace EasyLoan.DataAccess.Repositories
             await _dbSet.AddAsync(entity);
         }
 
-        public Task UpdateAsync(T entity)
-        {
-            _dbSet.Update(entity);
-            return Task.CompletedTask;
-        }
+        //public Task UpdateAsync(T entity)
+        //{
+        //    _dbSet.Update(entity);
+        //    return Task.CompletedTask;
+        //}
 
         public async Task SaveChangesAsync()
         {

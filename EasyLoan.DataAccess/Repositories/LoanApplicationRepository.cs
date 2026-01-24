@@ -20,15 +20,13 @@ namespace EasyLoan.DataAccess.Repositories
 
         public async Task<IEnumerable<LoanApplication>> GetAllWithDetailsAsync()
         {
-            return await _context.LoanApplications.Include(a => a.LoanType)
-                    .Include(a => a.Customer).Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails).ToListAsync();
+            return await _context.LoanApplications.AsNoTracking().Include(a => a.LoanType).ToListAsync();
         }
 
         public async Task<LoanApplication?> GetByApplicationNumberWithDetailsAsync(string applicationNumber)
         {
-            return await _context.LoanApplications.Include(a => a.LoanType)
-                    .Include(a => a.Customer).Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails)
-                .FirstOrDefaultAsync(a => a.ApplicationNumber == applicationNumber);
+            return await _context.LoanApplications.Include(a => a.LoanType).Include(a => a.Customer).FirstOrDefaultAsync(a => a.ApplicationNumber == applicationNumber);
+            //.Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails)
         }
 
         public async Task<IEnumerable<LoanApplication>> GetByCustomerIdWithDetailsAsync(Guid customerId)
@@ -36,8 +34,8 @@ namespace EasyLoan.DataAccess.Repositories
             return await _context.LoanApplications
                 .Where(a => a.CustomerId == customerId)
                 .Include(a => a.LoanType)
-                .Include(a => a.LoanDetails)
                 .ToListAsync();
+            //.Include(a => a.LoanDetails)
         }
 
         //public async Task AddAsync(LoanApplication application)

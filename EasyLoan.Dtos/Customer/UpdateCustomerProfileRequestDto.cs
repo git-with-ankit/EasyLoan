@@ -9,15 +9,12 @@ namespace EasyLoan.Dtos.Customer
 {
     public class UpdateCustomerProfileRequestDto
     {
-        [Required]
         [ MaxLength(100)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
-        [Required]
         [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Please enter correct Indian phone number.")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
-        [Required]
-        public decimal AnnualSalary { get; set; }
+        public decimal? AnnualSalary { get; set; }
     }
 }

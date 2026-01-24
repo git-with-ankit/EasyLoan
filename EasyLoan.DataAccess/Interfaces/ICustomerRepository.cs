@@ -9,7 +9,7 @@ namespace EasyLoan.DataAccess.Interfaces
 {
     public interface ICustomerRepository : IGenericRepository<Customer>
     {
-        Task<Customer?> GetByIdWithDetailsAsync(Guid id);
+        //Task<Customer?> GetByIdWithDetailsAsync(Guid id);
         Task<Customer?> GetByEmailAsync(string email);
         Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByPanAsync(string panNumber);

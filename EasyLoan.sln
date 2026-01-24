@@ -13,7 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Dtos", "EasyLoan.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Models.Common", "EasyLoan.Models.Common\EasyLoan.Models.Common.csproj", "{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Api.Tests", "EasyLoan.Api.Tests\EasyLoan.Api.Tests.csproj", "{B335FFB4-7F4F-4B8E-8C03-125783966763}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.UnitTest", "EasyLoan.Api.Tests\EasyLoan.UnitTest.csproj", "{B335FFB4-7F4F-4B8E-8C03-125783966763}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Business.Tests", "EasyLoan.Business.Tests\EasyLoan.Business.Tests.csproj", "{F771A2C4-D004-46AE-B203-A8E340F87FE5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B335FFB4-7F4F-4B8E-8C03-125783966763}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F771A2C4-D004-46AE-B203-A8E340F87FE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F771A2C4-D004-46AE-B203-A8E340F87FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F771A2C4-D004-46AE-B203-A8E340F87FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F771A2C4-D004-46AE-B203-A8E340F87FE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

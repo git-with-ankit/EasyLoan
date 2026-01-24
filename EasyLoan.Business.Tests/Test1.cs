@@ -1,7 +1,7 @@
-﻿namespace EasyLoan.Api.Tests
+﻿namespace EasyLoan.Business.Tests
 {
     [TestClass]
-    public sealed class LoanTypesControllerTests
+    public sealed class Test1
     {
         [TestMethod]
         public void TestMethod1()

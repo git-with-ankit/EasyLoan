@@ -5,6 +5,7 @@ using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
 using EasyLoan.Dtos.LoanPayment;
 using EasyLoan.Models.Common.Enums;
+using System.Text.RegularExpressions;
 
 namespace EasyLoan.Business.Services
 {
@@ -13,7 +14,7 @@ namespace EasyLoan.Business.Services
         private readonly ILoanPaymentRepository _paymentRepo;
         private readonly ILoanDetailsRepository _loanRepo;
         private readonly ICustomerRepository _customerRepo;
-
+        private static readonly Regex LoanNumberRegex = new(@"^LN-[0-9A-Za-z]{8}$", RegexOptions.Compiled);
         public LoanPaymentService(
             ILoanPaymentRepository repo,
             ILoanDetailsRepository loanRepo,
@@ -26,6 +27,10 @@ namespace EasyLoan.Business.Services
 
         public async Task<IEnumerable<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber)//TODO : Review
         {
+            if (!LoanNumberRegex.IsMatch(loanNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+            }
             var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
             if (loan.CustomerId != customerId)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
@@ -113,105 +118,109 @@ namespace EasyLoan.Business.Services
         //    await _paymentRepo.SaveChangesAsync();
         //}
 
-        public async Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
-        {
-            var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
-                ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+        //public async Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
+        //{
+        //    if (!LoanNumberRegex.IsMatch(loanNumber))
+        //    {
+        //        throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+        //    }
+        //    var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
+        //        ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
-            if (loan.CustomerId != customerId)
-                throw new ForbiddenException(ErrorMessages.AccessDenied);
+        //    if (loan.CustomerId != customerId)
+        //        throw new ForbiddenException(ErrorMessages.AccessDenied);
 
-            if (loan.Status != LoanStatus.Active)
-                throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+        //    if (loan.Status != LoanStatus.Active)
+        //        throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
 
-            var customer = await _customerRepo.GetByIdWithDetailsAsync(customerId)
-                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+        //    var customer = await _customerRepo.GetByIdAsync(customerId)
+        //        ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
 
-            var unpaidEmis = loan.Emis
-                .Where(e => !e.IsPaid)
-                .OrderBy(e => e.DueDate)
-                .ToList();
+        //    var unpaidEmis = loan.Emis
+        //        .Where(e => !e.IsPaid)
+        //        .OrderBy(e => e.DueDate)
+        //        .ToList();
 
-            if (!unpaidEmis.Any())
-                throw new BusinessRuleViolationException("All EMIs are already paid.");
+        //    if (!unpaidEmis.Any())
+        //        throw new BusinessRuleViolationException("All EMIs are already paid.");
 
-            var paymentAmount = dto.Amount;
-            var monthlyRate = loan.InterestRate / 12 / 100;
+        //    var paymentAmount = dto.Amount;
+        //    var monthlyRate = loan.InterestRate / 12 / 100;
 
-            foreach (var emi in unpaidEmis)
-            {
-                if (paymentAmount <= 0)
-                    break;
+        //    foreach (var emi in unpaidEmis)
+        //    {
+        //        if (paymentAmount <= 0)
+        //            break;
 
-                //  Calculate interest on CURRENT principal
-                var interestDue = loan.PrincipalRemaining * monthlyRate;
+        //        //  Calculate interest on CURRENT principal
+        //        var interestDue = loan.PrincipalRemaining * monthlyRate;
 
-                var interestPaid = Math.Min(paymentAmount, interestDue);
-                paymentAmount -= interestPaid;
+        //        var interestPaid = Math.Min(paymentAmount, interestDue);
+        //        paymentAmount -= interestPaid;
 
-                //Remaining goes to principal
-                var principalPaid = Math.Min(paymentAmount, emi.RemainingAmount - interestPaid);
-                if (principalPaid < 0)
-                    principalPaid = 0;
+        //        //Remaining goes to principal
+        //        var principalPaid = Math.Min(paymentAmount, emi.RemainingAmount - interestPaid);
+        //        if (principalPaid < 0)
+        //            principalPaid = 0;
 
-                paymentAmount -= principalPaid;
+        //        paymentAmount -= principalPaid;
 
-                // Update balances
-                loan.PrincipalRemaining -= principalPaid;
-                emi.RemainingAmount -= (interestPaid + principalPaid);
+        //        // Update balances
+        //        loan.PrincipalRemaining -= principalPaid;
+        //        emi.RemainingAmount -= (interestPaid + principalPaid);
 
-                if (emi.RemainingAmount <= 0)
-                {
-                    emi.RemainingAmount = 0;
-                }
+        //        if (emi.RemainingAmount <= 0)
+        //        {
+        //            emi.RemainingAmount = 0;
+        //        }
 
-                if (loan.PrincipalRemaining <= 0)
-                {
-                    loan.PrincipalRemaining = 0;
-                    loan.Status = LoanStatus.Closed;
-                    break;
-                }
-            }
+        //        if (loan.PrincipalRemaining <= 0)
+        //        {
+        //            loan.PrincipalRemaining = 0;
+        //            loan.Status = LoanStatus.Closed;
+        //            break;
+        //        }
+        //    }
 
-            //Credit score logic based on FIRST unpaid EMI only
-            var firstEmi = unpaidEmis.First();
+        //    //Credit score logic based on FIRST unpaid EMI only
+        //    var firstEmi = unpaidEmis.First();
 
-            if (dto.Amount < firstEmi.TotalAmount)
-                customer.CreditScore -= 10;
-            else if (dto.Amount == firstEmi.TotalAmount)
-                customer.CreditScore += 2;
-            else
-                customer.CreditScore += 5;
+        //    if (dto.Amount < firstEmi.TotalAmount)
+        //        customer.CreditScore -= 10;
+        //    else if (dto.Amount == firstEmi.TotalAmount)
+        //        customer.CreditScore += 2;
+        //    else
+        //        customer.CreditScore += 5;
 
-            customer.CreditScore = Math.Clamp(customer.CreditScore, 300, 900);
+        //    customer.CreditScore = Math.Clamp(customer.CreditScore, 300, 900);
 
-            // Close loan if everything is paid
-            if (loan.Emis.All(e => e.IsPaid))
-                loan.Status = LoanStatus.Closed;
+        //    // Close loan if everything is paid
+        //    if (loan.Emis.All(e => e.IsPaid))
+        //        loan.Status = LoanStatus.Closed;
 
-            var payment = new LoanPayment
-            {
-                Id = Guid.NewGuid(),
-                LoanDetailsId = loan.Id,
-                CustomerId = customerId,
-                Amount = dto.Amount,
-                PaymentDate = DateTime.UtcNow,
-                TransactionId = Guid.NewGuid(),
-                Status = LoanPaymentStatus.Paid
-            };
+        //    var payment = new LoanPayment
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        LoanDetailsId = loan.Id,
+        //        CustomerId = customerId,
+        //        Amount = dto.Amount,
+        //        PaymentDate = DateTime.UtcNow,
+        //        TransactionId = Guid.NewGuid(),
+        //        Status = LoanPaymentStatus.Paid
+        //    };
 
-            await _paymentRepo.AddAsync(payment);
-            await _customerRepo.UpdateAsync(customer);
-            await _loanRepo.UpdateAsync(loan);
-            await _paymentRepo.SaveChangesAsync();
+        //    await _paymentRepo.AddAsync(payment);
+        //    //await _customerRepo.UpdateAsync(customer);
+        //    //await _loanRepo.UpdateAsync(loan);
+        //    await _paymentRepo.SaveChangesAsync();
 
-            return new LoanPaymentResponseDto()
-            {
-                PaymentDate = payment.PaymentDate,
-                Amount = payment.Amount,
-                TransactionId = payment.TransactionId
-            };
-        }
+        //    return new LoanPaymentResponseDto()
+        //    {
+        //        PaymentDate = payment.PaymentDate,
+        //        Amount = payment.Amount,
+        //        TransactionId = payment.TransactionId
+        //    };
+        //}
 
 
         //    public async Task<NextEmiPaymentResponseDto> GetNextPaymentAsync(
@@ -254,8 +263,225 @@ namespace EasyLoan.Business.Services
         //                emiSchedule[0].PrincipalRemainingAfterPayment
         //        };
         //    }
-        public async Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
+        //public async Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId,string loanNumber, EmiDueStatus status)
+        //{
+        //    if (!LoanNumberRegex.IsMatch(loanNumber))
+        //    {
+        //        throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+        //    }
+        //    var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
+        //        ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+
+        //    if (loan.CustomerId != customerId)
+        //        throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+        //    if (loan.Status != LoanStatus.Active)
+        //        throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+
+        //    var unpaidEmis = loan.Emis
+        //        .Where(e => !e.IsPaid)
+        //        .OrderBy(e => e.DueDate)
+        //        .ToList();
+
+        //    if (!unpaidEmis.Any())
+        //        throw new BusinessRuleViolationException("No pending EMIs.");
+
+        //    var response = new List<DueEmisResponseDto>();
+
+        //    var principalSnapshot = loan.PrincipalRemaining;
+        //    var monthlyRate = loan.InterestRate / 12 / 100;
+
+        //    foreach (var emi in unpaidEmis)
+        //    {
+        //        if (principalSnapshot <= 0)
+        //            break;
+
+        //        var interest = principalSnapshot * monthlyRate;
+
+        //        var principal = emi.RemainingAmount - interest;
+        //        if (principal < 0)
+        //            principal = 0;
+
+        //        if (principal > principalSnapshot)
+        //            principal = principalSnapshot;
+
+        //        if (status == EmiDueStatus.Overdue && emi.DueDate.Date < DateTime.UtcNow.Date)
+        //        {
+        //            response.Add(new DueEmisResponseDto
+        //            {
+        //                DueDate = emi.DueDate,
+        //                EmiAmount = Math.Round(interest + principal, 2),
+        //                InterestComponent = Math.Round(interest, 2),
+        //                PrincipalComponent = Math.Round(principal, 2),
+        //                PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+        //                RemainingEmiAmount = emi.RemainingAmount
+        //            });
+        //        }
+        //        else if (status == EmiDueStatus.Upcoming && emi.DueDate.Date >= DateTime.UtcNow.Date)
+        //        {
+
+        //            response.Add(new DueEmisResponseDto
+        //            {
+        //                DueDate = emi.DueDate,
+        //                EmiAmount = Math.Round(interest + principal, 2),
+        //                InterestComponent = Math.Round(interest, 2),
+        //                PrincipalComponent = Math.Round(principal, 2),
+        //                PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+        //                RemainingEmiAmount = emi.RemainingAmount
+        //            });
+        //        }
+                    
+        //        principalSnapshot -= principal;
+                
+        //    }
+
+        //    return response;
+        //}
+        public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
         {
+            var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+
+            var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
+
+            var response = new List<IEnumerable<DueEmisResponseDto>>();
+
+            foreach (var loan in activeLoans)
+            {
+                var loanNumber = loan.LoanNumber;
+
+                var emi = await GetDueEmisAsync(customerId, loanNumber, status);
+                response.Add(emi);
+            }
+
+            return response;            
+        }
+        public async Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto)
+        {
+            if (!LoanNumberRegex.IsMatch(loanNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+            }
+            var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
+                ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+
+            if (loan.CustomerId != customerId)
+                throw new ForbiddenException(ErrorMessages.AccessDenied);
+
+            if (loan.Status != LoanStatus.Active)
+                throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+
+            var customer = await _customerRepo.GetByIdAsync(customerId)
+                ?? throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+            var unpaidEmis = loan.Emis
+                .Where(e => !e.IsPaid)
+                .OrderBy(e => e.DueDate)
+                .ToList();
+
+            if (!unpaidEmis.Any())
+                throw new BusinessRuleViolationException("All EMIs are already paid.");
+
+            var totalOutstanding = unpaidEmis.Sum(e => e.RemainingAmount);
+
+            if (dto.Amount > totalOutstanding)
+            {
+                throw new BusinessRuleViolationException(
+                    "Payment amount exceeds total outstanding loan amount.");
+            }
+
+            ApplyPaymentToEmis(loan, unpaidEmis, dto.Amount);
+
+            var newlyPaidEmis = unpaidEmis
+                                    .Where(e => e.IsPaid) 
+                                    .ToList();
+            UpdateCreditScore(customer, newlyPaidEmis);
+            CloseLoanIfCompleted(loan);
+
+            var payment = new LoanPayment
+            {
+                Id = Guid.NewGuid(),
+                LoanDetailsId = loan.Id,
+                CustomerId = customerId,
+                Amount = dto.Amount,
+                PaymentDate = DateTime.UtcNow,
+                TransactionId = Guid.NewGuid(),
+                Status = LoanPaymentStatus.Paid
+            };
+
+            await _paymentRepo.AddAsync(payment);
+            await _paymentRepo.SaveChangesAsync();
+
+            return new LoanPaymentResponseDto
+            {
+                PaymentDate = payment.PaymentDate,
+                Amount = payment.Amount,
+                TransactionId = payment.TransactionId
+            };
+        }
+        private static void ApplyPaymentToEmis(LoanDetails loan, List<LoanEmi> unpaidEmis, decimal paymentAmount)
+        {
+            var monthlyRate = loan.InterestRate / 12 / 100;
+
+            foreach (var emi in unpaidEmis)
+            {
+                if (paymentAmount <= 0)
+                    break;
+
+                var interestDue = loan.PrincipalRemaining * monthlyRate;
+                var interestPaid = Math.Min(paymentAmount, interestDue);
+                paymentAmount -= interestPaid;
+
+                var principalPaid = Math.Min(
+                    paymentAmount,
+                    emi.RemainingAmount - interestPaid);
+
+                principalPaid = Math.Max(0, principalPaid);
+                paymentAmount -= principalPaid;
+
+                loan.PrincipalRemaining -= principalPaid;
+                emi.RemainingAmount -= (interestPaid + principalPaid);
+
+                if (emi.RemainingAmount <= 0)
+                    emi.RemainingAmount = 0;
+
+                if (loan.PrincipalRemaining <= 0)
+                {
+                    loan.PrincipalRemaining = 0;
+                    loan.Status = LoanStatus.Closed;
+                    break;
+                }
+            }
+        }
+        private static void UpdateCreditScore(Customer customer, IEnumerable<LoanEmi> newlyPaidEmis)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            foreach (var emi in newlyPaidEmis)
+            {
+                if (emi.DueDate.Date < today)
+                {
+                    customer.CreditScore -= 10; // overdue EMI paid
+                }
+                else
+                {
+                    customer.CreditScore += 2;  // paid on time / early
+                }
+            }
+
+            customer.CreditScore = Math.Clamp(customer.CreditScore, 300, 900);
+        }
+        private static void CloseLoanIfCompleted(LoanDetails loan)
+        {
+            if (loan.Emis.All(e => e.IsPaid))
+                loan.Status = LoanStatus.Closed;
+        }
+
+        public async Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId, string loanNumber, EmiDueStatus status)
+        {
+            if (!LoanNumberRegex.IsMatch(loanNumber))
+            {
+                throw new BusinessRuleViolationException(ErrorMessages.WrongFormatForLoanNumber);
+            }
             var loan = await _loanRepo.GetByLoanNumberWithDetailsAsync(loanNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
@@ -272,7 +498,11 @@ namespace EasyLoan.Business.Services
 
             if (!unpaidEmis.Any())
                 throw new BusinessRuleViolationException("No pending EMIs.");
-
+                
+            return CalculateDueEmis(loan, unpaidEmis, status);
+        }
+        private static IEnumerable<DueEmisResponseDto> CalculateDueEmis( LoanDetails loan, List<LoanEmi> unpaidEmis, EmiDueStatus status)
+        {
             var response = new List<DueEmisResponseDto>();
 
             var principalSnapshot = loan.PrincipalRemaining;
@@ -317,30 +547,11 @@ namespace EasyLoan.Business.Services
                         RemainingEmiAmount = emi.RemainingAmount
                     });
                 }
-                    
+
                 principalSnapshot -= principal;
-                
             }
-
             return response;
-        }
-        public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
-        {
-            var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
 
-            var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
-
-            var response = new List<IEnumerable<DueEmisResponseDto>>();
-
-            foreach (var loan in activeLoans)
-            {
-                var loanNumber = loan.LoanNumber;
-
-                var emi = await GetDueEmisAsync(customerId, loanNumber, status);
-                response.Add(emi);
-            }
-
-            return response;            
         }
     }
 }

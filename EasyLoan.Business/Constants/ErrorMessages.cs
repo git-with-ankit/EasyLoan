@@ -14,6 +14,7 @@
 
         // Loan Application
         public const string LoanApplicationNotFound = "Loan application not found.";
+        public const string WrongFormatForLoanApplication = "Loan application number is not in the correct format.";
         public const string CreditScoreTooLow = "Credit score is too low to apply for loan.";
         public const string ManagersNotAvailable = "No managers available to approve loan. Please try after some time.";
         public const string LoanApplicationAlreadyReviewed = "Loan application has already been reviewed.";
@@ -23,6 +24,7 @@
         // Loan
         public const string LoanNotFound = "Loan not found.";
         public const string LoanNotActive = "Loan is not active.";
+        public const string WrongFormatForLoanNumber = "Loan Number is not in the correct format.";
 
         //LoanPayment
         public const string LoanPaymentsNotFound = "Loan payments not found.";

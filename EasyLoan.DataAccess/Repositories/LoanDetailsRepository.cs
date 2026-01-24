@@ -27,10 +27,11 @@ namespace EasyLoan.DataAccess.Repositories
         {
             return await _context.Loans
                 .Where(l => l.CustomerId == customerId)
-                .Include(l => l.LoanApplication)
-                .Include(l => l.LoanType)
-                .Include(l => l.Emis)
                 .ToListAsync();
+           
+           /*     .Include(l => l.LoanApplication)
+                .Include(l => l.LoanType)
+                .Include(l => l.Emis)*/
         }
 
         public async Task<LoanDetails?> GetByLoanNumberWithDetailsAsync(string loanNumber)

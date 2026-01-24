@@ -52,7 +52,7 @@ namespace EasyLoan.Business.Services
             employee.Name = dto.Name?.Trim() ?? employee.Name;
             employee.PhoneNumber = dto.PhoneNumber?.Trim() ?? employee.PhoneNumber;
 
-            await _employeeRepo.UpdateAsync(employee);
+            //await _employeeRepo.UpdateAsync(employee);
             await _employeeRepo.SaveChangesAsync();
 
             return new EmployeeProfileResponseDto()

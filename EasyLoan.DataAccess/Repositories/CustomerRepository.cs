@@ -8,14 +8,14 @@ namespace EasyLoan.DataAccess.Repositories
     {
         public CustomerRepository(EasyLoanDbContext context) : base(context) { }
 
-        public async Task<Customer?> GetByIdWithDetailsAsync(Guid id)
-        {
-            return await _context.Customers
-                .Include(c => c.Loans)
-                .ThenInclude(l => l.LoanPayments)
-                .Include(c => c.LoanApplications)
-                .FirstOrDefaultAsync(c => c.Id == id);
-        }
+        //public async Task<Customer?> GetByIdWithDetailsAsync(Guid id)
+        //{
+        //    return await _context.Customers
+        //        .Include(c => c.Loans)
+        //        .ThenInclude(l => l.LoanPayments)
+        //        .Include(c => c.LoanApplications)
+        //        .FirstOrDefaultAsync(c => c.Id == id);
+        //}
 
         //public async Task<IEnumerable<Customer>> GetAllAsync()
         //{
