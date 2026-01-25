@@ -78,6 +78,9 @@ namespace EasyLoan.Business.Services
 
         public async Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto)
         {
+            if (await _employeeRepo.ExistsByEmailAsync(dto.Email.ToLower().Trim()))
+                throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
+
             var emp = new Employee
             {
                 Id = Guid.NewGuid(),
@@ -118,5 +121,6 @@ namespace EasyLoan.Business.Services
                 return _tokenGenerator.GenerateToken(emp.Id, Role.Admin);
             }
         }
+
     }
 }

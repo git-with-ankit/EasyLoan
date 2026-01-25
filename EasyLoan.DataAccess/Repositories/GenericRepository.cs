@@ -29,11 +29,11 @@ namespace EasyLoan.DataAccess.Repositories
             await _dbSet.AddAsync(entity);
         }
 
-        //public Task UpdateAsync(T entity)
-        //{
-        //    _dbSet.Update(entity);
-        //    return Task.CompletedTask;
-        //}
+        public Task UpdateAsync(T entity)
+        {
+            _dbSet.Update(entity);
+            return Task.CompletedTask;
+        }
 
         public async Task SaveChangesAsync()
         {

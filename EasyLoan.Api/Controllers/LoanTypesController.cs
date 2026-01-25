@@ -60,7 +60,7 @@ namespace EasyLoan.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<LoanTypeResponseDto>> CreateLoanType(Guid loanTypeId, LoanTypeRequestDto request)
+        public async Task<ActionResult<LoanTypeResponseDto>> CreateLoanType(Guid loanTypeId, UpdateLoanTypeRequestDto request)
         {
             var updatedLoanType = await _service.UpdateLoanTypeAsync(loanTypeId, request);
             return Ok(updatedLoanType);

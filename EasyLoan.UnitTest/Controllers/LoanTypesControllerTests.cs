@@ -160,9 +160,8 @@ namespace EasyLoan.UnitTest.Controllers
             // Arrange
             var loanTypeId = Guid.NewGuid();
 
-            var request = new LoanTypeRequestDto
+            var request = new UpdateLoanTypeRequestDto
             {
-                Name = "Updated Home Loan",
                 InterestRate = 6.9m,
                 MinAmount = 150000,
                 MaxTenureInMonths = 300
@@ -171,10 +170,9 @@ namespace EasyLoan.UnitTest.Controllers
             var updatedLoanType = new LoanTypeResponseDto
             {
                 Id = loanTypeId,
-                Name = request.Name,
-                InterestRate = request.InterestRate,
-                MinAmount = request.MinAmount,
-                MaxTenureInMonths = request.MaxTenureInMonths
+                InterestRate = request.InterestRate.Value,
+                MinAmount = request.MinAmount.Value,
+                MaxTenureInMonths = request.MaxTenureInMonths.Value
             };
 
             _mockLoanTypeService
@@ -194,7 +192,6 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.IsNotNull(data);
 
             Assert.AreEqual(loanTypeId, data.Id);
-            Assert.AreEqual("Updated Home Loan", data.Name);
             Assert.AreEqual(6.9m, data.InterestRate);
             Assert.AreEqual(150000, data.MinAmount);
             Assert.AreEqual(300, data.MaxTenureInMonths);

@@ -10,18 +10,15 @@ namespace EasyLoan.Dtos.LoanType
 {
     public class UpdateLoanTypeRequestDto
     {
-        [Required]
         [Precision(5, 2)]
         [Range(0.01, 100)]
-        public decimal InterestRate { get; set; }
+        public decimal? InterestRate { get; set; }
 
-        [Required]
         [Precision(18, 2)]
         [Range(1, double.MaxValue)]
-        public decimal MinAmount { get; set; }
+        public decimal? MinAmount { get; set; }
 
-        [Required]
-        [Range(1, 480)]
-        public int MaxTenureInMonths { get; set; }
+        [Range(1, int.MaxValue)]
+        public int? MaxTenureInMonths { get; set; }
     }
 }

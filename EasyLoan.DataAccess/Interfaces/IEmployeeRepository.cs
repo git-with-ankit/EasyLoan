@@ -11,6 +11,7 @@ namespace EasyLoan.DataAccess.Interfaces
     {
         Task<IEnumerable<Employee>> GetAllWithDetailsAsync();
         Task<Employee?> GetByEmailAsync(string email);
+        Task<bool> ExistsByEmailAsync(string email);
         Task<IEnumerable<Employee>> GetManagersAsync();
     }
 }

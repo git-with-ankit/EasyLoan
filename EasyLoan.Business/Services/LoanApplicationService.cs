@@ -1,11 +1,9 @@
 ﻿using EasyLoan.Business.Constants;
 using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
-using EasyLoan.Business.Helper;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
-using EasyLoan.DataAccess.Repositories;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
 using System.Text.RegularExpressions;
@@ -20,6 +18,7 @@ namespace EasyLoan.Business.Services
         private readonly ILoanDetailsRepository _loanDetailsRepo;
         private readonly ILoanTypeRepository _loanTypeRepo;
         private readonly IPublicIdService _publicIdService;
+        private readonly IEmiCalculatorService _emiCalculatorService;
         private static readonly Regex ApplicationNumberRegex = new(@"^LA-[0-9A-Za-z]{8}$", RegexOptions.Compiled);
 
         public LoanApplicationService(
@@ -28,7 +27,8 @@ namespace EasyLoan.Business.Services
             IEmployeeRepository employeeRepo,
             ILoanDetailsRepository loanDetailsRepo,
             ILoanTypeRepository loanTypeRepo,
-            IPublicIdService publicIdService)
+            IPublicIdService publicIdService,
+            IEmiCalculatorService emiCalculatorService)
         {
             _loanApplicationrepo = repo;
             _customerRepo = customerRepo;
@@ -36,6 +36,7 @@ namespace EasyLoan.Business.Services
             _loanDetailsRepo = loanDetailsRepo;
             _loanTypeRepo = loanTypeRepo;
             _publicIdService = publicIdService;
+            _emiCalculatorService = emiCalculatorService;
         }
 
         public async Task<CreatedApplicationResponseDto> CreateAsync(Guid customerId, CreateLoanApplicationRequestDto dto)
@@ -118,7 +119,7 @@ namespace EasyLoan.Business.Services
                     Id = Guid.NewGuid(),
                     Status = LoanStatus.Active,
                     ApprovedAmount = dto.ApprovedAmount,
-                    LoanApplicationNumber = application.Id,
+                    LoanApplicationId = application.Id,
                     ApprovedByEmployeeId = application.AssignedEmployeeId,
                     CustomerId = application.CustomerId,
                     LoanNumber = _publicIdService.GenerateLoanNumber(),
@@ -129,7 +130,7 @@ namespace EasyLoan.Business.Services
                     CreatedDate = DateTime.UtcNow
                 };
 
-                var emiSchedule = EmiCalculator.GenerateSchedule(
+                var emiSchedule = _emiCalculatorService.GenerateSchedule(
                     principal: dto.ApprovedAmount,
                     annualInterestRate: application.LoanType.InterestRate,
                     tenureInMonths: application.RequestedTenureInMonths,
@@ -354,7 +355,10 @@ namespace EasyLoan.Business.Services
         }
         private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForCustomerAsync(Guid customerId, LoanApplicationStatus status)
         {
-            var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+            var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId);
+                
+            if(!applications.Any())
+                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
             if (applications.Any(a => a.CustomerId != customerId))
                 throw new ForbiddenException(ErrorMessages.AccessDenied);

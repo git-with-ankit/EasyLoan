@@ -27,6 +27,7 @@ namespace EasyLoan.DataAccess.Repositories
         {
             return await _context.Loans
                 .Where(l => l.CustomerId == customerId)
+                .Include(l => l.Emis)
                 .ToListAsync();
            
            /*     .Include(l => l.LoanApplication)

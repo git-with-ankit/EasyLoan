@@ -339,7 +339,10 @@ namespace EasyLoan.Business.Services
         //}
         public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
         {
-            var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId) ?? throw new NotFoundException(ErrorMessages.LoanNotFound);
+            var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId);
+
+            if (!customerLoans.Any())
+                throw new NotFoundException(ErrorMessages.LoanNotFound);
 
             var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
 
@@ -442,7 +445,9 @@ namespace EasyLoan.Business.Services
                 emi.RemainingAmount -= (interestPaid + principalPaid);
 
                 if (emi.RemainingAmount <= 0)
+                {
                     emi.RemainingAmount = 0;
+                }
 
                 if (loan.PrincipalRemaining <= 0)
                 {

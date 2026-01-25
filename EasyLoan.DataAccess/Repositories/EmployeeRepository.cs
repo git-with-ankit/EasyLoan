@@ -32,6 +32,11 @@ namespace EasyLoan.DataAccess.Repositories
                 .Where(e => e.Role == EmployeeRole.Manager)
                 .ToListAsync();
         }
+        public async Task<bool> ExistsByEmailAsync(string email)
+        {
+            return await _context.Employees
+                .AnyAsync(e => e.Email == email);
+        }
 
         //public Task UpdateAsync(Employee employee)
         //{

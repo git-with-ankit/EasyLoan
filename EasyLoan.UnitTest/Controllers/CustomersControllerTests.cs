@@ -3,13 +3,10 @@ using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Customer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using EasyLoan.UnitTest.Helpers;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+using EasyLoan.Business.Enums;
 
 namespace EasyLoan.UnitTest.Controllers
 {
@@ -23,27 +20,27 @@ namespace EasyLoan.UnitTest.Controllers
         {
             _mockCustomerService = new Mock<ICustomerService>();
             _mockAuthService = new Mock<IAuthService>();
-            _controller = new CustomersController(_mockCustomerService.Object, _mockAuthService.Object)
+            _controller = new CustomersController(_mockCustomerService.Object, _mockAuthService.Object);
         }
-        private static void ControllerTestHelper.SetUser(ControllerBase controller, Guid customerId)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
-                new Claim(ClaimTypes.Role, "Customer")
-            };
+        //private static void ControllerTestHelper.SetUser(ControllerBase controller, Guid customerId)
+        //{
+        //    var claims = new List<Claim>
+        //    {
+        //        new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
+        //        new Claim(ClaimTypes.Role, "Customer")
+        //    };
 
-            var identity = new ClaimsIdentity(claims, "TestAuth");
-            var principal = new ClaimsPrincipal(identity);
+        //    var identity = new ClaimsIdentity(claims, "TestAuth");
+        //    var principal = new ClaimsPrincipal(identity);
 
-            controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = principal
-                }
-            };
-        }
+        //    controller.ControllerContext = new ControllerContext
+        //    {
+        //        HttpContext = new DefaultHttpContext
+        //        {
+        //            User = principal
+        //        }
+        //    };
+        //}
         [TestMethod]
         public async Task GetProfile_WhenAuthorizedCustomer_ReturnsOkWithProfile()
         {
@@ -61,7 +58,7 @@ namespace EasyLoan.UnitTest.Controllers
                 CreditScore = 750
             };
 
-            ControllerTestHelper.SetUser(_controller, customerId);
+            ControllerTestHelper.SetUser(_controller, customerId,Role.Customer);
 
             _mockCustomerService
                 .Setup(s => s.GetProfileAsync(customerId))
@@ -110,7 +107,7 @@ namespace EasyLoan.UnitTest.Controllers
                 CreditScore = 780
             };
 
-            ControllerTestHelper.SetUser(_controller, customerId);
+            ControllerTestHelper.SetUser(_controller, customerId,Role.Customer);
 
             _mockCustomerService
                 .Setup(s => s.UpdateProfileAsync(customerId, request))

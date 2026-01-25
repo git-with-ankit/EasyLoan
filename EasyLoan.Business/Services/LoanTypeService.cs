@@ -1,18 +1,19 @@
 ﻿using EasyLoan.Business.Constants;
 using EasyLoan.Business.Exceptions;
-using EasyLoan.Business.Helper;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
-using EasyLoan.Models.Common.Enums;
 using EasyLoan.Dtos.LoanType;
+using EasyLoan.Business.Interfaces;
 
 public class LoanTypeService : ILoanTypeService
 {
     private readonly ILoanTypeRepository _loanTypeRepo;
+    private readonly IEmiCalculatorService _emiCalculatorService;
 
-    public LoanTypeService(ILoanTypeRepository loanTypeRepository)
+    public LoanTypeService(ILoanTypeRepository loanTypeRepository, IEmiCalculatorService emiCalculatorService)
     {
         _loanTypeRepo = loanTypeRepository;
+        _emiCalculatorService = emiCalculatorService;
     }
 
     public async Task<IEnumerable<LoanTypeResponseDto>> GetAllAsync()
@@ -67,15 +68,17 @@ public class LoanTypeService : ILoanTypeService
         };
     }
 
-    public async Task<LoanTypeResponseDto> UpdateLoanTypeAsync(Guid loanTypeId, LoanTypeRequestDto dto)
+    public async Task<LoanTypeResponseDto> UpdateLoanTypeAsync(Guid loanTypeId, UpdateLoanTypeRequestDto dto)
     {
         var type = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
 
-        type.InterestRate = dto.InterestRate;
-        type.MinAmount = dto.MinAmount;
-        type.MaxTenureInMonths = dto.MaxTenureInMonths;
+        type.InterestRate = dto.InterestRate ?? type.InterestRate;
+        type.MinAmount = dto.MinAmount ?? type.MinAmount;
+        type.MaxTenureInMonths = dto.MaxTenureInMonths ?? type.MaxTenureInMonths;
 
+        var updatedEntity = type;
+        
         //await _loanTypeRepo.UpdateAsync(type);
         await _loanTypeRepo.SaveChangesAsync();
 
@@ -115,7 +118,7 @@ public class LoanTypeService : ILoanTypeService
         if (amount < loanType.MinAmount)
             throw new BusinessRuleViolationException(ErrorMessages.AmountLessThanMinAmount);
 
-        return EmiCalculator.GenerateSchedule(
+        return _emiCalculatorService.GenerateSchedule(
             principal: amount,
             annualInterestRate: loanType.InterestRate,
             tenureInMonths: tenureInMonths,

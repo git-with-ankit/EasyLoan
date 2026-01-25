@@ -40,6 +40,7 @@ namespace EasyLoan.Api
             builder.Services.AddScoped<IJwtTokenGeneratorService, JwtTokenGeneratorService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddSingleton<IPublicIdService, PublicIdService>();
+            builder.Services.AddScoped<IEmiCalculatorService, EmiCalculatorService>();
 
             builder.Services.PostConfigure<ApiBehaviorOptions>(options =>
             {

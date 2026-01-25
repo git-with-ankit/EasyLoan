@@ -20,7 +20,7 @@ namespace EasyLoan.DataAccess.Models
         public Guid CustomerId { get; set; }
 
         [Required]
-        public Guid LoanApplicationNumber { get; set; }
+        public Guid LoanApplicationId { get; set; }
 
         [Required]
         public Guid LoanTypeId { get; set; }
@@ -61,7 +61,7 @@ namespace EasyLoan.DataAccess.Models
         [DeleteBehavior(DeleteBehavior.Restrict)]
         public Employee ApprovedByEmployee { get; set; }
 
-        [ForeignKey(nameof(LoanApplicationNumber))]
+        [ForeignKey(nameof(LoanApplicationId))]
         [DeleteBehavior(DeleteBehavior.Restrict)]
         public LoanApplication LoanApplication { get; set; }
         public ICollection<LoanPayment> LoanPayments { get; set; } = new List<LoanPayment>();
