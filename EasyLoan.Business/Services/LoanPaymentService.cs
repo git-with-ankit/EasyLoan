@@ -421,42 +421,78 @@ namespace EasyLoan.Business.Services
                 TransactionId = payment.TransactionId
             };
         }
+        //private static void ApplyPaymentToEmis(LoanDetails loan, List<LoanEmi> unpaidEmis, decimal paymentAmount)
+        //{
+        //    var monthlyRate = loan.InterestRate / 12 / 100;
+
+        //    foreach (var emi in unpaidEmis)
+        //    {
+        //        if (paymentAmount <= 0)
+        //            break;
+
+        //        var interestDue = loan.PrincipalRemaining * monthlyRate;
+        //        var interestPaid = Math.Min(paymentAmount, interestDue);
+        //        paymentAmount -= interestPaid;
+
+        //        var principalPaid = Math.Min(
+        //            paymentAmount,
+        //            emi.RemainingAmount - interestPaid);
+
+        //        principalPaid = Math.Max(0, principalPaid);
+        //        paymentAmount -= principalPaid;
+
+        //        loan.PrincipalRemaining -= principalPaid;
+        //        emi.RemainingAmount -= (interestPaid + principalPaid);
+
+        //        if (emi.RemainingAmount <= 0)
+        //        {
+        //            emi.RemainingAmount = 0;
+        //        }
+
+        //        if (loan.PrincipalRemaining <= 0)
+        //        {
+        //            loan.PrincipalRemaining = 0;
+        //            loan.Status = LoanStatus.Closed;
+        //            break;
+        //        }
+        //    }
+        //}
         private static void ApplyPaymentToEmis(LoanDetails loan, List<LoanEmi> unpaidEmis, decimal paymentAmount)
         {
-            var monthlyRate = loan.InterestRate / 12 / 100;
-
             foreach (var emi in unpaidEmis)
             {
                 if (paymentAmount <= 0)
                     break;
 
-                var interestDue = loan.PrincipalRemaining * monthlyRate;
-                var interestPaid = Math.Min(paymentAmount, interestDue);
+                ApplyPenaltyIfOverdue(emi);
+
+                var penaltyPaid = Math.Min(paymentAmount, emi.PenaltyAmount);
+                emi.PenaltyAmount -= penaltyPaid;
+                paymentAmount -= penaltyPaid;
+
+                var interestPaid = Math.Min(paymentAmount, emi.InterestComponent);
                 paymentAmount -= interestPaid;
 
-                var principalPaid = Math.Min(
-                    paymentAmount,
-                    emi.RemainingAmount - interestPaid);
-
-                principalPaid = Math.Max(0, principalPaid);
+                var principalPaid = Math.Min(paymentAmount, emi.PrincipalComponent);
                 paymentAmount -= principalPaid;
 
-                loan.PrincipalRemaining -= principalPaid;
                 emi.RemainingAmount -= (interestPaid + principalPaid);
+                loan.PrincipalRemaining -= principalPaid;
 
                 if (emi.RemainingAmount <= 0)
                 {
                     emi.RemainingAmount = 0;
-                }
-
-                if (loan.PrincipalRemaining <= 0)
-                {
-                    loan.PrincipalRemaining = 0;
-                    loan.Status = LoanStatus.Closed;
-                    break;
+                    emi.PaidDate = DateTime.UtcNow;
                 }
             }
+
+            if (loan.Emis.All(e => e.IsPaid))
+            {
+                loan.PrincipalRemaining = 0;
+                loan.Status = LoanStatus.Closed;
+            }
         }
+        
         private static void UpdateCreditScore(Customer customer, IEnumerable<LoanEmi> newlyPaidEmis)
         {
             var today = DateTime.UtcNow.Date;
@@ -503,60 +539,118 @@ namespace EasyLoan.Business.Services
 
             if (!unpaidEmis.Any())
                 throw new BusinessRuleViolationException("No pending EMIs.");
-                
-            return CalculateDueEmis(loan, unpaidEmis, status);
-        }
-        private static IEnumerable<DueEmisResponseDto> CalculateDueEmis( LoanDetails loan, List<LoanEmi> unpaidEmis, EmiDueStatus status)
-        {
-            var response = new List<DueEmisResponseDto>();
-
-            var principalSnapshot = loan.PrincipalRemaining;
-            var monthlyRate = loan.InterestRate / 12 / 100;
 
             foreach (var emi in unpaidEmis)
             {
-                if (principalSnapshot <= 0)
-                    break;
-
-                var interest = principalSnapshot * monthlyRate;
-
-                var principal = emi.RemainingAmount - interest;
-                if (principal < 0)
-                    principal = 0;
-
-                if (principal > principalSnapshot)
-                    principal = principalSnapshot;
-
-                if (status == EmiDueStatus.Overdue && emi.DueDate.Date < DateTime.UtcNow.Date)
-                {
-                    response.Add(new DueEmisResponseDto
-                    {
-                        DueDate = emi.DueDate,
-                        EmiAmount = Math.Round(interest + principal, 2),
-                        InterestComponent = Math.Round(interest, 2),
-                        PrincipalComponent = Math.Round(principal, 2),
-                        PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
-                        RemainingEmiAmount = emi.RemainingAmount
-                    });
-                }
-                else if (status == EmiDueStatus.Upcoming && emi.DueDate.Date >= DateTime.UtcNow.Date)
-                {
-
-                    response.Add(new DueEmisResponseDto
-                    {
-                        DueDate = emi.DueDate,
-                        EmiAmount = Math.Round(interest + principal, 2),
-                        InterestComponent = Math.Round(interest, 2),
-                        PrincipalComponent = Math.Round(principal, 2),
-                        PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
-                        RemainingEmiAmount = emi.RemainingAmount
-                    });
-                }
-
-                principalSnapshot -= principal;
+                ApplyPenaltyIfOverdue(emi);
             }
-            return response;
 
+            return CalculateDueEmis(loan, unpaidEmis, status);
+        }
+        //private static IEnumerable<DueEmisResponseDto> CalculateDueEmis( LoanDetails loan, List<LoanEmi> unpaidEmis, EmiDueStatus status)
+        //{
+        //    var response = new List<DueEmisResponseDto>();
+
+        //    var principalSnapshot = loan.PrincipalRemaining;
+        //    var monthlyRate = loan.InterestRate / 12 / 100;
+
+        //    foreach (var emi in unpaidEmis)
+        //    {
+        //        if (principalSnapshot <= 0)
+        //            break;
+
+        //        var interest = principalSnapshot * monthlyRate;
+
+        //        var principal = emi.RemainingAmount - interest;
+        //        if (principal < 0)
+        //            principal = 0;
+
+        //        if (principal > principalSnapshot)
+        //            principal = principalSnapshot;
+
+        //        if (status == EmiDueStatus.Overdue && emi.DueDate.Date < DateTime.UtcNow.Date)
+        //        {
+        //            response.Add(new DueEmisResponseDto
+        //            {
+        //                DueDate = emi.DueDate,
+        //                EmiAmount = Math.Round(interest + principal, 2),
+        //                InterestComponent = Math.Round(interest, 2),
+        //                PrincipalComponent = Math.Round(principal, 2),
+        //                PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+        //                RemainingEmiAmount = emi.RemainingAmount
+        //            });
+        //        }
+        //        else if (status == EmiDueStatus.Upcoming && emi.DueDate.Date >= DateTime.UtcNow.Date)
+        //        {
+
+        //            response.Add(new DueEmisResponseDto
+        //            {
+        //                DueDate = emi.DueDate,
+        //                EmiAmount = Math.Round(interest + principal, 2),
+        //                InterestComponent = Math.Round(interest, 2),
+        //                PrincipalComponent = Math.Round(principal, 2),
+        //                PrincipalRemainingAfterPayment = Math.Round(principalSnapshot - principal, 2),
+        //                RemainingEmiAmount = emi.RemainingAmount
+        //            });
+        //        }
+
+        //        principalSnapshot -= principal;
+        //    }
+        //    return response;
+
+        //}
+        private static IEnumerable<DueEmisResponseDto> CalculateDueEmis(LoanDetails loan, List<LoanEmi> unpaidEmis,EmiDueStatus status)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            return unpaidEmis
+                .Where(e =>
+                    (status == EmiDueStatus.Overdue && e.DueDate.Date < today) ||
+                    (status == EmiDueStatus.Upcoming && e.DueDate.Date >= today))
+                .Select(e => new DueEmisResponseDto
+                {
+                    DueDate = e.DueDate,
+                    EmiAmount = e.RemainingAmount + e.PenaltyAmount,
+                    InterestComponent = e.InterestComponent,
+                    PrincipalComponent = e.PrincipalComponent,
+                    RemainingEmiAmount = e.RemainingAmount,
+                    PenaltyAmount = e.PenaltyAmount
+                });
+        }
+        private static void ApplyPenaltyIfOverdue(LoanEmi emi)
+        {
+            if (emi.IsPaid)
+                return;
+
+            var today = DateTime.UtcNow.Date;
+
+            if (today <= emi.DueDate.Date)
+            {
+                emi.PenaltyAmount = 0;
+                return;
+            }
+
+            var monthsOverdue = GetElapsedMonths(emi.DueDate.Date, today);
+
+            const decimal monthlyPenaltyRate = 0.02m; // 2% per month
+
+            emi.PenaltyAmount = Math.Round(
+                emi.RemainingAmount * monthlyPenaltyRate * monthsOverdue,
+                2
+            );
+        }
+        private static int GetElapsedMonths(DateTime from, DateTime to)
+        {
+            if (to.Date <= from.Date)
+                return 0;
+
+            var months = (to.Year - from.Year) * 12 + (to.Month - from.Month);
+
+            // If current day hasn't crossed due day, don't count the month yet
+            if (to.Day < from.Day)
+                months--;
+
+            return Math.Max(0, months);
         }
     }
 }

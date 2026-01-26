@@ -130,21 +130,24 @@ namespace EasyLoan.UnitTest.Services
         }
 
         [TestMethod]
-        public async Task GetDueEmisAsync_Overdue_ReturnsOnlyPastEmis()
+        public async Task GetDueEmisAsync_Overdue_ReturnsOnlyOverdueWithPenalty()
         {
             var customerId = Guid.NewGuid();
+
+            var emi = new LoanEmi
+            {
+                DueDate = DateTime.UtcNow.AddMonths(-2),
+                InterestComponent = 200,
+                PrincipalComponent = 800,
+                TotalAmount = 1000,
+                RemainingAmount = 1000
+            };
 
             var loan = new LoanDetails
             {
                 CustomerId = customerId,
                 Status = LoanStatus.Active,
-                InterestRate = 12,
-                PrincipalRemaining = 10000,
-                Emis = new List<LoanEmi>
-                {
-                    new() { DueDate = DateTime.UtcNow.AddDays(-5), RemainingAmount = 2000 },
-                    new() { DueDate = DateTime.UtcNow.AddDays(5), RemainingAmount = 2000 }
-                }
+                Emis = new List<LoanEmi> { emi }
             };
 
             _loanRepoMock.Setup(r => r.GetByLoanNumberWithDetailsAsync(It.IsAny<string>()))
@@ -153,7 +156,7 @@ namespace EasyLoan.UnitTest.Services
             var result = (await _service.GetDueEmisAsync(customerId, "LN-ABCDEFGH", EmiDueStatus.Overdue)).ToList();
 
             Assert.AreEqual(1, result.Count);
-            Assert.IsTrue(result[0].DueDate < DateTime.UtcNow);
+            Assert.IsTrue(result[0].PenaltyAmount > 0);
         }
 
         [TestMethod]
@@ -170,7 +173,6 @@ namespace EasyLoan.UnitTest.Services
         [TestMethod]
         public async Task GetAllDueEmisAsync_ActiveLoans_ReturnsGroupedResults()
         {
-            // Arrange
             var customerId = Guid.NewGuid();
 
             var loan1 = new LoanDetails
@@ -178,13 +180,14 @@ namespace EasyLoan.UnitTest.Services
                 LoanNumber = "LN-11111111",
                 CustomerId = customerId,
                 Status = LoanStatus.Active,
-                InterestRate = 12,
-                PrincipalRemaining = 5000,
                 Emis = new List<LoanEmi>
                 {
-                    new LoanEmi
+                    new()
                     {
                         DueDate = DateTime.UtcNow.AddDays(5),
+                        InterestComponent = 100,
+                        PrincipalComponent = 900,
+                        TotalAmount = 1000,
                         RemainingAmount = 1000
                     }
                 }
@@ -195,14 +198,15 @@ namespace EasyLoan.UnitTest.Services
                 LoanNumber = "LN-22222222",
                 CustomerId = customerId,
                 Status = LoanStatus.Active,
-                InterestRate = 12,
-                PrincipalRemaining = 6000,
                 Emis = new List<LoanEmi>
                 {
-                    new LoanEmi
+                    new()
                     {
                         DueDate = DateTime.UtcNow.AddDays(7),
-                        RemainingAmount = 1500
+                        InterestComponent = 150,
+                        PrincipalComponent = 850,
+                        TotalAmount = 1000,
+                        RemainingAmount = 1000
                     }
                 }
             };
@@ -213,77 +217,65 @@ namespace EasyLoan.UnitTest.Services
 
             _loanRepoMock
                 .Setup(r => r.GetByLoanNumberWithDetailsAsync(It.IsAny<string>()))
-                .ReturnsAsync((string ln) =>
-                    ln == loan1.LoanNumber ? loan1 :
-                    ln == loan2.LoanNumber ? loan2 : null);
+                .ReturnsAsync((string ln) => ln == loan1.LoanNumber ? loan1 : loan2);
 
-            // Act
-            var result = (await _service.GetAllDueEmisAsync(customerId, EmiDueStatus.Upcoming))
-                .ToList();
+            var result = (await _service.GetAllDueEmisAsync(customerId, EmiDueStatus.Upcoming)).ToList();
 
-            // Assert
             Assert.AreEqual(2, result.Count);
-            Assert.IsTrue(result.All(group => group.Any()));
+            Assert.IsTrue(result.All(g => g.Any()));
         }
 
+        [TestMethod]
+        public async Task MakePaymentAsync_AllEmisPaid_ClosesLoan()
+        {
+            var customerId = Guid.NewGuid();
+            var loanNumber = "LN-ABCDEFGH";
 
-        //[TestMethod]
-        //public async Task MakePaymentAsync_AllEmisPaid_ClosesLoan()
-        //{
-        //    // Arrange
-        //    var customerId = Guid.NewGuid();
-        //    var loanNumber = "LN-ABCDEFGH";
+            var emi = new LoanEmi
+            {
+                DueDate = DateTime.UtcNow.AddDays(1),
+                InterestComponent = 100,
+                PrincipalComponent = 400,
+                TotalAmount = 500,
+                RemainingAmount = 500
+            };
 
-        //    var emi = new LoanEmi
-        //    {
-        //        DueDate = DateTime.UtcNow.AddDays(1),
-        //        RemainingAmount = 500
-        //    };
+            var loan = new LoanDetails
+            {
+                Id = Guid.NewGuid(),
+                LoanNumber = loanNumber,
+                CustomerId = customerId,
+                Status = LoanStatus.Active,
+                PrincipalRemaining = 400,
+                Emis = new List<LoanEmi> { emi }
+            };
 
-        //    var loan = new LoanDetails
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        LoanNumber = loanNumber,
-        //        CustomerId = customerId,
-        //        Status = LoanStatus.Active,
-        //        InterestRate = 10,
-        //        PrincipalRemaining = 500,
-        //        Emis = new List<LoanEmi> { emi }
-        //    };
+            var customer = new Customer
+            {
+                Id = customerId,
+                CreditScore = 650
+            };
 
-        //    var customer = new Customer
-        //    {
-        //        Id = customerId,
-        //        CreditScore = 650
-        //    };
+            _loanRepoMock.Setup(r => r.GetByLoanNumberWithDetailsAsync(loanNumber))
+                         .ReturnsAsync(loan);
 
-        //    _loanRepoMock
-        //        .Setup(r => r.GetByLoanNumberWithDetailsAsync(loanNumber))
-        //        .ReturnsAsync(loan);
+            _customerRepoMock.Setup(r => r.GetByIdAsync(customerId))
+                             .ReturnsAsync(customer);
 
-        //    _customerRepoMock
-        //        .Setup(r => r.GetByIdAsync(customerId))
-        //        .ReturnsAsync(customer);
+            _paymentRepoMock.Setup(r => r.AddAsync(It.IsAny<LoanPayment>()))
+                            .Returns(Task.CompletedTask);
 
-        //    _paymentRepoMock
-        //        .Setup(r => r.AddAsync(It.IsAny<LoanPayment>()))
-        //        .Returns(Task.CompletedTask);
+            _paymentRepoMock.Setup(r => r.SaveChangesAsync())
+                            .Returns(Task.CompletedTask);
 
-        //    _paymentRepoMock
-        //        .Setup(r => r.SaveChangesAsync())
-        //        .Returns(Task.CompletedTask);
+            var dto = new MakeLoanPaymentRequestDto { Amount = 500 };
 
-        //    var dto = new MakeLoanPaymentRequestDto
-        //    {
-        //        Amount = 500 // EXACT outstanding
-        //    };
+            await _service.MakePaymentAsync(customerId, loanNumber, dto);
 
-        //    // Act
-        //    await _service.MakePaymentAsync(customerId, loanNumber, dto);
-
-        //    // Assert
-        //    Assert.AreEqual(LoanStatus.Closed, loan.Status);
-        //    Assert.AreEqual(0, loan.PrincipalRemaining);
-        //}
+            Assert.AreEqual(LoanStatus.Closed, loan.Status);
+            Assert.AreEqual(0, loan.PrincipalRemaining);
+            Assert.IsTrue(emi.IsPaid);
+        }
     }
 }
+

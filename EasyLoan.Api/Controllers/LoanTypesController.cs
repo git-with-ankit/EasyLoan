@@ -15,7 +15,6 @@ namespace EasyLoan.Api.Controllers
         {
             _service = service;
         }
-
         
         [HttpGet]
         [Authorize(Roles = "Customer,Manager,Admin")]

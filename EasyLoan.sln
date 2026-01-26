@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Dtos", "EasyLoan.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.Models.Common", "EasyLoan.Models.Common\EasyLoan.Models.Common.csproj", "{4CF323B9-E8C0-44A5-882C-C8F59CFFA3BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.UnitTest", "EasyLoan.Api.Tests\EasyLoan.UnitTest.csproj", "{B335FFB4-7F4F-4B8E-8C03-125783966763}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyLoan.UnitTest", "EasyLoan.UnitTest\EasyLoan.UnitTest.csproj", "{B335FFB4-7F4F-4B8E-8C03-125783966763}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

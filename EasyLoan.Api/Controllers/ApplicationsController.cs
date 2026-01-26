@@ -33,37 +33,6 @@ namespace EasyLoan.Api.Controllers
             return CreatedAtAction(nameof(GetByApplicationNumber), new { applicationNumber = application.ApplicationNumber }, application);
         }
 
-        //[Authorize(Roles = "Customer")]
-        //[HttpGet]
-        //[ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)] // Customer not found
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] // Not owner
-        //public async Task<ActionResult<ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>>> GetCustomerApplications()
-        //{
-        //    var customerId = User.GetUserId();
-        //    var applications = await _service.GetCustomerApplicationsAsync(customerId);
-        //    return Ok(new ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>> { Success = true, Data = applications });
-        //}
-
-        //[Authorize(Roles = "Manager")]
-        //[HttpGet("assigned")]
-        //[ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status404NotFound)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)] 
-        //public async Task<ActionResult<ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>>> GetAssignedApplications()
-        //{
-        //    var managerId = User.GetUserId();
-        //    var assignedApplications = await _service.GetAssignedApplicationsAsync(managerId);
-        //    return Ok(new ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>> { Success = true, Data = assignedApplications });
-        //}
-        //[Authorize(Roles = "Admin")]
-        //[HttpGet("pending")]
-        //[ProducesResponseType(typeof(ApiResponseDto<IEnumerable<LoanApplicationsResponseDto>>), StatusCodes.Status200OK)]
-        //public async Task<ActionResult<ApiResponseDto<IEnumerable<LoanApplicationsAdminResponseDto>>>> GetAllPendingApplications()
-        //{
-        //    var assignedApplications = await _service.GetAllPendingApplicationsAsync();
-        //    return Ok(new ApiResponseDto<IEnumerable<LoanApplicationsAdminResponseDto>> { Success = true, Data = assignedApplications });
-        //}
         [Authorize(Roles ="Admin,Manager,Customer")]
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<LoanApplicationsResponseDto>), StatusCodes.Status200OK)]
@@ -81,7 +50,6 @@ namespace EasyLoan.Api.Controllers
             return Ok(applications);
 
         }
-
 
         [Authorize(Roles= "Customer")]
         [HttpGet("{applicationNumber}")]

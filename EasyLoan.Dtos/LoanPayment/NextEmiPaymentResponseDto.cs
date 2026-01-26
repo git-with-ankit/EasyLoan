@@ -14,6 +14,7 @@ namespace EasyLoan.Dtos.LoanPayment
         public decimal PrincipalComponent { get; set; }
         public decimal PrincipalRemainingAfterPayment { get; set; }
         public decimal RemainingEmiAmount { get; set; }
+        public decimal PenaltyAmount { get; set; }
     }
 
 }

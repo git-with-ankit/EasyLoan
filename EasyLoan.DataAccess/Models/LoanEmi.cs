@@ -1,12 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using EasyLoan.Models.Common.Enums;
-using System.Threading.Tasks;
 
 namespace EasyLoan.DataAccess.Models
 {
@@ -36,6 +30,20 @@ namespace EasyLoan.DataAccess.Models
         [Precision(18, 2)]
         [Range(0, double.MaxValue)]
         public decimal RemainingAmount { get; set; }
+
+        [Required]
+        [Precision(18, 2)]
+        [Range(0, double.MaxValue)]
+        public decimal InterestComponent { get; set; }
+
+        [Required]
+        [Precision(18, 2)]
+        [Range(0, double.MaxValue)]
+        public decimal PrincipalComponent { get; set; }
+
+        [Precision(18, 2)]
+        [Range(0, double.MaxValue)]
+        public decimal PenaltyAmount { get; set; } = 0;
 
         [NotMapped]
         public bool IsPaid => RemainingAmount <= 0;

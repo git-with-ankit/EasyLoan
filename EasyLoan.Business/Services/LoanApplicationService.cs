@@ -144,8 +144,12 @@ namespace EasyLoan.Business.Services
                         Id = Guid.NewGuid(),
                         EmiNumber = item.EmiNumber,
                         DueDate = item.DueDate,
+
                         TotalAmount = item.TotalEmiAmount,
-                        RemainingAmount = item.TotalEmiAmount
+                        RemainingAmount = item.TotalEmiAmount,
+
+                        InterestComponent = item.InterestComponent,
+                        PrincipalComponent = item.PrincipalComponent
                     });
                 }
 

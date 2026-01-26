@@ -57,18 +57,6 @@ namespace EasyLoan.Api.Controllers
             return Ok(token);
         }
 
-        ////[Authorize(Roles ="Admin")]
-        //[HttpPost]
-        //[ProducesResponseType(typeof(ApiResponseDto<Guid>), StatusCodes.Status201Created)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status400BadRequest)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status422UnprocessableEntity)]
-        //[ProducesResponseType(typeof(ApiResponseDto<object>), StatusCodes.Status403Forbidden)]
-        //public async Task<ActionResult<ApiResponseDto<Guid>>> CreateManager(CreateEmployeeRequestDto request)
-        //{
-        //    var id = await _employeeService.CreateManagerAsync(request);
-        //    return Ok(new ApiResponseDto<Guid> { Success = true, Data = id });
-        //}
-
         [Authorize(Roles ="Admin")]
         [HttpPost("manager/register")]
         [ProducesResponseType(typeof(RegisterManagerResponseDto), StatusCodes.Status201Created)]
