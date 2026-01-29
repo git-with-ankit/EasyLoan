@@ -1,13 +1,8 @@
 ﻿using EasyLoan.Api.Controllers;
-using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Loan;
-using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Dtos.LoanType;
-using EasyLoan.Models.Common.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.Security.Claims;
 
 namespace EasyLoan.UnitTest.Controllers
 {

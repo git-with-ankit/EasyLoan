@@ -1,0 +1,24 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+
+  <!-- ROLE -->
+  <select formControlName="role" (change)="onRoleChange()">
+    <option value="Customer">Customer</option>
+    <option value="Manager">Manager</option>
+  </select>
+
+  <!-- COMMON FIELDS -->
+  <input formControlName="name" placeholder="Name" />
+  <input formControlName="email" placeholder="Email" />
+  <input formControlName="phoneNumber" placeholder="Phone Number" />
+  <input type="password" formControlName="password" placeholder="Password" />
+
+  <!-- CUSTOMER-ONLY FIELDS -->
+  <ng-container *ngIf="form.get('role')?.value === 'Customer'">
+    <input type="date" formControlName="dateOfBirth" />
+    <input type="number" formControlName="annualSalary" placeholder="Annual Salary" />
+    <input formControlName="panNumber" placeholder="PAN Number" />
+  </ng-container>
+
+  <button type="submit">Register</button>
+
+</form>

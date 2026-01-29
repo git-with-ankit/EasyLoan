@@ -151,6 +151,47 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.IsNotNull(token);
             Assert.AreEqual(expectedToken, token);
         }
+        [TestMethod]
+        public async Task CreateManager_WhenAdmin_ReturnsCreatedWithManager()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+
+            var request = new CreateManagerRequestDto
+            {
+                Name = "New Manager",
+                Email = "manager@test.com",
+                PhoneNumber = "9999999999",
+                Password = "Password@123"
+            };
+
+            var response = new RegisterManagerResponseDto
+            {
+                Name = "New Manager",
+                Email = "manager@test.com",
+                Role = EmployeeRole.Manager
+            };
+
+            SetEmployeeUser(_controller, adminId, EmployeeRole.Admin);
+
+            _mockAuthService
+                .Setup(s => s.RegisterManagerAsync(request))
+                .ReturnsAsync(response);
+
+            // Act
+            var result = await _controller.CreateManager(request);
+
+            // Assert
+            var createdResult = result.Result as CreatedAtActionResult;
+            Assert.IsNotNull(createdResult);
+            Assert.AreEqual(StatusCodes.Status201Created, createdResult.StatusCode);
+            Assert.AreEqual(nameof(_controller.GetProfile), createdResult.ActionName);
+
+            var value = createdResult.Value as RegisterManagerResponseDto;
+            Assert.IsNotNull(value);
+            Assert.AreEqual(response.Email, value.Email);
+            Assert.AreEqual(EmployeeRole.Manager, value.Role);
+        }
 
     }
 
