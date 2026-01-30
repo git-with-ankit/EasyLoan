@@ -99,3 +99,7 @@ namespace EasyLoan.DataAccess.Models
 //Testing use in memory for repo
 //the date of birth should be till now - done
 //use helper-setuser instead of creating a separate setuser in each class(tests)
+
+//rate limiting the loan application 
+//change password
+//auth login , customer register and change password

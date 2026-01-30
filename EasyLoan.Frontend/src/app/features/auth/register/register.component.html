@@ -1,24 +1,63 @@
-<form [formGroup]="form" (ngSubmit)="submit()">
+<mat-card class="auth-card">
+  <mat-card-title>Register</mat-card-title>
 
-  <!-- ROLE -->
-  <select formControlName="role" (change)="onRoleChange()">
-    <option value="Customer">Customer</option>
-    <option value="Manager">Manager</option>
-  </select>
+  <form [formGroup]="form" (ngSubmit)="submit()">
 
-  <!-- COMMON FIELDS -->
-  <input formControlName="name" placeholder="Name" />
-  <input formControlName="email" placeholder="Email" />
-  <input formControlName="phoneNumber" placeholder="Phone Number" />
-  <input type="password" formControlName="password" placeholder="Password" />
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Role</mat-label>
+      <mat-select formControlName="role" (selectionChange)="onRoleChange()">
+        <mat-option value="Customer">Customer</mat-option>
+        <mat-option value="Manager">Manager</mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <!-- CUSTOMER-ONLY FIELDS -->
-  <ng-container *ngIf="form.get('role')?.value === 'Customer'">
-    <input type="date" formControlName="dateOfBirth" />
-    <input type="number" formControlName="annualSalary" placeholder="Annual Salary" />
-    <input formControlName="panNumber" placeholder="PAN Number" />
-  </ng-container>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
 
-  <button type="submit">Register</button>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
 
-</form>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Phone Number</mat-label>
+      <input matInput formControlName="phoneNumber" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" />
+    </mat-form-field>
+
+    <ng-container *ngIf="form.get('role')?.value === 'Customer'">
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Date of Birth</mat-label>
+        <input matInput type="date" formControlName="dateOfBirth" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Annual Salary</mat-label>
+        <input matInput type="number" formControlName="annualSalary" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>PAN Number</mat-label>
+        <input matInput formControlName="panNumber" />
+      </mat-form-field>
+
+    </ng-container>
+
+    <button
+      mat-raised-button
+      color="primary"
+      class="full-width"
+      type="submit"
+      [disabled]="form.invalid">
+      Register
+    </button>
+
+  </form>
+</mat-card>

@@ -1,22 +1,40 @@
-<form [formGroup]="form" (ngSubmit)="submit()">
+<mat-card class="auth-card">
+  <mat-card-title>Login</mat-card-title>
 
-  <select formControlName="role">
-    <option value="Customer">Customer</option>
-    <option value="Employee">Employee</option>
-  </select>
+  <form [formGroup]="form" (ngSubmit)="submit()">
 
-  <input
-    type="email"
-    formControlName="email"
-    placeholder="Email"
-  />
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Role</mat-label>
+      <mat-select formControlName="role">
+        <mat-option value="Customer">Customer</mat-option>
+        <mat-option value="Employee">Employee</mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <input
-    type="password"
-    formControlName="password"
-    placeholder="Password"
-  />
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+      <mat-error *ngIf="form.get('email')?.invalid">
+        Enter a valid email
+      </mat-error>
+    </mat-form-field>
 
-  <button type="submit">Login</button>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" />
+      <mat-error *ngIf="form.get('password')?.invalid">
+        Password does not meet requirements
+      </mat-error>
+    </mat-form-field>
 
-</form>
+    <button
+      mat-raised-button
+      color="primary"
+      class="full-width"
+      type="submit"
+      [disabled]="form.invalid">
+      Login
+    </button>
+
+  </form>
+</mat-card>

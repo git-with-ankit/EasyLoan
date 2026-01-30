@@ -6,6 +6,11 @@ import {
   ReactiveFormsModule
 } from '@angular/forms';
 import { AuthService } from '../auth.service';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 
 type LoginRole = 'Customer' | 'Employee';
 
@@ -13,7 +18,10 @@ type LoginRole = 'Customer' | 'Employee';
   standalone: true,
   selector: 'app-login',
   templateUrl: './login.component.html',
-  imports: [ReactiveFormsModule]
+  imports: [ReactiveFormsModule, CommonModule ,   MatCardModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule]
 })
 export class LoginComponent implements OnInit {
 

@@ -8,13 +8,23 @@ import {
 import { AuthService } from '../auth.service';
 import { CommonModule } from '@angular/common';
 
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+
 type RegisterRole = 'Customer' | 'Manager';
 
 @Component({
   standalone: true,
   selector: 'app-register',
   templateUrl: './register.component.html',
-  imports: [ReactiveFormsModule, CommonModule]
+  imports: [ CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule]
 })
 export class RegisterComponent implements OnInit {
 

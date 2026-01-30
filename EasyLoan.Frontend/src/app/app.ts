@@ -16,3 +16,4 @@ export class App {
 //loan-type-> create -> ??
         // -> list   -> ??
 //nested folder structure for parent and child
+//shared folder (enums, models) or in the specified
