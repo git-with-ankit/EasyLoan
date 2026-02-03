@@ -3,86 +3,160 @@ import {
   FormBuilder,
   FormGroup,
   Validators,
-  ReactiveFormsModule
+  ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors
 } from '@angular/forms';
-import { AuthService } from '../auth.service';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { AuthService } from '../auth.service';
 
-type RegisterRole = 'Customer' | 'Manager';
+type RegisterRole = 'Customer';
 
 @Component({
   standalone: true,
   selector: 'app-register',
   templateUrl: './register.component.html',
-  imports: [ CommonModule,
+  styleUrl: './register.component.css',
+  imports: [
     ReactiveFormsModule,
+    CommonModule,
+    RouterLink,
     MatCardModule,
     MatInputModule,
     MatSelectModule,
-    MatButtonModule]
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ]
 })
 export class RegisterComponent implements OnInit {
-
   form!: FormGroup;
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
+  hidePassword = true;
+  hideConfirmPassword = true;
+  maxDate: Date;
+  minDate: Date;
 
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
-
   private readonly PHONE_REGEX = /^[6-9]\d{9}$/;
   private readonly PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
   constructor(
     private fb: FormBuilder,
-    private auth: AuthService
-  ) {}
-
-  ngOnInit(): void {
-    this.buildForm('Customer');
+    private auth: AuthService,
+    private router: Router
+  ) {
+    // Set date constraints (18-150 years old)
+    const today = new Date();
+    this.maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    this.minDate = new Date(today.getFullYear() - 150, today.getMonth(), today.getDate());
   }
 
-  buildForm(role: RegisterRole): void {
-    // base controls (common to both DTOs)
+  ngOnInit(): void {
     this.form = this.fb.group({
-      role: [role, Validators.required],
+      role: ['Customer', Validators.required],
       name: ['', [Validators.required, Validators.maxLength(100)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
+      dateOfBirth: ['', Validators.required],
+      annualSalary: ['', [Validators.required, Validators.min(0)]],
+      panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
       password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
+      confirmPassword: ['', Validators.required]
+    }, {
+      validators: this.passwordMatchValidator
     });
+  }
 
-    // customer-only DTO fields
-    if (role === 'Customer') {
-      this.form.addControl(
-        'dateOfBirth',
-        this.fb.control('', Validators.required)
-      );
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
 
-      this.form.addControl(
-        'annualSalary',
-        this.fb.control(0, [Validators.required, Validators.min(0)])
-      );
+    if (!password || !confirmPassword) {
+      return null;
+    }
 
-      this.form.addControl(
-        'panNumber',
-        this.fb.control('', [Validators.required, Validators.pattern(this.PAN_REGEX)])
-      );
+    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+  }
+
+  getPasswordStrength(): { strength: string; color: string; width: string } {
+    const password = this.form.get('password')?.value || '';
+
+    if (password.length === 0) {
+      return { strength: '', color: '', width: '0%' };
+    }
+
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[@$!%*?&]/.test(password)) strength++;
+
+    if (strength <= 2) {
+      return { strength: 'Weak', color: '#f44336', width: '33%' };
+    } else if (strength <= 4) {
+      return { strength: 'Medium', color: '#ff9800', width: '66%' };
+    } else {
+      return { strength: 'Strong', color: '#4caf50', width: '100%' };
     }
   }
 
-  onRoleChange(): void {
-    const role = this.form.get('role')!.value as RegisterRole;
-    this.buildForm(role);
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const formValue = this.form.value;
+    const registerDto = {
+      name: formValue.name,
+      email: formValue.email,
+      phoneNumber: formValue.phoneNumber,
+      dateOfBirth: new Date(formValue.dateOfBirth).toISOString(),
+      annualSalary: parseFloat(formValue.annualSalary),
+      panNumber: formValue.panNumber.toUpperCase(),
+      password: formValue.password
+    };
+
+    this.auth.registerCustomer(registerDto).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.successMessage = 'Registration successful! Redirecting to login...';
+        setTimeout(() => {
+          this.router.navigate(['/auth/login']);
+        }, 2000);
+      },
+      error: (error: Error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message || 'Registration failed. Please try again.';
+      }
+    });
   }
 
-  submit(): void {
-    if (this.form.invalid) return;
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
+  }
 
-    const { role, ...dto } = this.form.value;
-    this.auth.register(role, dto).subscribe();
+  toggleConfirmPasswordVisibility(): void {
+    this.hideConfirmPassword = !this.hideConfirmPassword;
   }
 }

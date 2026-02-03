@@ -112,10 +112,10 @@ namespace EasyLoan.DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("cac68a94-2859-42c6-bd2e-86c8eef2fd64"),
+                            Id = new Guid("a1adbd15-4709-4017-97af-77cc56bdd439"),
                             Email = "ankitkumarsingh018@gmail.com",
                             Name = "Ankit",
-                            Password = "$2a$11$uCcQaBXQNoeqhfs13PDZDuOmr7B.8Aj8ctUpMPTnC3tAEAGv0n.Ne",
+                            Password = "$2a$11$JqtCImh.HFTH8RKcjjVEW.owsp.qgwhJsK.M0b5FozVxzZxSgdBSi",
                             PhoneNumber = "1234567890",
                             Role = "Admin"
                         });
@@ -260,6 +260,10 @@ namespace EasyLoan.DataAccess.Migrations
 
                     b.Property<DateTime?>("PaidDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PaidPenaltyAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PenaltyAmount")
                         .HasPrecision(18, 2)

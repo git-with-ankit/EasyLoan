@@ -4,6 +4,7 @@ using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
 using EasyLoan.Models.Common.Enums;
@@ -26,7 +27,10 @@ namespace EasyLoan.Business.Services
 
         public async Task<CustomerProfileResponseDto> RegisterCustomerAsync(RegisterCustomerRequestDto dto)
         {
-            if (await _customerRepo.ExistsByEmailAsync(dto.Email))
+            if (await _customerRepo.ExistsByEmailAsync(dto.Email.ToLower().Trim()))
+                throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
+
+            if (await _employeeRepo.ExistsByEmailAsync(dto.Email.ToLower().Trim()))
                 throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
 
             if (await _customerRepo.ExistsByPanAsync(dto.PanNumber))
@@ -81,6 +85,9 @@ namespace EasyLoan.Business.Services
             if (await _employeeRepo.ExistsByEmailAsync(dto.Email.ToLower().Trim()))
                 throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
 
+            if(await _customerRepo.ExistsByEmailAsync(dto.Email.ToLower().Trim()))
+                throw new BusinessRuleViolationException(ErrorMessages.EmailAlreadyExists);
+
             var emp = new Employee
             {
                 Id = Guid.NewGuid(),
@@ -120,6 +127,37 @@ namespace EasyLoan.Business.Services
             {
                 return _tokenGenerator.GenerateToken(emp.Id, Role.Admin);
             }
+        }
+
+        public async Task<string> LoginAsync(LoginRequestDto dto)
+        {
+            var customer = await _customerRepo.GetByEmailAsync(dto.Email.ToLower().Trim());
+
+            if (customer != null)
+            {
+                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, customer.Password);
+                if (!passwordResult)
+                    throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+
+                return _tokenGenerator.GenerateToken(customer.Id, Role.Customer);//Generate token
+            }
+            else
+            {
+
+                var emp = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim()) 
+                    ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, emp.Password);
+
+                if (!passwordResult)
+                    throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+
+                var role = emp.Role == EmployeeRole.Manager ? Role.Manager : Role.Admin;
+
+                return _tokenGenerator.GenerateToken(emp.Id, role);
+
+            }
+
+            
         }
 
     }

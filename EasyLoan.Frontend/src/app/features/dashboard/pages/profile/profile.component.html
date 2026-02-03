@@ -1,0 +1,128 @@
+<div class="profile-container">
+    <div class="page-header">
+        <h2>My Profile</h2>
+        <p class="subtitle">View and manage your personal information</p>
+    </div>
+
+    @if (isLoading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your profile...</p>
+    </div>
+    } @else if (errorMessage() && !profile()) {
+    <div class="error-state">
+        <p class="error-message">{{ errorMessage() }}</p>
+        <button class="retry-btn" (click)="loadProfile()">Retry</button>
+    </div>
+    } @else if (profile()) {
+    <div class="profile-content">
+        @if (successMessage()) {
+        <div class="success-banner">
+            {{ successMessage() }}
+        </div>
+        }
+
+        @if (errorMessage()) {
+        <div class="error-banner">
+            {{ errorMessage() }}
+        </div>
+        }
+
+        <div class="profile-card">
+            <div class="card-header">
+                <div class="avatar-large">{{ profile()!.name[0]?.toUpperCase() || 'U' }}</div>
+                <div class="header-info">
+                    <h3>{{ profile()!.name }}</h3>
+                    <p class="email">{{ profile()!.email }}</p>
+                </div>
+                @if (!isEditing()) {
+                <button class="edit-btn" (click)="onEdit()">Edit Profile</button>
+                }
+            </div>
+
+            <div class="card-body">
+                @if (!isEditing()) {
+                <!-- View Mode -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Date of Birth</span>
+                        <span class="value">{{ formatDate(profile()!.dateOfBirth) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Phone Number</span>
+                        <span class="value">{{ profile()!.phoneNumber }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Annual Salary</span>
+                        <span class="value">₹{{ profile()!.annualSalary | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">PAN Number</span>
+                        <span class="value">{{ profile()!.panNumber }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Credit Score</span>
+                        <span class="value credit-score">{{ profile()!.creditScore }}</span>
+                    </div>
+                </div>
+                } @else {
+                <!-- Edit Mode -->
+                <form [formGroup]="profileForm" (ngSubmit)="onSave()">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Name *</label>
+                            <input type="text" id="name" formControlName="name"
+                                [class.invalid]="profileForm.get('name')?.invalid && profileForm.get('name')?.touched" />
+                            @if (profileForm.get('name')?.invalid && profileForm.get('name')?.touched) {
+                            <span class="error-text">Name is required (max 100 characters)</span>
+                            }
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phoneNumber">Phone Number *</label>
+                            <input type="tel" id="phoneNumber" formControlName="phoneNumber"
+                                placeholder="10-digit Indian number"
+                                [class.invalid]="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" />
+                            @if (profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched) {
+                            <span class="error-text">Please enter a valid 10-digit Indian phone number</span>
+                            }
+                        </div>
+
+                        <div class="form-group">
+                            <label for="annualSalary">Annual Salary *</label>
+                            <input type="number" id="annualSalary" formControlName="annualSalary"
+                                placeholder="Enter annual salary"
+                                [class.invalid]="profileForm.get('annualSalary')?.invalid && profileForm.get('annualSalary')?.touched" />
+                            @if (profileForm.get('annualSalary')?.invalid && profileForm.get('annualSalary')?.touched) {
+                            <span class="error-text">Please enter a valid salary amount</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="readonly-info">
+                        <p class="info-note">
+                            <strong>Note:</strong> Email, Date of Birth, PAN Number, and Credit Score cannot be
+                            modified.
+                        </p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" (click)="onCancel()" [disabled]="isSaving()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="save-btn" [disabled]="isSaving() || profileForm.invalid">
+                            @if (isSaving()) {
+                            <span class="spinner-small"></span>
+                            Saving...
+                            } @else {
+                            Save Changes
+                            }
+                        </button>
+                    </div>
+                </form>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>

@@ -1,0 +1,15 @@
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2 class="logo">EasyLoan</h2>
+        <p class="tagline">Customer Portal</p>
+    </div>
+
+    <nav class="nav-menu">
+        @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+            <span class="icon">{{ item.icon }}</span>
+            <span class="label">{{ item.label }}</span>
+        </a>
+        }
+    </nav>
+</aside>

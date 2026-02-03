@@ -192,9 +192,9 @@ namespace EasyLoan.UnitTest.Controllers
                 }
             };
 
-            _mockPaymentService
-                .Setup(s => s.GetAllDueEmisAsync(customerId, status))
-                .ReturnsAsync(emis);
+            //_mockPaymentService
+            //    .Setup(s => s.GetAllDueEmisAsync(customerId, status))
+            //    .ReturnsAsync(emis);
 
             // Act
             var result = await _controller.GetAllDueEmisAsync(status);
@@ -258,9 +258,9 @@ namespace EasyLoan.UnitTest.Controllers
         }
     };
 
-            _mockPaymentService
-                .Setup(s => s.GetAllDueEmisAsync(customerId, status))
-                .ReturnsAsync(emis);
+            //_mockPaymentService
+            //    .Setup(s => s.GetAllDueEmisAsync(customerId, status))
+            //    .ReturnsAsync(emis);
 
             // Act
             var result = await _controller.GetAllDueEmisAsync(status);

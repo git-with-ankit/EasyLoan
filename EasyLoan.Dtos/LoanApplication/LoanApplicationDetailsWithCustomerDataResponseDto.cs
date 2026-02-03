@@ -18,7 +18,7 @@ namespace EasyLoan.Dtos.LoanApplication
         public string PanNumber { get; set; }
         public string LoanType { get; set; }
         public decimal RequestedAmount { get; set; }
-        public decimal AppprovedAmount { get; set; }
+        public decimal ApprovedAmount { get; set; }
         public decimal InterestRate { get; set; }
         public int RequestedTenureInMonths { get; set; }
         public LoanApplicationStatus Status { get; set; }

@@ -45,6 +45,10 @@ namespace EasyLoan.DataAccess.Models
         [Range(0, double.MaxValue)]
         public decimal PenaltyAmount { get; set; } = 0;
 
+        [Precision(18, 2)]
+        [Range(0, double.MaxValue)]
+        public decimal PaidPenaltyAmount { get; set; } = 0;
+
         [NotMapped]
         public bool IsPaid => RemainingAmount <= 0;
 

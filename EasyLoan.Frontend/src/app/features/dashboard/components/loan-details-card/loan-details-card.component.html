@@ -1,0 +1,170 @@
+<div class="modal-overlay" (click)="onClose()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Loan Details</h2>
+            <button class="close-btn" (click)="onClose()">×</button>
+        </div>
+
+        @if (isLoading()) {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading loan details...</p>
+        </div>
+        } @else if (errorMessage() && !loanDetails()) {
+        <div class="error-message">{{ errorMessage() }}</div>
+        } @else if (loanDetails()) {
+        <div class="modal-body">
+            <!-- Loan Details Section -->
+            <div class="details-section">
+                <h3>Loan Information</h3>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="label">Loan Number:</span>
+                        <span class="value">{{ loanDetails()!.loanNumber }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Loan Type:</span>
+                        <span class="value">{{ loanDetails()!.loanType }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Approved Amount:</span>
+                        <span class="value">₹{{ loanDetails()!.approvedAmount | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Principal Remaining:</span>
+                        <span class="value">₹{{ loanDetails()!.principalRemaining | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Tenure:</span>
+                        <span class="value">{{ loanDetails()!.tenureInMonths }} months</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Interest Rate:</span>
+                        <span class="value">{{ loanDetails()!.interestRate }}%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Status:</span>
+                        <span class="value status">{{ loanDetails()!.status }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMI Section -->
+            <div class="emis-section">
+                <h3>EMI Payments</h3>
+
+                <div class="emi-tabs">
+                    <button class="emi-tab" [class.active]="selectedEmiStatus() === EmiDueStatus.Overdue"
+                        (click)="onEmiStatusChange(EmiDueStatus.Overdue)">
+                        Overdue
+                    </button>
+                    <button class="emi-tab" [class.active]="selectedEmiStatus() === EmiDueStatus.Upcoming"
+                        (click)="onEmiStatusChange(EmiDueStatus.Upcoming)">
+                        Upcoming
+                    </button>
+                </div>
+
+                @if (emis().length === 0) {
+                <div class="empty-emis">
+                    <p>No {{ selectedEmiStatus().toLowerCase() }} EMIs</p>
+                </div>
+                } @else {
+                <div class="emis-list">
+                    @for (emi of emis(); track emi.dueDate) {
+                    <div class="emi-item" [class.selected]="selectedEmi() === emi" (click)="onSelectEmi(emi)">
+                        <div class="emi-header">
+                            <span class="due-date">Due: {{ emi.dueDate | date:'mediumDate' }}</span>
+                            <span class="total-amount">₹{{ getTotalDue(emi) | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="emi-breakdown">
+                            <div class="breakdown-item">
+                                <span>Principal:</span>
+                                <span>₹{{ emi.principalComponent | number:'1.2-2' }}</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Interest:</span>
+                                <span>₹{{ emi.interestComponent | number:'1.2-2' }}</span>
+                            </div>
+                            @if (emi.penaltyAmount > 0) {
+                            <div class="breakdown-item penalty">
+                                <span>Penalty:</span>
+                                <span>₹{{ emi.penaltyAmount | number:'1.2-2' }}</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+
+                <!-- Payment Form -->
+                @if (selectedEmi()) {
+                <div class="payment-form">
+                    <h4>Make Payment</h4>
+
+                    @if (successMessage()) {
+                    <div class="success-message">{{ successMessage() }}</div>
+                    }
+                    @if (errorMessage()) {
+                    <div class="error-message">{{ errorMessage() }}</div>
+                    }
+
+                    <div class="form-group">
+                        <label for="paymentAmount">Payment Amount:</label>
+                        <input type="number" id="paymentAmount" [(ngModel)]="paymentAmount" [value]="paymentAmount()"
+                            (ngModelChange)="onPaymentAmountChange($event)" min="0" step="0.01" class="amount-input">
+                    </div>
+
+                    <button class="pay-btn" [disabled]="isProcessingPayment() || paymentAmount() <= 0"
+                        (click)="onMakePayment()">
+                        @if (isProcessingPayment()) {
+                        <span>Processing...</span>
+                        } @else {
+                        <span>Pay ₹{{ paymentAmount() | number:'1.2-2' }}</span>
+                        }
+                    </button>
+                </div>
+                }
+            </div>
+
+            <!-- Payment History Section -->
+            <div class="payment-history-section">
+                <h3>Payment History</h3>
+
+                @if (isLoadingHistory()) {
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading payment history...</p>
+                </div>
+                } @else if (paymentHistory().length === 0) {
+                <div class="empty-history">
+                    <p>No payment history available</p>
+                </div>
+                } @else {
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (payment of paymentHistory(); track payment.paymentDate) {
+                            <tr>
+                                <td>{{ payment.paymentDate | date:'medium' }}</td>
+                                <td>₹{{ payment.amount | number:'1.2-2' }}</td>
+                                <td><span class="status-badge" [class.paid]="payment.status === 'Paid'">{{
+                                        payment.status }}</span></td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</div>

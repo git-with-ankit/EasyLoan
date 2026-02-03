@@ -1,0 +1,51 @@
+<div class="applications-container">
+    <div class="page-header">
+        <h2>My Loan Applications</h2>
+        <p class="subtitle">Track your loan application status</p>
+    </div>
+
+    <div class="filter-tabs">
+        <button class="filter-tab" [class.active]="selectedStatus() === LoanApplicationStatus.Pending"
+            (click)="onStatusChange(LoanApplicationStatus.Pending)">
+            Pending
+        </button>
+        <button class="filter-tab" [class.active]="selectedStatus() === LoanApplicationStatus.Approved"
+            (click)="onStatusChange(LoanApplicationStatus.Approved)">
+            Approved
+        </button>
+        <button class="filter-tab" [class.active]="selectedStatus() === LoanApplicationStatus.Rejected"
+            (click)="onStatusChange(LoanApplicationStatus.Rejected)">
+            Rejected
+        </button>
+    </div>
+
+    @if (isLoading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading applications...</p>
+    </div>
+    } @else if (errorMessage()) {
+    <div class="error-state">
+        <p class="error-message">{{ errorMessage() }}</p>
+        <button class="retry-btn" (click)="loadApplications()">Retry</button>
+    </div>
+    } @else if (applications().length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No {{ selectedStatus() }} Applications</h3>
+        <p>You don't have any {{ selectedStatus().toLowerCase() }} loan applications.</p>
+    </div>
+    } @else {
+    <div class="applications-grid">
+        @for (application of applications(); track application.applicationNumber) {
+        <app-application-card [application]="application" (viewDetails)="onViewDetails($event)">
+        </app-application-card>
+        }
+    </div>
+    }
+
+    @if (selectedApplicationNumber()) {
+    <app-application-details-card [applicationNumber]="selectedApplicationNumber()!" (close)="onCloseDetails()">
+    </app-application-details-card>
+    }
+</div>

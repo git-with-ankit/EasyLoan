@@ -5,11 +5,14 @@ import {
   Validators,
   ReactiveFormsModule
 } from '@angular/forms';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 
 type LoginRole = 'Customer' | 'Employee';
@@ -18,26 +21,45 @@ type LoginRole = 'Customer' | 'Employee';
   standalone: true,
   selector: 'app-login',
   templateUrl: './login.component.html',
-  imports: [ReactiveFormsModule, CommonModule ,   MatCardModule,
+  styleUrl: './login.component.css',
+  imports: [
+    ReactiveFormsModule,
+    CommonModule,
+    RouterLink,
+    MatCardModule,
     MatInputModule,
     MatSelectModule,
-    MatButtonModule]
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ]
 })
 export class LoginComponent implements OnInit {
-
   form!: FormGroup;
+  isLoading = false;
+  errorMessage = '';
+  hidePassword = true;
+  loginType: LoginRole = 'Customer';
 
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
 
   constructor(
     private fb: FormBuilder,
-    private auth: AuthService
-  ) {}
+    private auth: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit(): void {
+    // Get login type from route data
+    this.route.data.subscribe(data => {
+      if (data['type']) {
+        this.loginType = data['type'];
+      }
+    });
+
     this.form = this.fb.group({
-      role: ['Customer', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
     });
@@ -46,10 +68,35 @@ export class LoginComponent implements OnInit {
   submit(): void {
     if (this.form.invalid) return;
 
-    const { role, email, password } = this.form.value;
+    this.isLoading = true;
+    this.errorMessage = '';
 
-    this.auth
-      .login(role as LoginRole, { email, password })
-      .subscribe();
+    const { email, password } = this.form.value;
+    const loginDto = { email, password };
+
+    const login$ = this.loginType === 'Customer'
+      ? this.auth.loginCustomer(loginDto)
+      : this.auth.loginEmployee(loginDto);
+
+    login$.subscribe({
+      next: () => {
+        this.isLoading = false;
+        // Navigate based on role or login type
+        if (this.loginType === 'Customer') {
+          this.router.navigate(['/customer/dashboard']);
+        } else {
+          this.router.navigate(['/employee/dashboard']);
+        }
+      },
+      error: (error: Error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message || 'Login failed. Please check your credentials.';
+      }
+    });
+  }
+
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
   }
 }
+

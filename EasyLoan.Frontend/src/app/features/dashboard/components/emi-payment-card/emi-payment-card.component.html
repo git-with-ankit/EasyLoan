@@ -1,0 +1,73 @@
+<div class="payment-card-overlay" (click)="onCancel()">
+    <div class="payment-card" (click)="$event.stopPropagation()">
+        <div class="card-header">
+            <h2>EMI Payment</h2>
+            <button class="close-btn" (click)="onCancel()" [disabled]="isProcessing">
+                <span>&times;</span>
+            </button>
+        </div>
+
+        <div class="card-body">
+            <div class="emi-details">
+                <div class="detail-row">
+                    <span class="label">Due Date:</span>
+                    <span class="value">{{ emi.dueDate | date: 'mediumDate' }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">EMI Amount:</span>
+                    <span class="value">₹{{ emi.emiAmount | number: '1.2-2' }}</span>
+                </div>
+
+                <div class="breakdown">
+                    <h3>Payment Breakdown</h3>
+                    <div class="detail-row">
+                        <span class="label">Principal Component:</span>
+                        <span class="value">₹{{ emi.principalComponent | number: '1.2-2' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Interest Component:</span>
+                        <span class="value">₹{{ emi.interestComponent | number: '1.2-2' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Remaining EMI Amount:</span>
+                        <span class="value">₹{{ emi.remainingEmiAmount | number: '1.2-2' }}</span>
+                    </div>
+                    <div class="detail-row penalty" *ngIf="emi.penaltyAmount > 0">
+                        <span class="label">Penalty:</span>
+                        <span class="value">₹{{ emi.penaltyAmount | number: '1.2-2' }}</span>
+                    </div>
+                </div>
+
+                <div class="total-row">
+                    <span class="label">Total Amount to Pay:</span>
+                    <span class="value">₹{{ totalAmount | number: '1.2-2' }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Remaining Balance After Payment:</span>
+                    <span class="value">₹{{ emi.principalRemainingAfterPayment | number: '1.2-2' }}</span>
+                </div>
+            </div>
+
+            <div class="messages">
+                <div class="success-message" *ngIf="successMessage">
+                    {{ successMessage }}
+                </div>
+                <div class="error-message" *ngIf="errorMessage">
+                    {{ errorMessage }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button class="btn btn-cancel" (click)="onCancel()" [disabled]="isProcessing">
+                Cancel
+            </button>
+            <button class="btn btn-pay" (click)="onPay()" [disabled]="isProcessing">
+                <span *ngIf="!isProcessing">Pay ₹{{ totalAmount | number: '1.2-2' }}</span>
+                <span *ngIf="isProcessing">Processing...</span>
+            </button>
+        </div>
+    </div>
+</div>

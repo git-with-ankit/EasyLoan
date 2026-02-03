@@ -57,6 +57,7 @@ namespace EasyLoan.Business.Services
             var managers = await _employeeRepo.GetAllWithDetailsAsync();
 
             var assignedEmployeeId = managers
+                    .Where(m => m.Role == EmployeeRole.Manager)
                     .OrderBy(m => m.AssignedLoanApplications.Count)
                     .Select(m => m.Id)
                     .FirstOrDefault();
@@ -203,7 +204,8 @@ namespace EasyLoan.Business.Services
                 PanNumber = customer.PanNumber,
                 LoanType = loanType.Name,
                 RequestedAmount = application.RequestedAmount,
-                AppprovedAmount = application.ApprovedAmount,
+                RequestedTenureInMonths = application.RequestedTenureInMonths,
+                ApprovedAmount = application.ApprovedAmount,
                 InterestRate = loanType.InterestRate,
                 Status = application.Status,
                 ManagerComments = application.ManagerComments,
@@ -244,7 +246,7 @@ namespace EasyLoan.Business.Services
                 LoanType = application.LoanType.Name,
                 RequestedAmount = application.RequestedAmount,
                 InterestRate = application.LoanType.InterestRate,
-                AppprovedAmount = application.ApprovedAmount,
+                ApprovedAmount = application.ApprovedAmount,
                 AssignedEmployeeId = application.AssignedEmployeeId,
                 RequestedTenureInMonths = application.RequestedTenureInMonths,
                 Status = application.Status,
@@ -323,8 +325,9 @@ namespace EasyLoan.Business.Services
         {
             var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
 
+            // Return empty list if no applications found
             if (!applications.Any())
-                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+                return new List<LoanApplicationsResponseDto>();
 
             return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsResponseDto
             {
@@ -342,8 +345,9 @@ namespace EasyLoan.Business.Services
 
             var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
 
+            // Return empty list if no applications found
             if (!applications.Any())
-                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+                return new List<LoanApplicationsResponseDto>();
 
             return applications.Where(a => a.AssignedEmployeeId == managerId && a.Status == status).
                 Select(a => new LoanApplicationsResponseDto
@@ -361,8 +365,9 @@ namespace EasyLoan.Business.Services
         {
             var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId);
                 
+            // Return empty list if no applications found
             if(!applications.Any())
-                throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
+                return new List<LoanApplicationsResponseDto>();
 
             if (applications.Any(a => a.CustomerId != customerId))
                 throw new ForbiddenException(ErrorMessages.AccessDenied);

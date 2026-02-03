@@ -13,6 +13,6 @@ namespace EasyLoan.Business.Interfaces
         Task<LoanPaymentResponseDto> MakePaymentAsync(Guid customerId,string loanNumber, MakeLoanPaymentRequestDto dto);
         Task<IEnumerable<LoanPaymentHistoryResponseDto>> GetPaymentsHistoryAsync(Guid customerId, string loanNumber);
         Task<IEnumerable<DueEmisResponseDto>> GetDueEmisAsync(Guid customerId, string loanNumber, EmiDueStatus status);
-        Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status);
+        Task<IEnumerable<LoanEmiGroupResponseDto>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status);
     }
 }

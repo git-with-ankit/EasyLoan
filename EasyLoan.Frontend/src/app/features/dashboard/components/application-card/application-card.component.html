@@ -1,0 +1,31 @@
+<div class="application-card">
+    <div class="card-header">
+        <h3 class="application-number">{{ application.applicationNumber }}</h3>
+        <span class="status-badge" [ngClass]="getStatusClass()">{{ application.status }}</span>
+    </div>
+
+    <div class="card-body">
+        <div class="info-row">
+            <span class="label">Loan Type:</span>
+            <span class="value">{{ application.loanTypeName }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Requested Amount:</span>
+            <span class="value">₹{{ application.requestedAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Tenure:</span>
+            <span class="value">{{ application.tenureInMonths }} months</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Applied On:</span>
+            <span class="value">{{ application.createdDate | date:'mediumDate' }}</span>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button class="view-details-btn" (click)="onViewDetails()">
+            View Details
+        </button>
+    </div>
+</div>

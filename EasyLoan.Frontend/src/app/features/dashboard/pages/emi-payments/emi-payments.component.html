@@ -1,0 +1,59 @@
+<div class="emi-payments-container">
+    <div class="page-header">
+        <h2>Overdue EMIs</h2>
+        <p class="subtitle">Manage and pay your overdue EMI payments</p>
+    </div>
+
+    @if (isLoading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your EMI payments...</p>
+    </div>
+    } @else if (errorMessage()) {
+    <div class="error-state">
+        <p class="error-message">{{ errorMessage() }}</p>
+        <button class="retry-btn" (click)="loadDueEmis()">Retry</button>
+    </div>
+    } @else if (emisByLoan().length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3>All Caught Up!</h3>
+        <p>You have no overdue EMI payments at the moment.</p>
+    </div>
+    } @else {
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-label">Total Overdue EMIs</div>
+            <div class="summary-value">{{ totalDueEmis }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Amount Due</div>
+            <div class="summary-value">₹{{ totalAmountDue | number:'1.2-2' }}</div>
+        </div>
+    </div>
+
+    <div class="loans-list">
+        @for (loanGroup of emisByLoan(); track loanGroup.loanNumber) {
+        <div class="loan-card" (click)="onLoanClick(loanGroup.loanNumber)">
+            <div class="loan-card-header">
+                <h3 class="loan-number">{{ loanGroup.loanNumber }}</h3>
+                <span class="overdue-count">{{ loanGroup.emis.length }} overdue EMI{{ loanGroup.emis.length > 1 ? 's' :
+                    '' }}</span>
+            </div>
+            <div class="loan-card-body">
+                <div class="loan-info">
+                    <span class="label">Total Amount Due:</span>
+                    <span class="amount">₹{{ getLoanTotalDue(loanGroup) | number:'1.2-2' }}</span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    }
+
+    @if (selectedLoanNumber()) {
+    <app-loan-details-card [loanNumber]="selectedLoanNumber()!" (close)="onCloseLoanDetails()"
+        (paymentSuccess)="onPaymentSuccess()">
+    </app-loan-details-card>
+    }
+</div>

@@ -1,0 +1,23 @@
+<div class="loan-card">
+    <div class="card-header">
+        <h3 class="loan-number">{{ loan.loanNumber }}</h3>
+        <span class="status-badge" [ngClass]="getStatusClass()">{{ loan.status }}</span>
+    </div>
+
+    <div class="card-body">
+        <div class="info-row">
+            <span class="label">Principal Remaining:</span>
+            <span class="value">₹{{ loan.principalRemaining | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Interest Rate:</span>
+            <span class="value">{{ loan.interestRate }}%</span>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <button class="view-details-btn" (click)="onViewDetails()">
+            View Details
+        </button>
+    </div>
+</div>

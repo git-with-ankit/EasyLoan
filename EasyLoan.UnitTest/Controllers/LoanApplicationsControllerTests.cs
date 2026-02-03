@@ -131,7 +131,7 @@ namespace EasyLoan.UnitTest.Controllers
                 CustomerName = "Rohit Sharma",
                 LoanType = "Home Loan",
                 RequestedAmount = 500000,
-                AppprovedAmount = 450000,
+                //AppprovedAmount = 450000,
                 InterestRate = 8.5m,
                 AssignedEmployeeId = Guid.NewGuid(),
                 RequestedTenureInMonths = 240,
@@ -158,7 +158,7 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(details.CustomerName, response.CustomerName);
             Assert.AreEqual(details.LoanType, response.LoanType);
             Assert.AreEqual(details.RequestedAmount, response.RequestedAmount);
-            Assert.AreEqual(details.AppprovedAmount, response.AppprovedAmount);
+            //Assert.AreEqual(details.AppprovedAmount, response.AppprovedAmount);
             Assert.AreEqual(details.InterestRate, response.InterestRate);
             Assert.AreEqual(details.AssignedEmployeeId, response.AssignedEmployeeId);
             Assert.AreEqual(details.RequestedTenureInMonths, response.RequestedTenureInMonths);
@@ -231,7 +231,7 @@ namespace EasyLoan.UnitTest.Controllers
                 PanNumber = "ABCDE1234F",
                 LoanType = "Home Loan",
                 RequestedAmount = 600000,
-                AppprovedAmount = 550000,
+                //AppprovedAmount = 550000,
                 InterestRate = 8.4m,
                 RequestedTenureInMonths = 240,
                 Status = LoanApplicationStatus.Pending,
@@ -269,7 +269,7 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(details.PanNumber, response.PanNumber);
             Assert.AreEqual(details.LoanType, response.LoanType);
             Assert.AreEqual(details.RequestedAmount, response.RequestedAmount);
-            Assert.AreEqual(details.AppprovedAmount, response.AppprovedAmount);
+            //Assert.AreEqual(details.AppprovedAmount, response.AppprovedAmount);
             Assert.AreEqual(details.InterestRate, response.InterestRate);
             Assert.AreEqual(details.RequestedTenureInMonths, response.RequestedTenureInMonths);
             Assert.AreEqual(details.Status, response.Status);

@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.Customer;
+﻿using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
 using System;
 using System.Collections.Generic;
@@ -14,5 +15,6 @@ namespace EasyLoan.Business.Interfaces
         Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto);
         Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto);
         Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto);
+        Task<string> LoginAsync(LoginRequestDto dto);
     }
 }

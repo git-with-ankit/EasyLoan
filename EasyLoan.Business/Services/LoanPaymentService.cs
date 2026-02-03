@@ -337,23 +337,36 @@ namespace EasyLoan.Business.Services
 
         //    return response;
         //}
-        public async Task<IEnumerable<IEnumerable<DueEmisResponseDto>>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
+        public async Task<IEnumerable<LoanEmiGroupResponseDto>> GetAllDueEmisAsync(Guid customerId, EmiDueStatus status)
         {
             var customerLoans = await _loanRepo.GetLoansByCustomerIdWithDetailsAsync(customerId);
 
+            // Return empty array if customer has no loans
             if (!customerLoans.Any())
-                throw new NotFoundException(ErrorMessages.LoanNotFound);
+                return new List<LoanEmiGroupResponseDto>();
 
             var activeLoans = customerLoans.Where(l => l.Status == LoanStatus.Active);
 
-            var response = new List<IEnumerable<DueEmisResponseDto>>();
+            // Return empty array if customer has no active loans
+            if (!activeLoans.Any())
+                return new List<LoanEmiGroupResponseDto>();
+
+            var response = new List<LoanEmiGroupResponseDto>();
 
             foreach (var loan in activeLoans)
             {
                 var loanNumber = loan.LoanNumber;
-
-                var emi = await GetDueEmisAsync(customerId, loanNumber, status);
-                response.Add(emi);
+                var emis = await GetDueEmisAsync(customerId, loanNumber, status);
+                
+                // Only include loans that have EMIs matching the status
+                if (emis.Any())
+                {
+                    response.Add(new LoanEmiGroupResponseDto
+                    {
+                        LoanNumber = loanNumber,
+                        Emis = emis
+                    });
+                }
             }
 
             return response;            
@@ -384,7 +397,7 @@ namespace EasyLoan.Business.Services
             if (!unpaidEmis.Any())
                 throw new BusinessRuleViolationException("All EMIs are already paid.");
 
-            var totalOutstanding = unpaidEmis.Sum(e => e.RemainingAmount);
+            var totalOutstanding = unpaidEmis.Sum(e => e.RemainingAmount + e.PenaltyAmount);
 
             if (dto.Amount > totalOutstanding)
             {
@@ -467,22 +480,37 @@ namespace EasyLoan.Business.Services
                 ApplyPenaltyIfOverdue(emi);
 
                 var penaltyPaid = Math.Min(paymentAmount, emi.PenaltyAmount);
+                emi.PaidPenaltyAmount += penaltyPaid;
                 emi.PenaltyAmount -= penaltyPaid;
                 paymentAmount -= penaltyPaid;
 
+                // Pay interest second
                 var interestPaid = Math.Min(paymentAmount, emi.InterestComponent);
+                emi.InterestComponent -= interestPaid;
                 paymentAmount -= interestPaid;
 
+                // Pay principal last
                 var principalPaid = Math.Min(paymentAmount, emi.PrincipalComponent);
+                emi.PrincipalComponent -= principalPaid;
                 paymentAmount -= principalPaid;
 
+                // Update remaining amount (penalty is NOT part of RemainingAmount, only interest + principal)
                 emi.RemainingAmount -= (interestPaid + principalPaid);
                 loan.PrincipalRemaining -= principalPaid;
 
-                if (emi.RemainingAmount <= 0)
+
+                var interestCleared = emi.InterestComponent == 0m;
+                var principalCleared = emi.PrincipalComponent == 0m;
+                var penaltyCleared = emi.PenaltyAmount == 0m;
+                var roundingResidue = emi.RemainingAmount <= 0.01m;
+
+                if (interestCleared && principalCleared && penaltyCleared && roundingResidue)
                 {
                     emi.RemainingAmount = 0;
                     emi.PaidDate = DateTime.UtcNow;
+
+                    if (paymentAmount <= 0.01m)
+                        paymentAmount = 0;
                 }
             }
 
@@ -626,7 +654,7 @@ namespace EasyLoan.Business.Services
 
             if (today <= emi.DueDate.Date)
             {
-                emi.PenaltyAmount = 0;
+                //emi.PenaltyAmount = 0;
                 return;
             }
 
@@ -634,10 +662,7 @@ namespace EasyLoan.Business.Services
 
             const decimal monthlyPenaltyRate = 0.02m; // 2% per month
 
-            emi.PenaltyAmount = Math.Round(
-                emi.RemainingAmount * monthlyPenaltyRate * monthsOverdue,
-                2
-            );
+            emi.PenaltyAmount = Math.Max(0,Math.Round((emi.RemainingAmount * monthlyPenaltyRate * monthsOverdue) - emi.PaidPenaltyAmount,2));
         }
         private static int GetElapsedMonths(DateTime from, DateTime to)
         {

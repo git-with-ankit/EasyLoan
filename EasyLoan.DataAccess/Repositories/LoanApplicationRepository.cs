@@ -25,7 +25,7 @@ namespace EasyLoan.DataAccess.Repositories
 
         public async Task<LoanApplication?> GetByApplicationNumberWithDetailsAsync(string applicationNumber)
         {
-            return await _context.LoanApplications.Include(a => a.LoanType).Include(a => a.Customer).FirstOrDefaultAsync(a => a.ApplicationNumber == applicationNumber);
+            return await _context.LoanApplications.Include(a => a.LoanType).Include(a => a.Customer).ThenInclude(c => c.Loans).FirstOrDefaultAsync(a => a.ApplicationNumber == applicationNumber);
             //.Include(a => a.ApprovedByEmployee).Include(a => a.LoanDetails)
         }
 

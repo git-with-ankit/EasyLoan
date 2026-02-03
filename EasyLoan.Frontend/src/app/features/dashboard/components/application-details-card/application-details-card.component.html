@@ -1,0 +1,62 @@
+<div class="modal-overlay" (click)="onClose()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Application Details</h2>
+            <button class="close-btn" (click)="onClose()">×</button>
+        </div>
+
+        @if (isLoading()) {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading application details...</p>
+        </div>
+        } @else if (errorMessage()) {
+        <div class="error-message">{{ errorMessage() }}</div>
+        } @else if (applicationDetails()) {
+        <div class="modal-body">
+            <div class="status-banner" [ngClass]="getStatusClass()">
+                <span class="status-label">Status:</span>
+                <span class="status-value">{{ applicationDetails()!.status }}</span>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="label">Application Number:</span>
+                    <span class="value">{{ applicationDetails()!.applicationNumber }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Customer Name:</span>
+                    <span class="value">{{ applicationDetails()!.customerName }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Loan Type:</span>
+                    <span class="value">{{ applicationDetails()!.loanType }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Requested Amount:</span>
+                    <span class="value">₹{{ applicationDetails()!.requestedAmount | number:'1.2-2' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Approved Amount:</span>
+                    <span class="value">₹{{ (applicationDetails()!.approvedAmount || 0) | number:'1.2-2' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Interest Rate:</span>
+                    <span class="value">{{ applicationDetails()!.interestRate }}%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Requested Tenure:</span>
+                    <span class="value">{{ applicationDetails()!.requestedTenureInMonths }} months</span>
+                </div>
+            </div>
+
+            @if (applicationDetails()!.managerComments) {
+            <div class="comments-section">
+                <h3>Manager Comments</h3>
+                <p class="comments">{{ applicationDetails()!.managerComments }}</p>
+            </div>
+            }
+        </div>
+        }
+    </div>
+</div>

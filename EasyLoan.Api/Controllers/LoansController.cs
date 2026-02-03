@@ -66,13 +66,13 @@ namespace EasyLoan.Api.Controllers
 
         [Authorize(Roles = "Customer")]
         [HttpGet("emis")]
-        [ProducesResponseType(typeof(DueEmisResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<LoanEmiGroupResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<ActionResult<IEnumerable<IEnumerable<DueEmisResponseDto>>>> GetAllDueEmisAsync(EmiDueStatus status)
+        public async Task<ActionResult<IEnumerable<LoanEmiGroupResponseDto>>> GetAllDueEmisAsync(EmiDueStatus status)
         {
             var customerId = User.GetUserId();
             var payments = await _paymentService.GetAllDueEmisAsync(customerId, status);

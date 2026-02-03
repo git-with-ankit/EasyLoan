@@ -1,0 +1,150 @@
+<div class="create-application-container">
+    <div class="page-header">
+        <h2>Apply for Loan</h2>
+        <p class="subtitle">Fill in the details to apply for a new loan</p>
+    </div>
+
+    @if (successMessage()) {
+    <div class="success-banner">
+        <div class="success-icon">✓</div>
+        <div class="success-content">
+            <h3>Success!</h3>
+            <p>{{ successMessage() }}</p>
+            <p class="redirect-message">Redirecting to applications...</p>
+        </div>
+    </div>
+    } @else {
+    @if (isLoadingLoanTypes()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading loan types...</p>
+    </div>
+    } @else if (loanTypes().length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No Loan Types Available</h3>
+        <p>There are currently no loan types available for application.</p>
+    </div>
+    } @else {
+    <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" class="application-form">
+        <!-- Loan Type Selection -->
+        <div class="form-section">
+            <h3>Loan Type</h3>
+
+            <div class="form-group">
+                <label for="loanTypeId">Select Loan Type *</label>
+                <select id="loanTypeId" formControlName="loanTypeId" (change)="onLoanTypeChange($event)"
+                    class="form-control" [class.invalid]="loanTypeId?.invalid && loanTypeId?.touched">
+                    <option value="">-- Select a loan type --</option>
+                    @for (loanType of loanTypes(); track loanType.id) {
+                    <option [value]="loanType.id">{{ loanType.name }}</option>
+                    }
+                </select>
+                @if (loanTypeId?.invalid && loanTypeId?.touched) {
+                <span class="error-text">Please select a loan type</span>
+                }
+            </div>
+
+            @if (selectedLoanType()) {
+            <div class="loan-type-info">
+                <div class="info-item">
+                    <span class="label">Interest Rate:</span>
+                    <span class="value">{{ selectedLoanType()!.interestRate }}%</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Minimum Amount:</span>
+                    <span class="value">₹{{ selectedLoanType()!.minAmount | number:'1.2-2' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Maximum Tenure:</span>
+                    <span class="value">{{ selectedLoanType()!.maxTenureInMonths }} months</span>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Loan Details -->
+        <div class="form-section">
+            <h3>Loan Details</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="requestedAmount">Requested Amount (₹) *</label>
+                    <input type="number" id="requestedAmount" formControlName="requestedAmount" class="form-control"
+                        [class.invalid]="requestedAmount?.invalid && requestedAmount?.touched"
+                        placeholder="Enter amount" min="0" step="1000">
+                    @if (requestedAmount?.invalid && requestedAmount?.touched) {
+                    <span class="error-text">
+                        @if (requestedAmount?.errors?.['required']) {
+                        Amount is required
+                        } @else if (requestedAmount?.errors?.['min']) {
+                        Amount must be at least ₹{{ selectedLoanType()?.minAmount || 1 | number:'1.2-2' }}
+                        }
+                    </span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="requestedTenureInMonths">Tenure (Months) *</label>
+                    <input type="number" id="requestedTenureInMonths" formControlName="requestedTenureInMonths"
+                        class="form-control"
+                        [class.invalid]="requestedTenureInMonths?.invalid && requestedTenureInMonths?.touched"
+                        placeholder="Enter tenure" min="1">
+                    @if (requestedTenureInMonths?.invalid && requestedTenureInMonths?.touched) {
+                    <span class="error-text">
+                        @if (requestedTenureInMonths?.errors?.['required']) {
+                        Tenure is required
+                        } @else if (requestedTenureInMonths?.errors?.['min']) {
+                        Tenure must be at least 1 month
+                        } @else if (requestedTenureInMonths?.errors?.['max']) {
+                        Tenure cannot exceed {{ selectedLoanType()?.maxTenureInMonths }} months
+                        }
+                    </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage()) {
+        <div class="error-message">
+            {{ errorMessage() }}
+        </div>
+        }
+
+        <!-- Preview EMI Button -->
+        <div class="form-actions">
+            <button type="button" class="preview-btn" [disabled]="applicationForm.invalid || isLoadingEmiPlan()"
+                (click)="onPreviewEmi()">
+                @if (isLoadingEmiPlan()) {
+                <span>Generating EMI Plan...</span>
+                } @else {
+                <span>Preview EMI Plan</span>
+                }
+            </button>
+        </div>
+
+        <!-- EMI Plan Preview -->
+        @if (emiPlan().length > 0) {
+        <app-emi-plan-preview [emiPlan]="emiPlan()" [loanType]="selectedLoanType()!"
+            [requestedAmount]="requestedAmount?.value || 0" [tenure]="requestedTenureInMonths?.value || 0">
+        </app-emi-plan-preview>
+
+        <!-- Submit Button -->
+        <div class="form-actions submit-section">
+            <button type="button" class="reset-btn" (click)="resetForm()">
+                Reset
+            </button>
+            <button type="submit" class="submit-btn" [disabled]="applicationForm.invalid || isSubmitting()">
+                @if (isSubmitting()) {
+                <span>Submitting...</span>
+                } @else {
+                <span>Submit Application</span>
+                }
+            </button>
+        </div>
+        }
+    </form>
+    }
+    }
+</div>

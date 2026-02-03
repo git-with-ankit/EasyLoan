@@ -22,6 +22,20 @@ namespace EasyLoan.Api
             builder.Services.AddDbContextPool<EasyLoanDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("EasyLoanDBConnection"))
             );
+            
+            // Add CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngularApp", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+
+                });
+            });
+
             // Add services to the container.
 
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
@@ -189,6 +203,8 @@ namespace EasyLoan.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowAngularApp");
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
