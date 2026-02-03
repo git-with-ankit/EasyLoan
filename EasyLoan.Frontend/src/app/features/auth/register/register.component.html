@@ -1,7 +1,7 @@
 <div class="register-container">
   <mat-card class="auth-card">
     <mat-card-header>
-      <mat-card-title>Register for EasyLoan</mat-card-title>
+      <mat-card-title>{{ isManagerRegistration ? 'Create Manager Account' : 'Register for EasyLoan' }}</mat-card-title>
     </mat-card-header>
 
     <mat-card-content>
@@ -60,8 +60,8 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- Date of Birth -->
-        <mat-form-field appearance="outline" class="full-width">
+        <!-- Date of Birth (Customer only) -->
+        <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
           <mat-label>Date of Birth</mat-label>
           <mat-icon matPrefix>cake</mat-icon>
           <input matInput [matDatepicker]="picker" formControlName="dateOfBirth" [max]="maxDate" [min]="minDate"
@@ -74,11 +74,11 @@
           <mat-hint>You must be at least 18 years old</mat-hint>
         </mat-form-field>
 
-        <!-- Financial Information Section -->
-        <h3 class="section-title">Financial Information</h3>
+        <!-- Financial Information Section (Customer only) -->
+        <h3 *ngIf="!isManagerRegistration" class="section-title">Financial Information</h3>
 
-        <!-- Annual Salary -->
-        <mat-form-field appearance="outline" class="full-width">
+        <!-- Annual Salary (Customer only) -->
+        <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
           <mat-label>Annual Salary</mat-label>
           <mat-icon matPrefix>attach_money</mat-icon>
           <input matInput type="number" formControlName="annualSalary" placeholder="Enter your annual salary" />
@@ -90,8 +90,8 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- PAN Number -->
-        <mat-form-field appearance="outline" class="full-width">
+        <!-- PAN Number (Customer only) -->
+        <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
           <mat-label>PAN Number</mat-label>
           <mat-icon matPrefix>credit_card</mat-icon>
           <input matInput formControlName="panNumber" placeholder="ABCDE1234F" style="text-transform: uppercase;" />
@@ -156,12 +156,12 @@
         <!-- Submit Button -->
         <button mat-raised-button color="primary" class="full-width submit-btn" type="submit"
           [disabled]="form.invalid || isLoading">
-          <span *ngIf="!isLoading">Register</span>
+          <span *ngIf="!isLoading">{{ isManagerRegistration ? 'Create Manager' : 'Register' }}</span>
           <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
         </button>
 
-        <!-- Login Link -->
-        <div class="login-link">
+        <!-- Login Link (Customer only) -->
+        <div *ngIf="!isManagerRegistration" class="login-link">
           <p>Already have an account? <a routerLink="/auth/login">Login here</a></p>
         </div>
       </form>

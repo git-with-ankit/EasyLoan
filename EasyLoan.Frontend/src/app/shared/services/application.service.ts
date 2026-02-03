@@ -7,6 +7,11 @@ import {
     LoanApplicationStatus
 } from '../models/application.models';
 import { CreateApplicationRequest, CreateApplicationResponse } from '../models/loan-type.models';
+import {
+    LoanApplicationDetailsWithCustomerData,
+    ReviewLoanApplicationRequest,
+    LoanApplicationReviewResponse
+} from '../models/review.models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -40,5 +45,24 @@ export class ApplicationService {
      */
     createApplication(request: CreateApplicationRequest): Observable<CreateApplicationResponse> {
         return this.http.post<CreateApplicationResponse>(this.baseUrl, request);
+    }
+
+    /**
+     * Get application details with customer data for review (Manager only)
+     * @param applicationNumber - The application number
+     * @returns Observable of application details with customer data
+     */
+    getApplicationDetailsForReview(applicationNumber: string): Observable<LoanApplicationDetailsWithCustomerData> {
+        return this.http.get<LoanApplicationDetailsWithCustomerData>(`${this.baseUrl}/${applicationNumber}/review`);
+    }
+
+    /**
+     * Submit a review for a loan application (Manager only)
+     * @param applicationNumber - The application number
+     * @param request - Review data (status and remarks)
+     * @returns Observable of review response
+     */
+    submitReview(applicationNumber: string, request: ReviewLoanApplicationRequest): Observable<LoanApplicationReviewResponse> {
+        return this.http.post<LoanApplicationReviewResponse>(`${this.baseUrl}/${applicationNumber}/review`, request);
     }
 }

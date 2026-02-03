@@ -81,11 +81,24 @@ export class LoginComponent implements OnInit {
     login$.subscribe({
       next: () => {
         this.isLoading = false;
-        // Navigate based on role or login type
-        if (this.loginType === 'Customer') {
-          this.router.navigate(['/customer/dashboard']);
+
+        // Get the actual user role from the token
+        const user = this.auth.getCurrentUser();
+
+        if (user) {
+          // Navigate based on the actual role
+          if (user.role === 'Customer') {
+            this.router.navigate(['/customer/dashboard']);
+          } else if (user.role === 'Manager') {
+            this.router.navigate(['/employee/dashboard']);
+          } else if (user.role === 'Admin') {
+            this.router.navigate(['/admin/dashboard']);
+          } else {
+            // Fallback
+            this.router.navigate(['/unauthorized']);
+          }
         } else {
-          this.router.navigate(['/employee/dashboard']);
+          this.errorMessage = 'Failed to retrieve user information';
         }
       },
       error: (error: Error) => {

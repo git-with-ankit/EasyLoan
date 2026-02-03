@@ -7,7 +7,7 @@ import {
   AbstractControl,
   ValidationErrors
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -19,7 +19,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AuthService } from '../auth.service';
 
-type RegisterRole = 'Customer';
+type RegisterRole = 'Customer' | 'Manager';
 
 @Component({
   standalone: true,
@@ -49,6 +49,8 @@ export class RegisterComponent implements OnInit {
   hideConfirmPassword = true;
   maxDate: Date;
   minDate: Date;
+  registrationType: RegisterRole = 'Customer';
+  isManagerRegistration = false;
 
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
@@ -58,7 +60,8 @@ export class RegisterComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     // Set date constraints (18-150 years old)
     const today = new Date();
@@ -67,19 +70,38 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      role: ['Customer', Validators.required],
-      name: ['', [Validators.required, Validators.maxLength(100)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-      phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
-      dateOfBirth: ['', Validators.required],
-      annualSalary: ['', [Validators.required, Validators.min(0)]],
-      panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
-      password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
-      confirmPassword: ['', Validators.required]
-    }, {
-      validators: this.passwordMatchValidator
-    });
+    // Check if this is manager registration based on route
+    this.isManagerRegistration = this.router.url.includes('/admin/dashboard/create-manager');
+    this.registrationType = this.isManagerRegistration ? 'Manager' : 'Customer';
+
+    if (this.isManagerRegistration) {
+      // Simplified form for manager registration
+      this.form = this.fb.group({
+        role: ['Manager', Validators.required],
+        name: ['', [Validators.required, Validators.maxLength(100)]],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+        phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
+        password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
+        confirmPassword: ['', Validators.required]
+      }, {
+        validators: this.passwordMatchValidator
+      });
+    } else {
+      // Full form for customer registration
+      this.form = this.fb.group({
+        role: ['Customer', Validators.required],
+        name: ['', [Validators.required, Validators.maxLength(100)]],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+        phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
+        dateOfBirth: ['', Validators.required],
+        annualSalary: ['', [Validators.required, Validators.min(0)]],
+        panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
+        password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
+        confirmPassword: ['', Validators.required]
+      }, {
+        validators: this.passwordMatchValidator
+      });
+    }
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -127,29 +149,55 @@ export class RegisterComponent implements OnInit {
     this.successMessage = '';
 
     const formValue = this.form.value;
-    const registerDto = {
-      name: formValue.name,
-      email: formValue.email,
-      phoneNumber: formValue.phoneNumber,
-      dateOfBirth: new Date(formValue.dateOfBirth).toISOString(),
-      annualSalary: parseFloat(formValue.annualSalary),
-      panNumber: formValue.panNumber.toUpperCase(),
-      password: formValue.password
-    };
 
-    this.auth.registerCustomer(registerDto).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.successMessage = 'Registration successful! Redirecting to login...';
-        setTimeout(() => {
-          this.router.navigate(['/auth/login']);
-        }, 2000);
-      },
-      error: (error: Error) => {
-        this.isLoading = false;
-        this.errorMessage = error.message || 'Registration failed. Please try again.';
-      }
-    });
+    if (this.isManagerRegistration) {
+      // Manager registration
+      const registerDto = {
+        name: formValue.name,
+        email: formValue.email,
+        phoneNumber: formValue.phoneNumber,
+        password: formValue.password
+      };
+
+      this.auth.registerManager(registerDto).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.successMessage = 'Manager created successfully!';
+          setTimeout(() => {
+            this.router.navigate(['/admin/dashboard/applications']);
+          }, 2000);
+        },
+        error: (error: Error) => {
+          this.isLoading = false;
+          this.errorMessage = error.message || 'Manager creation failed. Please try again.';
+        }
+      });
+    } else {
+      // Customer registration
+      const registerDto = {
+        name: formValue.name,
+        email: formValue.email,
+        phoneNumber: formValue.phoneNumber,
+        dateOfBirth: new Date(formValue.dateOfBirth).toISOString(),
+        annualSalary: parseFloat(formValue.annualSalary),
+        panNumber: formValue.panNumber.toUpperCase(),
+        password: formValue.password
+      };
+
+      this.auth.registerCustomer(registerDto).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.successMessage = 'Registration successful! Redirecting to login...';
+          setTimeout(() => {
+            this.router.navigate(['/auth/login']);
+          }, 2000);
+        },
+        error: (error: Error) => {
+          this.isLoading = false;
+          this.errorMessage = error.message || 'Registration failed. Please try again.';
+        }
+      });
+    }
   }
 
   togglePasswordVisibility(): void {
