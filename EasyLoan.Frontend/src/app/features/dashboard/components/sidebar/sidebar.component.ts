@@ -17,6 +17,7 @@ export class SidebarComponent {
         // Handle Admin role
         if (this.role === 'Admin') {
             return [
+                { path: '/admin/dashboard/overview', label: 'Dashboard', icon: '📊' },
                 { path: '/admin/dashboard/loan-types', label: 'Loan Types', icon: '💼' },
                 { path: '/admin/dashboard/assigned-applications', label: 'All Applications', icon: '📂' },
                 { path: '/admin/dashboard/create-manager', label: 'Create Manager', icon: '👥' }

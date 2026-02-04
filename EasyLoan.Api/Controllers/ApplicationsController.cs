@@ -78,7 +78,7 @@ namespace EasyLoan.Api.Controllers
             var reviewedApplication = await _service.UpdateReviewAsync(applicationNumber, managerId, request);
             return Ok(reviewedApplication);
         }
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         [HttpGet("{applicationNumber}/review")]
         [ProducesResponseType(typeof(LoanApplicationDetailsWithCustomerDataResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -87,8 +87,9 @@ namespace EasyLoan.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<LoanApplicationDetailsWithCustomerDataResponseDto>> GetApplicationDetailsForReview(string applicationNumber )
         {
-            var managerId = User.GetUserId();
-            var applicationDetails = await _service.GetApplicationDetailsForReview(applicationNumber, managerId);
+            var userId = User.GetUserId();
+            var role = User.GetRole();
+            var applicationDetails = await _service.GetApplicationDetailsForReview(applicationNumber, userId, role);
             return Ok(applicationDetails);
         }
     }

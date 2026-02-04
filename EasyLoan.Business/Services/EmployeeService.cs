@@ -64,6 +64,30 @@ namespace EasyLoan.Business.Services
             };
         }
 
+        public async Task<AdminDashboardResponseDto> GetAdminDashboardAsync()
+        {
+            var loanTypes = await _loanTypeRepo.GetAllAsync();
+
+            var applications = await _loanApplicationRepo.GetAllAsync();
+
+            var managers = await _employeeRepo.GetManagersAsync();
+
+            return new AdminDashboardResponseDto
+            {
+                NumberOfLoanTypes = loanTypes.Count(),
+                NumberOfPendingApplications =
+                    applications.Count(a => a.Status == LoanApplicationStatus.Pending),
+
+                NumberOfApprovedApplications =
+                    applications.Count(a => a.Status == LoanApplicationStatus.Approved),
+
+                NumberOfRejectedApplications =
+                    applications.Count(a => a.Status == LoanApplicationStatus.Rejected),
+
+                NumberOfManagers = managers.Count()
+            };
+        }
+
         //public async Task<string> LoginAsync(EmployeeLoginRequestDto dto)
         //{
         //    var emp = await _employeeRepo.GetByEmailAsync(dto.Email)

@@ -26,7 +26,18 @@ export class HeaderComponent {
     }
 
     onProfile() {
-        this.router.navigate(['/customer/dashboard/profile']);
+        const user = this.tokenService.getCurrentUser();
+        console.log('Header - Current User:', user);
+        if (user) {
+            console.log('Header - Role:', user.role);
+
+            // Navigate based on role
+            if (user.role === 'Customer') {
+                this.router.navigate(['/customer/dashboard/profile']);
+            } else if (user.role === 'Manager' || user.role === 'Admin') {
+                this.router.navigate(['/employee/dashboard/profile']);
+            }
+        }
     }
 
     onSignout() {

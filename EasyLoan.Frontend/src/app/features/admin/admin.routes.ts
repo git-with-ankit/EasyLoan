@@ -15,8 +15,12 @@ export const ADMIN_ROUTES: Routes = [
         children: [
             {
                 path: '',
-                redirectTo: 'loan-types',
+                redirectTo: 'overview',
                 pathMatch: 'full'
+            },
+            {
+                path: 'overview',
+                loadComponent: () => import('../dashboard/pages/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
             },
             {
                 path: 'loan-types',

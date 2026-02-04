@@ -1,0 +1,58 @@
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back! Here's an overview of your system.</p>
+    </div>
+
+    <div *ngIf="loading()" class="loading">
+        <div class="spinner"></div>
+        <p>Loading dashboard...</p>
+    </div>
+
+    <div *ngIf="error() && !loading()" class="error">
+        <p>{{ error() }}</p>
+        <button class="btn-retry" (click)="loadDashboard()">Retry</button>
+    </div>
+
+    <div *ngIf="!loading() && !error() && dashboardData()" class="stats-grid">
+        <div class="stat-card loan-types">
+            <div class="stat-icon">💼</div>
+            <div class="stat-content">
+                <div class="stat-number">{{ dashboardData()!.numberOfLoanTypes }}</div>
+                <div class="stat-label">Loan Types</div>
+            </div>
+        </div>
+
+        <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <div class="stat-number">{{ dashboardData()!.numberOfPendingApplications }}</div>
+                <div class="stat-label">Pending Applications</div>
+            </div>
+        </div>
+
+        <div class="stat-card approved">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <div class="stat-number">{{ dashboardData()!.numberOfApprovedApplications }}</div>
+                <div class="stat-label">Approved Applications</div>
+            </div>
+        </div>
+
+        <div class="stat-card rejected">
+            <div class="stat-icon">❌</div>
+            <div class="stat-content">
+                <div class="stat-number">{{ dashboardData()!.numberOfRejectedApplications }}</div>
+                <div class="stat-label">Rejected Applications</div>
+            </div>
+        </div>
+
+        <div class="stat-card managers">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-number">{{ dashboardData()!.numberOfManagers }}</div>
+                <div class="stat-label">Total Managers</div>
+            </div>
+        </div>
+    </div>
+</div>

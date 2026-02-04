@@ -164,7 +164,7 @@ export class RegisterComponent implements OnInit {
           this.isLoading = false;
           this.successMessage = 'Manager created successfully!';
           setTimeout(() => {
-            this.router.navigate(['/admin/dashboard/applications']);
+            this.router.navigate(['/admin/dashboard/overview']);
           }, 2000);
         },
         error: (error: Error) => {

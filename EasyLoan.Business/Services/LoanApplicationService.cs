@@ -178,7 +178,7 @@ namespace EasyLoan.Business.Services
                 Status = application.Status
             };
         }
-        public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid managerId)
+        public async Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid userId, Role userRole)
         {
             if (!ApplicationNumberRegex.IsMatch(applicationNumber))
             {
@@ -187,7 +187,7 @@ namespace EasyLoan.Business.Services
             var application = await _loanApplicationrepo.GetByApplicationNumberWithDetailsAsync(applicationNumber)
                 ?? throw new NotFoundException(ErrorMessages.LoanApplicationNotFound);
 
-            if (application.AssignedEmployeeId != managerId)
+            if (application.AssignedEmployeeId != userId && userRole==Role.Manager)
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             var customer = application.Customer;

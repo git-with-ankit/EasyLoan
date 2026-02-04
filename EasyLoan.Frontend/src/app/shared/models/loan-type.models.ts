@@ -15,6 +15,19 @@ export interface EmiScheduleItem {
     principalRemainingAfterPayment: number;
 }
 
+export interface CreateLoanTypeRequest {
+    name: string;
+    interestRate: number;
+    minAmount: number;
+    maxTenureInMonths: number;
+}
+
+export interface UpdateLoanTypeRequest {
+    interestRate?: number;
+    minAmount?: number;
+    maxTenureInMonths?: number;
+}
+
 export interface CreateApplicationRequest {
     loanTypeId: string;
     requestedAmount: number;

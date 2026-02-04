@@ -1,1 +1,53 @@
-<p>loan-types-list works!</p>
+<div class="loan-types-container">
+    <div class="header">
+        <h1>Loan Types Management</h1>
+        <button class="btn-create" (click)="navigateToCreate()">
+            <span class="icon">+</span>
+            Create Loan Type
+        </button>
+    </div>
+
+    <div *ngIf="loading()" class="loading">
+        <div class="spinner"></div>
+        <p>Loading loan types...</p>
+    </div>
+
+    <div *ngIf="error() && !loading()" class="error">
+        <p>{{ error() }}</p>
+        <button class="btn-retry" (click)="loadLoanTypes()">Retry</button>
+    </div>
+
+    <div *ngIf="!loading() && !error()" class="loan-types-grid">
+        <ng-container *ngIf="loanTypes().length > 0">
+            <div *ngFor="let loanType of loanTypes()" class="loan-type-card">
+                <div class="card-header">
+                    <h3>{{ loanType.name }}</h3>
+                    <button class="btn-edit" (click)="navigateToEdit(loanType.id)">
+                        Edit
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="label">Interest Rate:</span>
+                        <span class="value">{{ loanType.interestRate }}%</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Minimum Amount:</span>
+                        <span class="value">₹{{ loanType.minAmount | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Maximum Tenure:</span>
+                        <span class="value">{{ loanType.maxTenureInMonths }} months</span>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <div *ngIf="loanTypes().length === 0" class="empty-state">
+            <p>No loan types found.</p>
+            <button class="btn-create" (click)="navigateToCreate()">
+                Create Your First Loan Type
+            </button>
+        </div>
+    </div>
+</div>

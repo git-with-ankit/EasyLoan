@@ -69,5 +69,14 @@ namespace EasyLoan.Api.Controllers
             var manager = await _authService.RegisterManagerAsync(request);
             return CreatedAtAction(nameof(GetProfile), new { }, manager);
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/dashboard")]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<AdminDashboardResponseDto>> AdminDashboard()
+        {
+            var response = await _employeeService.GetAdminDashboardAsync();
+            return Ok(response);
+        }
     }
 }

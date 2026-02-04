@@ -29,10 +29,18 @@ export class TokenService {
             const payload = token.split('.')[1];
             const decoded = JSON.parse(atob(payload));
 
+            // Get role from token - handle both string and array formats
+            let role = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
+            // If role is an array, take the first element
+            if (Array.isArray(role)) {
+                role = role[0];
+            }
+
             return {
                 id: decoded.sub || decoded.id || decoded.nameid,
                 email: decoded.email,
-                role: decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
+                role: role,
                 exp: decoded.exp
             };
         } catch (error) {
