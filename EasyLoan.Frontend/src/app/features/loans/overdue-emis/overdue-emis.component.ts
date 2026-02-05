@@ -1,8 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LoanService } from '../../../shared/services/loan.service';
+import { LoanService } from '../loan.service';
 import { LoanDetailsCardComponent } from '../loans-list/loan-details-card/loan-details-card.component';
-import { EmiDueStatus, LoanEmiGroup } from '../../../shared/models/loan.models';
+import { EmiDueStatus, LoanEmiGroup } from '../loan.models';
 
 @Component({
     selector: 'app-overdue-emis',

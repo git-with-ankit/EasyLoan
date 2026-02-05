@@ -1,11 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CustomerService } from '../../shared/services/customer.service';
-import { EmployeeService } from '../../shared/services/employee.service';
-import { TokenService } from '../../shared/services/token.service';
-import { CustomerProfile } from '../../shared/models/customer.models';
-import { EmployeeProfile } from '../../shared/models/employee.models';
+import { ProfileService, UserProfile, UpdateUserProfile } from './profile.service';
+import { UserService } from '../../services/user.service';
+import { CustomerProfile } from './customer-profile.models';
+import { EmployeeProfile } from './employee-profile.models';
 
 @Component({
     selector: 'app-profile',
@@ -15,7 +14,7 @@ import { EmployeeProfile } from '../../shared/models/employee.models';
     styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
-    profile = signal<CustomerProfile | EmployeeProfile | null>(null);
+    profile = signal<UserProfile | null>(null);
     isLoading = signal(false);
     isEditing = signal(false);
     isSaving = signal(false);
@@ -27,22 +26,15 @@ export class ProfileComponent implements OnInit {
     isEmployee = signal(false);
 
     constructor(
-        private customerService: CustomerService,
-        private employeeService: EmployeeService,
-        private tokenService: TokenService,
+        private profileService: ProfileService,
+        private userService: UserService,
         private fb: FormBuilder
     ) {
-        const user = this.tokenService.getCurrentUser();
-        console.log('Profile Component - Current User:', user);
+        const user = this.userService.currentUser();
         if (user) {
             this.userRole.set(user.role);
-            console.log('Profile Component - User Role:', user.role);
-
             this.isCustomer.set(user.role === 'Customer');
             this.isEmployee.set(user.role === 'Manager' || user.role === 'Admin');
-
-            console.log('Profile Component - isCustomer:', this.isCustomer());
-            console.log('Profile Component - isEmployee:', this.isEmployee());
         }
         this.initializeForm();
     }
@@ -70,38 +62,30 @@ export class ProfileComponent implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        if (this.isCustomer()) {
-            this.customerService.getProfile().subscribe({
-                next: (data: CustomerProfile) => {
-                    this.profile.set(data);
+        this.profileService.getProfile().subscribe({
+            next: (data: UserProfile) => {
+                this.profile.set(data);
+                if (this.isCustomer()) {
+                    const customerData = data as CustomerProfile;
                     this.profileForm.patchValue({
-                        name: data.name,
-                        phoneNumber: data.phoneNumber,
-                        annualSalary: data.annualSalary
+                        name: customerData.name,
+                        phoneNumber: customerData.phoneNumber,
+                        annualSalary: customerData.annualSalary
                     });
-                    this.isLoading.set(false);
-                },
-                error: (error: Error) => {
-                    this.errorMessage.set(error.message || 'Failed to load profile');
-                    this.isLoading.set(false);
-                }
-            });
-        } else {
-            this.employeeService.getProfile().subscribe({
-                next: (data: EmployeeProfile) => {
-                    this.profile.set(data);
+                } else {
+                    const employeeData = data as EmployeeProfile;
                     this.profileForm.patchValue({
-                        name: data.name,
-                        phoneNumber: data.phoneNumber
+                        name: employeeData.name,
+                        phoneNumber: employeeData.phoneNumber
                     });
-                    this.isLoading.set(false);
-                },
-                error: (error: Error) => {
-                    this.errorMessage.set(error.message || 'Failed to load profile');
-                    this.isLoading.set(false);
                 }
-            });
-        }
+                this.isLoading.set(false);
+            },
+            error: (error: Error) => {
+                this.errorMessage.set(error.message || 'Failed to load profile');
+                this.isLoading.set(false);
+            }
+        });
     }
 
     onEdit(): void {
@@ -144,35 +128,19 @@ export class ProfileComponent implements OnInit {
 
         const updateData = this.profileForm.value;
 
-        if (this.isCustomer()) {
-            this.customerService.updateProfile(updateData).subscribe({
-                next: (data: CustomerProfile) => {
-                    this.profile.set(data);
-                    this.isEditing.set(false);
-                    this.isSaving.set(false);
-                    this.successMessage.set('Profile updated successfully!');
-                    setTimeout(() => this.successMessage.set(''), 3000);
-                },
-                error: (error: Error) => {
-                    // this.errorMessage.set(error.error?.message || 'Failed to update profile');
-                    this.isSaving.set(false);
-                }
-            });
-        } else {
-            this.employeeService.updateProfile(updateData).subscribe({
-                next: (data: EmployeeProfile) => {
-                    this.profile.set(data);
-                    this.isEditing.set(false);
-                    this.isSaving.set(false);
-                    this.successMessage.set('Profile updated successfully!');
-                    setTimeout(() => this.successMessage.set(''), 3000);
-                },
-                error: (error: Error) => {
-                    // this.errorMessage.set(error.error?.message || 'Failed to update profile');
-                    this.isSaving.set(false);
-                }
-            });
-        }
+        this.profileService.updateProfile(updateData).subscribe({
+            next: (data: UserProfile) => {
+                this.profile.set(data);
+                this.isEditing.set(false);
+                this.isSaving.set(false);
+                this.successMessage.set('Profile updated successfully!');
+                setTimeout(() => this.successMessage.set(''), 3000);
+            },
+            error: (error: Error) => {
+                this.isSaving.set(false);
+                this.errorMessage.set(error.message || 'Failed to update profile');
+            }
+        });
     }
 
     formatDate(dateString: string): string {

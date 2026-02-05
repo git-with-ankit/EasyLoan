@@ -1,5 +1,4 @@
 ﻿using EasyLoan.Business.Constants;
-using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
@@ -77,7 +76,7 @@ namespace EasyLoan.Business.Services
             if (!passwordResult) 
                 throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-            return _tokenGenerator.GenerateToken(customer.Id , Role.Customer);//Generate token
+            return _tokenGenerator.GenerateToken(customer.Id, customer.Email, Role.Customer);//Generate token
         }
 
         public async Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto)
@@ -121,11 +120,11 @@ namespace EasyLoan.Business.Services
 
             if (emp.Role == EmployeeRole.Manager)
             {
-                return _tokenGenerator.GenerateToken(emp.Id, Role.Manager);
+                return _tokenGenerator.GenerateToken(emp.Id, emp.Email, Role.Manager);
             }
             else
             {
-                return _tokenGenerator.GenerateToken(emp.Id, Role.Admin);
+                return _tokenGenerator.GenerateToken(emp.Id, emp.Email, Role.Admin);
             }
         }
 
@@ -139,26 +138,55 @@ namespace EasyLoan.Business.Services
                 if (!passwordResult)
                     throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-                return _tokenGenerator.GenerateToken(customer.Id, Role.Customer);//Generate token
+                return _tokenGenerator.GenerateToken(customer.Id, customer.Email, Role.Customer);//Generate token
             }
             else
             {
 
-                var emp = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim()) 
+                var employee = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim()) 
                     ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
-                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, emp.Password);
+                
+                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, employee.Password);
 
                 if (!passwordResult)
                     throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-                var role = emp.Role == EmployeeRole.Manager ? Role.Manager : Role.Admin;
+                var role = employee.Role == EmployeeRole.Manager ? Role.Manager : Role.Admin;
 
-                return _tokenGenerator.GenerateToken(emp.Id, role);
+                var token = _tokenGenerator.GenerateToken(employee.Id, employee.Email, role);
 
+                return token;
             }
-
-            
         }
 
+        public async Task ChangePasswordAsync(Guid userId, Role role, ChangePasswordRequestDto dto)
+        {
+            if (role == Role.Customer)
+            {
+                var customer = await _customerRepo.GetByIdAsync(userId);
+                if (customer == null)
+                    throw new NotFoundException(ErrorMessages.CustomerNotFound);
+
+                if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, customer.Password)) // Changed PasswordHash to Password
+                    throw new AuthenticationFailedException("Old password is incorrect.");
+
+                customer.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword); // Changed PasswordHash to Password
+                // await _customerRepo.UpdateAsync(customer);
+                await _customerRepo.SaveChangesAsync(); // Added SaveChangesAsync
+            }
+            else // Manager or Admin
+            {
+                var employee = await _employeeRepo.GetByIdAsync(userId);
+                if (employee == null)
+                    throw new NotFoundException(ErrorMessages.EmployeeNotFound);
+
+                if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, employee.Password)) // Changed PasswordHash to Password
+                    throw new AuthenticationFailedException("Old password is incorrect.");
+
+                employee.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword); // Changed PasswordHash to Password
+                // await _employeeRepo.UpdateAsync(employee);
+                await _employeeRepo.SaveChangesAsync(); // Added SaveChangesAsync
+            }
+        }
     }
 }

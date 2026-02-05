@@ -1,14 +1,10 @@
-﻿using EasyLoan.Business.Enums;
-using EasyLoan.Business.Interfaces;
+﻿using EasyLoan.Business.Interfaces;
+using EasyLoan.Models.Common.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace EasyLoan.Business.Services
 {
@@ -21,11 +17,12 @@ namespace EasyLoan.Business.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(Guid userId, Role role)
+        public string GenerateToken(Guid userId, string email, Role role)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, role.ToString())
             };
 

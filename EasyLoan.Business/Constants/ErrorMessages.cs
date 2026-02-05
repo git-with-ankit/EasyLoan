@@ -12,6 +12,8 @@
         public const string EmailAlreadyExists = "Email already exists.";
         public const string PanAlreadyExists = "PAN number already exists.";
 
+
+        public const string EmployeeNotFound = "Employee not found.";
         // Loan Application
         public const string LoanApplicationNotFound = "Loan application not found.";
         public const string WrongFormatForLoanApplication = "Loan application number is not in the correct format.";

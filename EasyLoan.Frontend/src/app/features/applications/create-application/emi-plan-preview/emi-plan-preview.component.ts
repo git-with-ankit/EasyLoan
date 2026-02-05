@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { EmiScheduleItem, LoanType } from '../../../../shared/models/loan-type.models';
+import { EmiScheduleItem, LoanType } from '../../../loan-types/loan-type.models';
 
 @Component({
     selector: 'app-emi-plan-preview',

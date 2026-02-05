@@ -1,7 +1,7 @@
 <header class="header">
     <div class="header-content">
         <div class="page-title">
-            <h1>EasyLoan</h1>
+            <h1 (click)="onLogoClick()">EasyLoan</h1>
         </div>
 
         <div class="header-actions">
@@ -11,7 +11,8 @@
             </div> -->
             <nav class="header-nav">
                 <a class="nav-link" (click)="onProfile()">My Profile</a>
-                <a class="nav-link signout" (click)="onSignout()">Sign Out</a>
+                <a class="nav-link" (click)="openChangePasswordDialog()">Change Password</a>
+                <a class="nav-link" (click)="onSignout()">Sign Out</a>
             </nav>
         </div>
     </div>

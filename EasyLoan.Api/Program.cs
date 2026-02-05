@@ -113,6 +113,15 @@ namespace EasyLoan.Api
                 };
                 opt.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // Read token from cookie instead of Authorization header
+                        if (context.Request.Cookies.ContainsKey("easyloan_auth"))
+                        {
+                            context.Token = context.Request.Cookies["easyloan_auth"];
+                        }
+                        return Task.CompletedTask;
+                    },
                     OnChallenge = async context =>
                     {
                         // stop the default behaviour

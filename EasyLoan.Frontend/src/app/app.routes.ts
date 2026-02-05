@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './shared/guards/auth.guard';
-import { roleGuard } from './shared/guards/role.guard';
+import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -20,7 +20,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['Customer'] },
     loadChildren: () =>
-      import('./features/customer/customer.routes').then(m => m.CUSTOMER_ROUTES),
+      import('./routes/customer.routes').then(m => m.CUSTOMER_ROUTES),
   },
 
   {
@@ -28,7 +28,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['Manager', 'Admin'] },
     loadChildren: () =>
-      import('./features/employee/employee.routes').then(m => m.EMPLOYEE_ROUTES),
+      import('./routes/employee.routes').then(m => m.EMPLOYEE_ROUTES),
   },
 
   {
@@ -36,13 +36,13 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['Admin'] },
     loadChildren: () =>
-      import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
+      import('./routes/admin.routes').then(m => m.ADMIN_ROUTES),
   },
 
   {
     path: 'unauthorized',
     loadComponent: () =>
-      import('./shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent),
+      import('./shared/components/unauthorized/unauthorized.component').then(c => c.UnauthorizedComponent),
   },
 
   // {

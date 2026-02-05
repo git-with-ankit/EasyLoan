@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 import {
   CustomerLoginRequest,
@@ -10,32 +10,32 @@ import {
   CustomerProfileResponse,
   RegisterManagerResponse,
   UserRole,
-  AuthUser
-} from '../../shared/models/auth.models';
-import { TokenService } from '../../shared/services/token.service';
+  ChangePasswordRequest
+} from './auth.models';
+import { UserService, MeResponse } from '../../services/user.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = `${environment.apiUrl}`;
-  private tokenService = inject(TokenService);
+  private userService = inject(UserService);
   private router = inject(Router);
 
   constructor(private http: HttpClient) { }
 
-  loginCustomer(dto: CustomerLoginRequest): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/customers/login`, dto, {
-      responseType: 'text' as 'json'
+  loginCustomer(dto: CustomerLoginRequest): Observable<MeResponse | null> {
+    return this.http.post(`${this.baseUrl}/customers/login`, dto, {
+      withCredentials: true
     }).pipe(
-      tap(token => this.handleLoginSuccess(token))
+      switchMap(() => this.userService.loadCurrentUser())
     );
   }
 
-  loginEmployee(dto: EmployeeLoginRequest): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/employees/login`, dto, {
-      responseType: 'text' as 'json'
+  loginEmployee(dto: EmployeeLoginRequest): Observable<MeResponse | null> {
+    return this.http.post(`${this.baseUrl}/employees/login`, dto, {
+      withCredentials: true
     }).pipe(
-      tap(token => this.handleLoginSuccess(token))
+      switchMap(() => this.userService.loadCurrentUser())
     );
   }
 
@@ -48,20 +48,32 @@ export class AuthService {
   }
 
   logout(): void {
-    this.tokenService.removeToken();
-    this.router.navigate(['/auth/login']);
+    // Use unified auth logout endpoint
+    this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {
+        this.userService.clearUser();
+        this.router.navigate(['/auth/login']);
+      },
+      error: () => {
+        // Even if logout fails, clear local state and redirect
+        this.userService.clearUser();
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 
   isAuthenticated(): boolean {
-    return this.tokenService.isAuthenticated();
+    return this.userService.currentUser() !== null;
   }
 
-  getCurrentUser(): AuthUser | null {
-    return this.tokenService.getCurrentUser();
+  getCurrentUser(): MeResponse | null {
+    return this.userService.currentUser();
   }
 
-  private handleLoginSuccess(token: string): void {
-    this.tokenService.setToken(token);
+  changePassword(dto: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/auth/change-password`, dto, {
+      withCredentials: true
+    });
   }
 }
 

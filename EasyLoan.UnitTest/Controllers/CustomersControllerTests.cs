@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using EasyLoan.UnitTest.Helpers;
 using Moq;
 using System.Security.Claims;
-using EasyLoan.Business.Enums;
+;
 
 namespace EasyLoan.UnitTest.Controllers
 {

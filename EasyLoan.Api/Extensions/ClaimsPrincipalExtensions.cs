@@ -1,6 +1,6 @@
 ﻿using EasyLoan.Business.Constants;
-using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
+using EasyLoan.Models.Common.Enums;
 using System.Security.Claims;
 
 namespace EasyLoan.Api.Extensions

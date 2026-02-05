@@ -94,7 +94,7 @@ export class RegisterComponent implements OnInit {
         annualSalary: ['', [Validators.required, Validators.min(0)]],
         panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
         password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
-        confirmPassword: ['', Validators.required]
+        confirmPassword: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
       }, {
         validators: this.passwordMatchValidator
       });
@@ -110,29 +110,6 @@ export class RegisterComponent implements OnInit {
     }
 
     return password.value === confirmPassword.value ? null : { passwordMismatch: true };
-  }
-
-  getPasswordStrength(): { strength: string; color: string; width: string } {
-    const password = this.form.get('password')?.value || '';
-
-    if (password.length === 0) {
-      return { strength: '', color: '', width: '0%' };
-    }
-
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/\d/.test(password)) strength++;
-    if (/[@$!%*?&]/.test(password)) strength++;
-
-    if (strength <= 2) {
-      return { strength: 'Weak', color: '#f44336', width: '33%' };
-    } else if (strength <= 4) {
-      return { strength: 'Medium', color: '#ff9800', width: '66%' };
-    } else {
-      return { strength: 'Strong', color: '#4caf50', width: '100%' };
-    }
   }
 
   submit(): void {

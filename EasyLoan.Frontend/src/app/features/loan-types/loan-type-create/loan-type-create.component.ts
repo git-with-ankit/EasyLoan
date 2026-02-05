@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoanTypeService } from '../../../shared/services/loan-type.service';
+import { LoanTypeService } from '../loan-type.service';
 
 @Component({
   selector: 'app-loan-type-create',

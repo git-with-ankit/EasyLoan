@@ -60,13 +60,25 @@ namespace EasyLoan.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<string>> Login(
+        public async Task<ActionResult> Login(
            CustomerLoginRequestDto request)
         {
             var token = await _authService.LoginCustomerAsync(request);
-            return Ok(token);
+            
+            // Set HTTP-only cookie
+            Response.Cookies.Append("easyloan_auth", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(
+                    int.Parse(HttpContext.RequestServices
+                        .GetRequiredService<IConfiguration>()["Jwt:AccessTokenExpiryMinutes"]!))
+            });
+            
+            return NoContent();
         }
     }
 }

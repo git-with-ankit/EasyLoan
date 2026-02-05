@@ -1,5 +1,5 @@
 ﻿using EasyLoan.Api.Controllers;
-using EasyLoan.Business.Enums;
+;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;

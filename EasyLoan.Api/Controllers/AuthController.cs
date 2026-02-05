@@ -41,3 +41,69 @@
 //        }
 //    }
 //}
+
+using EasyLoan.Api.Extensions;
+using EasyLoan.Business.Interfaces;
+using EasyLoan.Dtos.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace EasyLoan.Api.Controllers
+{
+    [ApiController]
+    [Route("api/auth")]
+    public class AuthController : ControllerBase
+    {
+        private readonly IConfiguration _configuration;
+        private readonly IAuthService _authService;
+
+        public AuthController(IConfiguration configuration, IAuthService authService)
+        {
+            _configuration = configuration;
+            _authService = authService;
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        [ProducesResponseType(typeof(MeResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        public ActionResult<MeResponseDto> GetMe()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var role = User.GetRole();
+
+            return Ok(new MeResponseDto
+            {
+                Email = email!,
+                Role = role!
+            });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        public ActionResult Logout()
+        {
+            Response.Cookies.Delete("easyloan_auth");
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> ChangePassword( ChangePasswordRequestDto request)
+        {
+            var userId = User.GetUserId();
+            var role = User.GetRole();
+
+            await _authService.ChangePasswordAsync(userId, role, request);
+
+            return NoContent();
+        }
+    }
+}

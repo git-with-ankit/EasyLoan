@@ -2,9 +2,9 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoanTypeService } from '../../../shared/services/loan-type.service';
-import { ApplicationService } from '../../../shared/services/application.service';
-import { LoanType, EmiScheduleItem } from '../../../shared/models/loan-type.models';
+import { LoanTypeService } from '../../loan-types/loan-type.service';
+import { ApplicationService } from '../application.service';
+import { LoanType, EmiScheduleItem } from '../../loan-types/loan-type.models';
 import { EmiPlanPreviewComponent } from './emi-plan-preview/emi-plan-preview.component';
 
 @Component({

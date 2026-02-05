@@ -7,8 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
-import { ApplicationService } from '../../../shared/services/application.service';
-import { LoanApplicationSummary, LoanApplicationStatus } from '../../../shared/models/application.models';
+import { ApplicationService } from '../application.service';
+import { LoanApplicationSummary, LoanApplicationStatus } from '../application.models';
 import { AuthService } from '../../auth/auth.service';
 
 @Component({

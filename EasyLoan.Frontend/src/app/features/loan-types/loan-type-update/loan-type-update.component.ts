@@ -2,8 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { LoanTypeService } from '../../../shared/services/loan-type.service';
-import { LoanType } from '../../../shared/models/loan-type.models';
+import { LoanTypeService } from '../loan-type.service';
+import { LoanType } from '../loan-type.models';
 
 @Component({
   selector: 'app-loan-type-update',

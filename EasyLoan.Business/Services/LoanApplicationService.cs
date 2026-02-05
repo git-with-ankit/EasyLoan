@@ -1,5 +1,4 @@
 ﻿using EasyLoan.Business.Constants;
-using EasyLoan.Business.Enums;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;

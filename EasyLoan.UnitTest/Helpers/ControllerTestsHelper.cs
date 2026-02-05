@@ -1,4 +1,4 @@
-﻿using EasyLoan.Business.Enums;
+﻿;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;

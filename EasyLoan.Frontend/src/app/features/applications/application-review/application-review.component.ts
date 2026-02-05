@@ -7,9 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ApplicationService } from '../../../shared/services/application.service';
-import { LoanApplicationDetailsWithCustomerData, ReviewLoanApplicationRequest } from '../../../shared/models/review.models';
-import { LoanApplicationStatus } from '../../../shared/models/application.models';
+import { ApplicationService } from '../application.service';
+import { LoanApplicationDetailsWithCustomerData, ReviewLoanApplicationRequest } from '../review.models';
+import { LoanApplicationStatus } from '../application.models';
 import { AuthService } from '../../auth/auth.service';
 
 @Component({
@@ -179,6 +179,6 @@ export class ApplicationReviewComponent implements OnInit {
 
     goBack() {
         const basePath = this.userRole === 'Admin' ? '/admin' : '/employee';
-        this.router.navigate([basePath, 'dashboard', 'assigned-applications']);
+        this.router.navigate([basePath, 'assigned-applications']);
     }
 }

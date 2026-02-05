@@ -54,19 +54,35 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- Date of Birth (Customer only) -->
         <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
-          <mat-label>Date of Birth</mat-label>
-          <mat-icon matPrefix>cake</mat-icon>
-          <input matInput [matDatepicker]="picker" formControlName="dateOfBirth" [max]="maxDate" [min]="minDate"
-            placeholder="Select your date of birth" />
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('required')">
-            Date of birth is required
-          </mat-error>
-          <mat-hint>You must be at least 18 years old</mat-hint>
-        </mat-form-field>
+        <mat-label>Date of Birth</mat-label>
+        <mat-icon matPrefix>cake</mat-icon>
+
+        <input
+          matInput
+          [matDatepicker]="picker"
+          formControlName="dateOfBirth"
+          [max]="maxDate"
+          [min]="minDate"
+          placeholder="Select your date of birth"
+        />
+
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+
+        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('required')">
+          Date of birth is required
+        </mat-error>
+
+        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMax')">
+          You must be at least 18 years old
+        </mat-error>
+
+        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMin')">
+          Age cannot be more than 150 years
+        </mat-error>
+      </mat-form-field>
+
 
         <!-- Financial Information Section (Customer only) -->
         <h3 *ngIf="!isManagerRegistration" class="section-title">Financial Information</h3>
@@ -119,16 +135,6 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- Password Strength Indicator -->
-        <div class="password-strength" *ngIf="form.get('password')?.value">
-          <div class="strength-label">Password Strength: <strong>{{ getPasswordStrength().strength }}</strong></div>
-          <div class="strength-bar">
-            <div class="strength-fill" [style.width]="getPasswordStrength().width"
-              [style.background-color]="getPasswordStrength().color">
-            </div>
-          </div>
-        </div>
-
         <!-- Confirm Password -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Confirm Password</mat-label>
@@ -141,6 +147,9 @@
           </button>
           <mat-error *ngIf="form.get('confirmPassword')?.hasError('required')">
             Please confirm your password
+          </mat-error>
+          <mat-error *ngIf="form.get('confirmPassword')?.hasError('pattern')">
+            Password must be 8-20 characters with uppercase, lowercase, digit, and special character
           </mat-error>
           <mat-error *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched">
             Passwords do not match

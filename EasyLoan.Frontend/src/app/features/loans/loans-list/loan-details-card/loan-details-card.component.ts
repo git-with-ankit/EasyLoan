@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LoanService } from '../../../../shared/services/loan.service';
-import { LoanDetails, DueEmiResponse, EmiDueStatus, PaymentHistory } from '../../../../shared/models/loan.models';
+import { LoanService } from '../../loan.service';
+import { LoanDetails, DueEmiResponse, EmiDueStatus, PaymentHistory } from '../../loan.models';
 
 @Component({
     selector: 'app-loan-details-card',

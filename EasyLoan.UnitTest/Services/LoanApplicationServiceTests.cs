@@ -1,6 +1,6 @@
 ﻿//Business rules , Exceptions , Decision logic , Correct repository interactions
 
-using EasyLoan.Business.Enums;
+;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Business.Services;
