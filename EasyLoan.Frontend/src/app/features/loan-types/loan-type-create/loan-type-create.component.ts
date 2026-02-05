@@ -41,7 +41,7 @@ export class LoanTypeCreateComponent implements OnInit {
 
     this.loanTypeService.createLoanType(this.createForm.value).subscribe({
       next: () => {
-        this.router.navigate(['/admin/dashboard/loan-types']);
+        this.router.navigate(['/admin/loan-types']);
       },
       error: (err) => {
         this.submitting = false;
@@ -52,7 +52,7 @@ export class LoanTypeCreateComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/admin/dashboard/loan-types']);
+    this.router.navigate(['/admin/loan-types']);
   }
 
   getFieldError(fieldName: string): string | null {

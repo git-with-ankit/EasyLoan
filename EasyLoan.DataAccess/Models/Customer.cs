@@ -100,6 +100,7 @@ namespace EasyLoan.DataAccess.Models
 //the date of birth should be till now - done
 //use helper-setuser instead of creating a separate setuser in each class(tests)
 
+//testing 
 //rate limiting the loan application 
 //change password
 //findasync
@@ -108,8 +109,9 @@ namespace EasyLoan.DataAccess.Models
 //structure - done
 //landing page
 //constants
-//routes remove dashboard
+//routes remove dashboard - done
 //*ngif
+//admin or employee in admin routes
 //auth login , customer register and change password
 //totalOngoingLoans - done
 //recalculating penalty makes the penalty charge up again - done

@@ -51,9 +51,11 @@ export class NotFoundComponent implements OnInit {
     const user = this.tokenService.getCurrentUser();
     if (user) {
       if (user.role === 'Customer') {
-        this.homeRoute = '/customer/dashboard';
-      } else if (user.role === 'Manager' || user.role === 'Admin') {
-        this.homeRoute = '/employee/dashboard';
+        this.homeRoute = '/customer';
+      } else if (user.role === 'Manager') {
+        this.homeRoute = '/employee';
+      } else if (user.role === 'Admin') {
+        this.homeRoute = '/admin';
       }
     }
   }

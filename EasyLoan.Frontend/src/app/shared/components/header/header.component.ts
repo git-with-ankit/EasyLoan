@@ -31,9 +31,11 @@ export class HeaderComponent {
 
             // Navigate based on role
             if (user.role === 'Customer') {
-                this.router.navigate(['/customer/dashboard/profile']);
-            } else if (user.role === 'Manager' || user.role === 'Admin') {
-                this.router.navigate(['/employee/dashboard/profile']);
+                this.router.navigate(['/customer/profile']);
+            } else if (user.role === 'Manager') {
+                this.router.navigate(['/employee/profile']);
+            } else if (user.role === 'Admin') {
+                this.router.navigate(['/admin/profile']);
             }
         }
     }

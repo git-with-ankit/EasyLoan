@@ -147,7 +147,7 @@ export class CreateApplicationComponent implements OnInit {
 
                 // Redirect to applications list after 2 seconds
                 setTimeout(() => {
-                    this.router.navigate(['/customer/dashboard/applications']);
+                    this.router.navigate(['/customer/applications']);
                 }, 2000);
             },
             error: (error) => {

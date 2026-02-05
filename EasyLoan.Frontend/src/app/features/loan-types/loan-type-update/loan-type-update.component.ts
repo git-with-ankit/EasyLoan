@@ -71,7 +71,7 @@ export class LoanTypeUpdateComponent implements OnInit {
 
     this.loanTypeService.updateLoanType(this.loanTypeId, this.updateForm.value).subscribe({
       next: () => {
-        this.router.navigate(['/admin/dashboard/loan-types']);
+        this.router.navigate(['/admin/loan-types']);
       },
       error: (err) => {
         this.submitting.set(false);
@@ -82,7 +82,7 @@ export class LoanTypeUpdateComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/admin/dashboard/loan-types']);
+    this.router.navigate(['/admin/loan-types']);
   }
 
   getFieldError(fieldName: string): string | null {

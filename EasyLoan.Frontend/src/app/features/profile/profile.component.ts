@@ -154,7 +154,7 @@ export class ProfileComponent implements OnInit {
                     setTimeout(() => this.successMessage.set(''), 3000);
                 },
                 error: (error: Error) => {
-                    this.errorMessage.set(error.error?.message || 'Failed to update profile');
+                    // this.errorMessage.set(error.error?.message || 'Failed to update profile');
                     this.isSaving.set(false);
                 }
             });
@@ -168,7 +168,7 @@ export class ProfileComponent implements OnInit {
                     setTimeout(() => this.successMessage.set(''), 3000);
                 },
                 error: (error: Error) => {
-                    this.errorMessage.set(error.error?.message || 'Failed to update profile');
+                    // this.errorMessage.set(error.error?.message || 'Failed to update profile');
                     this.isSaving.set(false);
                 }
             });

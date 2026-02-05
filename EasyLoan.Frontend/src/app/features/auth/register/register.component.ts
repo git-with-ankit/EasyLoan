@@ -70,7 +70,7 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.isManagerRegistration = this.router.url.includes('/admin/dashboard/create-manager');
+    this.isManagerRegistration = this.router.url.includes('/admin/create-manager');
     this.registrationType = this.isManagerRegistration ? 'Manager' : 'Customer';
 
     if (this.isManagerRegistration) {
@@ -161,7 +161,7 @@ export class RegisterComponent implements OnInit {
           this.isLoading.set(false);
           this.successMessage = 'Manager created successfully!';
           setTimeout(() => {
-            this.router.navigate(['/admin/dashboard/overview']);
+            this.router.navigate(['/admin/dashboard']);
           }, 2000);
         },
         error: (error: Error) => {

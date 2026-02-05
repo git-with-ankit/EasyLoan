@@ -79,6 +79,6 @@ export class AssignedApplicationsComponent implements OnInit {
     reviewApplication(applicationNumber: string) {
         const user = this.authService.getCurrentUser();
         const basePath = user?.role === 'Admin' ? '/admin' : '/employee';
-        this.router.navigate([basePath, 'dashboard', 'assigned-applications', applicationNumber, 'review']);
+        this.router.navigate([basePath, 'assigned-applications', applicationNumber, 'review']);
     }
 }

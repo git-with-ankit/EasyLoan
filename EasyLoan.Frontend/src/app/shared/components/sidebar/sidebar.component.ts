@@ -17,10 +17,10 @@ export class SidebarComponent {
         // Handle Admin role
         if (this.role === 'Admin') {
             return [
-                { path: '/admin/dashboard/overview', label: 'Dashboard' },
-                { path: '/admin/dashboard/loan-types', label: 'Loan Types' },
-                { path: '/admin/dashboard/assigned-applications', label: 'All Applications' },
-                { path: '/admin/dashboard/create-manager', label: 'Create Manager' }
+                { path: '/admin/dashboard', label: 'Dashboard' },
+                { path: '/admin/loan-types', label: 'Loan Types' },
+                { path: '/admin/assigned-applications', label: 'All Applications' },
+                { path: '/admin/create-manager', label: 'Create Manager' }
             ];
         }
 
@@ -31,10 +31,10 @@ export class SidebarComponent {
 
         // Default to Customer items
         return [
-            { path: '/customer/dashboard/overdue-emis', label: 'Overdue EMIs' },
-            { path: '/customer/dashboard/loans', label: 'My Loans' },
-            { path: '/customer/dashboard/applications', label: 'Applications' },
-            { path: '/customer/dashboard/apply-loan', label: 'Apply for Loan' }
+            { path: '/customer/overdue-emis', label: 'Overdue EMIs' },
+            { path: '/customer/loans', label: 'My Loans' },
+            { path: '/customer/applications', label: 'Applications' },
+            { path: '/customer/apply-loan', label: 'Apply for Loan' }
         ];
     }
 }

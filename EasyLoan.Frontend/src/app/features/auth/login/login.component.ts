@@ -88,11 +88,11 @@ export class LoginComponent implements OnInit {
         if (user) {
           // Navigate based on the actual role
           if (user.role === 'Customer') {
-            this.router.navigate(['/customer/dashboard']);
+            this.router.navigate(['/customer']);
           } else if (user.role === 'Manager') {
-            this.router.navigate(['/employee/dashboard']);
+            this.router.navigate(['/employee']);
           } else if (user.role === 'Admin') {
-            this.router.navigate(['/admin/dashboard']);
+            this.router.navigate(['/admin']);
           } else {
             // Fallback
             this.router.navigate(['/unauthorized']);

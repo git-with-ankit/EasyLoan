@@ -44,10 +44,10 @@ export class LoanTypesListComponent implements OnInit {
   }
 
   navigateToCreate(): void {
-    this.router.navigate(['/admin/dashboard/loan-types/create']);
+    this.router.navigate(['/admin/loan-types/create']);
   }
 
   navigateToEdit(id: string): void {
-    this.router.navigate([`/admin/dashboard/loan-types/${id}/edit`]);
+    this.router.navigate([`/admin/loan-types/${id}/edit`]);
   }
 }
