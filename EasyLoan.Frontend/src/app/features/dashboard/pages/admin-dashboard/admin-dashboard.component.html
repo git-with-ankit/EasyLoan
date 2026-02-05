@@ -16,7 +16,6 @@
 
     <div *ngIf="!loading() && !error() && dashboardData()" class="stats-grid">
         <div class="stat-card loan-types">
-            <div class="stat-icon">💼</div>
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfLoanTypes }}</div>
                 <div class="stat-label">Loan Types</div>
@@ -24,7 +23,6 @@
         </div>
 
         <div class="stat-card pending">
-            <div class="stat-icon">⏳</div>
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfPendingApplications }}</div>
                 <div class="stat-label">Pending Applications</div>
@@ -32,7 +30,6 @@
         </div>
 
         <div class="stat-card approved">
-            <div class="stat-icon">✅</div>
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfApprovedApplications }}</div>
                 <div class="stat-label">Approved Applications</div>
@@ -40,7 +37,6 @@
         </div>
 
         <div class="stat-card rejected">
-            <div class="stat-icon">❌</div>
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfRejectedApplications }}</div>
                 <div class="stat-label">Rejected Applications</div>
@@ -48,7 +44,6 @@
         </div>
 
         <div class="stat-card managers">
-            <div class="stat-icon">👥</div>
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfManagers }}</div>
                 <div class="stat-label">Total Managers</div>

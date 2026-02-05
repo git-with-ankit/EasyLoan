@@ -17,10 +17,10 @@ export class SidebarComponent {
         // Handle Admin role
         if (this.role === 'Admin') {
             return [
-                { path: '/admin/dashboard/overview', label: 'Dashboard', icon: '📊' },
-                { path: '/admin/dashboard/loan-types', label: 'Loan Types', icon: '💼' },
-                { path: '/admin/dashboard/assigned-applications', label: 'All Applications', icon: '📂' },
-                { path: '/admin/dashboard/create-manager', label: 'Create Manager', icon: '👥' }
+                { path: '/admin/dashboard/overview', label: 'Dashboard' },
+                { path: '/admin/dashboard/loan-types', label: 'Loan Types' },
+                { path: '/admin/dashboard/assigned-applications', label: 'All Applications' },
+                { path: '/admin/dashboard/create-manager', label: 'Create Manager' }
             ];
         }
 
@@ -31,10 +31,10 @@ export class SidebarComponent {
 
         // Default to Customer items
         return [
-            { path: '/customer/dashboard/emi-payments', label: 'Overdue EMIs', icon: '💳' },
-            { path: '/customer/dashboard/loans', label: 'My Loans', icon: '💰' },
-            { path: '/customer/dashboard/applications', label: 'Applications', icon: '📝' },
-            { path: '/customer/dashboard/apply-loan', label: 'Apply for Loan', icon: '✨' }
+            { path: '/customer/dashboard/emi-payments', label: 'Overdue EMIs' },
+            { path: '/customer/dashboard/loans', label: 'My Loans' },
+            { path: '/customer/dashboard/applications', label: 'Applications' },
+            { path: '/customer/dashboard/apply-loan', label: 'Apply for Loan' }
         ];
     }
 }

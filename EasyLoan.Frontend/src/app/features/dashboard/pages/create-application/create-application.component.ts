@@ -123,7 +123,7 @@ export class CreateApplicationComponent implements OnInit {
                 this.isLoadingEmiPlan.set(false);
             },
             error: (error) => {
-                this.errorMessage.set(error.error?.message || 'Failed to generate EMI plan');
+                // this.errorMessage.set(error.error?.message || 'Failed to generate EMI plan');
                 this.isLoadingEmiPlan.set(false);
             }
         });

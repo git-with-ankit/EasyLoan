@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -42,7 +42,7 @@ type RegisterRole = 'Customer' | 'Manager';
 })
 export class RegisterComponent implements OnInit {
   form!: FormGroup;
-  isLoading = false;
+  isLoading = signal<boolean>(false);
   errorMessage = '';
   successMessage = '';
   hidePassword = true;
@@ -70,12 +70,10 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Check if this is manager registration based on route
     this.isManagerRegistration = this.router.url.includes('/admin/dashboard/create-manager');
     this.registrationType = this.isManagerRegistration ? 'Manager' : 'Customer';
 
     if (this.isManagerRegistration) {
-      // Simplified form for manager registration
       this.form = this.fb.group({
         role: ['Manager', Validators.required],
         name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -87,7 +85,6 @@ export class RegisterComponent implements OnInit {
         validators: this.passwordMatchValidator
       });
     } else {
-      // Full form for customer registration
       this.form = this.fb.group({
         role: ['Customer', Validators.required],
         name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -144,7 +141,7 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -161,14 +158,14 @@ export class RegisterComponent implements OnInit {
 
       this.auth.registerManager(registerDto).subscribe({
         next: () => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.successMessage = 'Manager created successfully!';
           setTimeout(() => {
             this.router.navigate(['/admin/dashboard/overview']);
           }, 2000);
         },
         error: (error: Error) => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.errorMessage = error.message || 'Manager creation failed. Please try again.';
         }
       });
@@ -186,14 +183,14 @@ export class RegisterComponent implements OnInit {
 
       this.auth.registerCustomer(registerDto).subscribe({
         next: () => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.successMessage = 'Registration successful! Redirecting to login...';
           setTimeout(() => {
             this.router.navigate(['/auth/login']);
           }, 2000);
         },
         error: (error: Error) => {
-          this.isLoading = false;
+          this.isLoading.set(false);
           this.errorMessage = error.message || 'Registration failed. Please try again.';
         }
       });

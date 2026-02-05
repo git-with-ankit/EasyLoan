@@ -11,12 +11,6 @@
         <span>{{ successMessage }}</span>
       </div>
 
-      <!-- Error Message -->
-      <div *ngIf="errorMessage" class="error-message">
-        <mat-icon>error</mat-icon>
-        <span>{{ errorMessage }}</span>
-      </div>
-
       <form [formGroup]="form" (ngSubmit)="submit()">
         <!-- Personal Information Section -->
         <h3 class="section-title">Personal Information</h3>
@@ -155,9 +149,9 @@
 
         <!-- Submit Button -->
         <button mat-raised-button color="primary" class="full-width submit-btn" type="submit"
-          [disabled]="form.invalid || isLoading">
-          <span *ngIf="!isLoading">{{ isManagerRegistration ? 'Create Manager' : 'Register' }}</span>
-          <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+          [disabled]="form.invalid || isLoading()">
+          <span *ngIf="!isLoading()">{{ isManagerRegistration ? 'Create Manager' : 'Register' }}</span>
+          <mat-spinner *ngIf="isLoading()" diameter="20"></mat-spinner>
         </button>
 
         <!-- Login Link (Customer only) -->

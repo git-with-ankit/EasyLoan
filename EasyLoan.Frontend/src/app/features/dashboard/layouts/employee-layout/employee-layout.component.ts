@@ -28,6 +28,6 @@ export class EmployeeLayoutComponent implements OnInit {
 
     onSignout() {
         this.authService.logout();
-        this.router.navigate(['/auth/login']);
+        this.router.navigate(['/auth/employee/login']);
     }
 }

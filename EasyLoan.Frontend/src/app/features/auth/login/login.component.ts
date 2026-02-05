@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -36,7 +36,7 @@ type LoginRole = 'Customer' | 'Employee';
 })
 export class LoginComponent implements OnInit {
   form!: FormGroup;
-  isLoading = false;
+  isLoading = signal<boolean>(false);
   errorMessage = '';
   hidePassword = true;
   loginType: LoginRole = 'Customer';
@@ -68,7 +68,7 @@ export class LoginComponent implements OnInit {
   submit(): void {
     if (this.form.invalid) return;
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.errorMessage = '';
 
     const { email, password } = this.form.value;
@@ -80,7 +80,7 @@ export class LoginComponent implements OnInit {
 
     login$.subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
 
         // Get the actual user role from the token
         const user = this.auth.getCurrentUser();
@@ -102,8 +102,8 @@ export class LoginComponent implements OnInit {
         }
       },
       error: (error: Error) => {
-        this.isLoading = false;
-        this.errorMessage = error.message || 'Login failed. Please check your credentials.';
+        this.isLoading.set(false);
+        // this.errorMessage = error.message || 'Login failed. Please check your credentials.';
       }
     });
   }

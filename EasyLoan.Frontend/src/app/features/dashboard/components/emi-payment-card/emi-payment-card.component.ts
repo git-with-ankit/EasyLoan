@@ -41,7 +41,7 @@ export class EmiPaymentCardComponent {
             },
             error: (error) => {
                 this.isProcessing = false;
-                this.errorMessage = error.message || 'Payment failed. Please try again.';
+                // this.errorMessage = error.message || 'Payment failed. Please try again.';
             }
         });
     }

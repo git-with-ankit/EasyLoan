@@ -5,13 +5,13 @@ import { LoanDetailsCardComponent } from '../../components/loan-details-card/loa
 import { EmiDueStatus, LoanEmiGroup } from '../../../../shared/models/loan.models';
 
 @Component({
-    selector: 'app-emi-payments',
+    selector: 'app-overdue-emis',
     standalone: true,
     imports: [CommonModule, LoanDetailsCardComponent],
-    templateUrl: './emi-payments.component.html',
-    styleUrl: './emi-payments.component.css'
+    templateUrl: 'overdue-emis.component.html',
+    styleUrl: './overdue-emis.component.css'
 })
-export class EmiPaymentsComponent implements OnInit {
+export class OverdueEmis implements OnInit {
     emisByLoan = signal<LoanEmiGroup[]>([]);
     isLoading = signal(false);
     errorMessage = signal('');

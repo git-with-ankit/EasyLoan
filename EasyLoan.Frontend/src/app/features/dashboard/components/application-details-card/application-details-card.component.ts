@@ -32,7 +32,7 @@ export class ApplicationDetailsCardComponent implements OnInit {
                 this.isLoading.set(false);
             },
             error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load application details');
+                // this.errorMessage.set(error.message || 'Failed to load application details');
                 this.isLoading.set(false);
             }
         });

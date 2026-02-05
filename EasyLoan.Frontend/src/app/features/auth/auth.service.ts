@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import {
   CustomerLoginRequest,
@@ -27,8 +27,7 @@ export class AuthService {
     return this.http.post<string>(`${this.baseUrl}/customers/login`, dto, {
       responseType: 'text' as 'json'
     }).pipe(
-      tap(token => this.handleLoginSuccess(token)),
-      catchError(this.handleError)
+      tap(token => this.handleLoginSuccess(token))
     );
   }
 
@@ -36,21 +35,16 @@ export class AuthService {
     return this.http.post<string>(`${this.baseUrl}/employees/login`, dto, {
       responseType: 'text' as 'json'
     }).pipe(
-      tap(token => this.handleLoginSuccess(token)),
-      catchError(this.handleError)
+      tap(token => this.handleLoginSuccess(token))
     );
   }
 
   registerCustomer(dto: RegisterCustomerRequest): Observable<CustomerProfileResponse> {
-    return this.http.post<CustomerProfileResponse>(`${this.baseUrl}/customers/register`, dto).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.post<CustomerProfileResponse>(`${this.baseUrl}/customers/register`, dto);
   }
 
   registerManager(dto: CreateManagerRequest): Observable<RegisterManagerResponse> {
-    return this.http.post<RegisterManagerResponse>(`${this.baseUrl}/employees/manager/register`, dto).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.post<RegisterManagerResponse>(`${this.baseUrl}/employees/manager/register`, dto);
   }
 
   logout(): void {
@@ -68,26 +62,6 @@ export class AuthService {
 
   private handleLoginSuccess(token: string): void {
     this.tokenService.setToken(token);
-  }
-
-  private handleError = (error: any): Observable<never> => {
-    let errorMessage = 'An error occurred. Please try again.';
-
-    if (error.error) {
-      if (typeof error.error === 'string') {
-        errorMessage = error.error;
-      } else if (error.error.title) {
-        errorMessage = error.error.title;
-      } else if (error.error.errors) {
-        // Validation errors
-        const errors = Object.values(error.error.errors).flat();
-        errorMessage = errors.join(', ');
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    return throwError(() => new Error(errorMessage));
   }
 }
 

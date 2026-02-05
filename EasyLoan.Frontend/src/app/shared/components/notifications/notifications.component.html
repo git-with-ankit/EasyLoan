@@ -1,0 +1,16 @@
+<div class="notifications-container">
+    @for (notification of notificationService.getNotifications(); track notification.id) {
+    <div class="notification" [ngClass]="'notification-' + notification.type">
+        <div class="notification-content">
+            <span class="notification-icon">
+                @if (notification.type === 'success') { ✓ }
+                @else if (notification.type === 'error') { ✕ }
+                @else if (notification.type === 'warning') { ⚠ }
+                @else { ℹ }
+            </span>
+            <span class="notification-message">{{ notification.message }}</span>
+        </div>
+        <button class="notification-close" (click)="closeNotification(notification.id)">×</button>
+    </div>
+    }
+</div>

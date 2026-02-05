@@ -8,16 +8,10 @@ export const CUSTOMER_ROUTES: Routes = [
                 (c) => c.CustomerLayoutComponent
             ),
         children: [
-            { path: '', redirectTo: 'emi-payments', pathMatch: 'full' },
-            /*
+            { path: '', redirectTo: 'overdue-emis', pathMatch: 'full' },
             {
-                path: '',
-                loadComponent: () => import('../dashboard/pages/customer-home/customer-home.component').then(m => m.CustomerHomeComponent)
-            },
-            */
-            {
-                path: 'emi-payments',
-                loadComponent: () => import('../dashboard/pages/emi-payments/emi-payments.component').then(m => m.EmiPaymentsComponent)
+                path: 'overdue-emis',
+                loadComponent: () => import('../dashboard/pages/overdue-emis/overdue-emis.component').then(m => m.OverdueEmis)
             },
             {
                 path: 'loans',

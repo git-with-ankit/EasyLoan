@@ -45,9 +45,9 @@ export const routes: Routes = [
       import('./shared/pages/unauthorized.component').then(c => c.UnauthorizedComponent),
   },
 
-  {
-    path: '**',
-    loadComponent: () =>
-      import('./shared/pages/not-found.component').then(c => c.NotFoundComponent),
-  },
+  // {
+  //   path: '**',
+  //   loadComponent: () =>
+  //     import('./shared/pages/not-found.component').then(c => c.NotFoundComponent),
+  // },
 ];

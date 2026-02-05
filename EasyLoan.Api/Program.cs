@@ -65,7 +65,8 @@ namespace EasyLoan.Api
                         Status = StatusCodes.Status400BadRequest,
                         Title = "Validation failed",
                         Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1",
-                        Instance = context.HttpContext.Request.Path
+                        Instance = context.HttpContext.Request.Path,
+                        Detail = "Validation errors"
                     };
 
                     return new BadRequestObjectResult(problemDetails)

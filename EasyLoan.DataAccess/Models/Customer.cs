@@ -103,6 +103,10 @@ namespace EasyLoan.DataAccess.Models
 //rate limiting the loan application 
 //change password
 //findasync
+//token - cookie
+//errors
+//structure
+//enums or constants
 //auth login , customer register and change password
 //totalOngoingLoans - done
 //recalculating penalty makes the penalty charge up again - done
