@@ -1,9 +1,10 @@
 import { LoanApplicationStatus } from './application.models';
 
+// Request DTO that matches backend ReviewLoanApplicationRequestDto
 export interface ReviewLoanApplicationRequest {
-    status: LoanApplicationStatus; // Approved or Rejected
+    isApproved: boolean; // true for Approve, false for Reject
     approvedAmount: number;
-    remarks: string;
+    managerComments: string;
 }
 
 export interface LoanApplicationReviewResponse {

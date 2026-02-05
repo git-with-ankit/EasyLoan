@@ -104,9 +104,12 @@ namespace EasyLoan.DataAccess.Models
 //change password
 //findasync
 //token - cookie
-//errors
-//structure
-//enums or constants
+//errors - done
+//structure - done
+//landing page
+//constants
+//routes remove dashboard
+//*ngif
 //auth login , customer register and change password
 //totalOngoingLoans - done
 //recalculating penalty makes the penalty charge up again - done

@@ -48,8 +48,7 @@ export interface LoanDetails {
 
 export enum LoanStatus {
     Active = 'Active',
-    Closed = 'Closed',
-    Defaulted = 'Defaulted'
+    Closed = 'Closed'
 }
 
 export interface PaymentHistory {

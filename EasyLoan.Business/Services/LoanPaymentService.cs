@@ -558,7 +558,7 @@ namespace EasyLoan.Business.Services
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
             if (loan.Status != LoanStatus.Active)
-                throw new BusinessRuleViolationException(ErrorMessages.LoanNotActive);
+                return new List<DueEmisResponseDto>();//changes
 
             var unpaidEmis = loan.Emis
                 .Where(e => !e.IsPaid)
@@ -566,7 +566,7 @@ namespace EasyLoan.Business.Services
                 .ToList();
 
             if (!unpaidEmis.Any())
-                throw new BusinessRuleViolationException("No pending EMIs.");
+                return new List<DueEmisResponseDto>();//Changes
 
             foreach (var emi in unpaidEmis)
             {

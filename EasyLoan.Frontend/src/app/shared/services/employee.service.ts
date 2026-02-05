@@ -9,19 +9,10 @@ export class EmployeeService {
     private baseUrl = `${environment.apiUrl}/employees`;
     private http = inject(HttpClient);
 
-    /**
-     * Get the authenticated employee's profile
-     * @returns Observable of employee profile
-     */
     getProfile(): Observable<EmployeeProfile> {
         return this.http.get<EmployeeProfile>(`${this.baseUrl}/profile`);
     }
 
-    /**
-     * Update the authenticated employee's profile
-     * @param profile - Updated profile data
-     * @returns Observable of updated employee profile
-     */
     updateProfile(profile: UpdateEmployeeProfile): Observable<EmployeeProfile> {
         return this.http.patch<EmployeeProfile>(`${this.baseUrl}/profile`, profile);
     }

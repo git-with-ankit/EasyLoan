@@ -9,7 +9,7 @@ export const ADMIN_ROUTES: Routes = [
     {
         path: 'dashboard',
         loadComponent: () =>
-            import('../dashboard/layouts/admin-layout/admin-layout.component').then(
+            import('./admin-layout/admin-layout.component').then(
                 (c) => c.AdminLayoutComponent
             ),
         children: [
@@ -20,7 +20,7 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'overview',
-                loadComponent: () => import('../dashboard/pages/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+                loadComponent: () => import('../dashboard/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
             },
             {
                 path: 'loan-types',
@@ -28,11 +28,11 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'assigned-applications',
-                loadComponent: () => import('../dashboard/pages/assigned-applications/assigned-applications.component').then(m => m.AssignedApplicationsComponent)
+                loadComponent: () => import('../applications/assigned-applications/assigned-applications.component').then(m => m.AssignedApplicationsComponent)
             },
             {
                 path: 'assigned-applications/:applicationNumber/review',
-                loadComponent: () => import('../dashboard/pages/application-review/application-review.component').then(m => m.ApplicationReviewComponent)
+                loadComponent: () => import('../applications/application-review/application-review.component').then(m => m.ApplicationReviewComponent)
             },
             {
                 path: 'create-manager',
@@ -40,7 +40,7 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'profile',
-                loadComponent: () => import('../dashboard/pages/profile/profile.component').then(m => m.ProfileComponent)
+                loadComponent: () => import('../profile/profile.component').then(m => m.ProfileComponent)
             }
         ]
     },

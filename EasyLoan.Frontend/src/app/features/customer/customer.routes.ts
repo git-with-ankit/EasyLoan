@@ -2,32 +2,32 @@ import { Routes } from '@angular/router';
 
 export const CUSTOMER_ROUTES: Routes = [
     {
-        path: 'dashboard',
+        path: '',
         loadComponent: () =>
-            import('../dashboard/layouts/customer-layout/customer-layout.component').then(
+            import('./customer-layout/customer-layout.component').then(
                 (c) => c.CustomerLayoutComponent
             ),
         children: [
             { path: '', redirectTo: 'overdue-emis', pathMatch: 'full' },
             {
                 path: 'overdue-emis',
-                loadComponent: () => import('../dashboard/pages/overdue-emis/overdue-emis.component').then(m => m.OverdueEmis)
+                loadComponent: () => import('../loans/overdue-emis/overdue-emis.component').then(m => m.OverdueEmis)
             },
             {
                 path: 'loans',
-                loadComponent: () => import('../dashboard/pages/loans-list/loans-list.component').then(m => m.LoansListComponent)
+                loadComponent: () => import('../loans/loans-list/loans-list.component').then(m => m.LoansListComponent)
             },
             {
                 path: 'applications',
-                loadComponent: () => import('../dashboard/pages/applications-list/applications-list.component').then(m => m.ApplicationsListComponent)
+                loadComponent: () => import('../applications/applications-list/applications-list.component').then(m => m.ApplicationsListComponent)
             },
             {
                 path: 'apply-loan',
-                loadComponent: () => import('../dashboard/pages/create-application/create-application.component').then(m => m.CreateApplicationComponent)
+                loadComponent: () => import('../applications/create-application/create-application.component').then(m => m.CreateApplicationComponent)
             },
             {
                 path: 'profile',
-                loadComponent: () => import('../dashboard/pages/profile/profile.component').then(m => m.ProfileComponent)
+                loadComponent: () => import('../profile/profile.component').then(m => m.ProfileComponent)
             }
         ]
     },
