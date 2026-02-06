@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -10,6 +10,15 @@ import { Router, RouterModule } from '@angular/router';
 import { ApplicationService } from '../application.service';
 import { LoanApplicationSummary, LoanApplicationStatus } from '../application.models';
 import { AuthService } from '../../auth/auth.service';
+import { createPaginationParams } from '../../../shared/models/pagination.models';
+
+interface TabPaginationState {
+    data: LoanApplicationSummary[];
+    pageIndex: number;  // 0-indexed for MatPaginator
+    pageSize: number;
+    totalCount: number;
+    isLoading: boolean;
+}
 
 @Component({
     selector: 'app-assigned-applications',
@@ -32,17 +41,32 @@ import { AuthService } from '../../auth/auth.service';
 export class AssignedApplicationsComponent implements OnInit {
     displayedColumns: string[] = ['applicationNumber', 'loanType', 'amount', 'appliedOn', 'status', 'actions'];
 
-    // Data Sources for each tab
-    pendingDataSource = new MatTableDataSource<LoanApplicationSummary>([]);
-    approvedDataSource = new MatTableDataSource<LoanApplicationSummary>([]);
-    rejectedDataSource = new MatTableDataSource<LoanApplicationSummary>([]);
+    // Pagination state for each tab using signals
+    pendingState = signal<TabPaginationState>({
+        data: [],
+        pageIndex: 0,
+        pageSize: 10,
+        totalCount: 0,
+        isLoading: false
+    });
 
-    // Paginators for each tab
-    @ViewChild('pendingPaginator') pendingPaginator!: MatPaginator;
-    @ViewChild('approvedPaginator') approvedPaginator!: MatPaginator;
-    @ViewChild('rejectedPaginator') rejectedPaginator!: MatPaginator;
+    approvedState = signal<TabPaginationState>({
+        data: [],
+        pageIndex: 0,
+        pageSize: 10,
+        totalCount: 0,
+        isLoading: false
+    });
 
-    userRole: string = '';
+    rejectedState = signal<TabPaginationState>({
+        data: [],
+        pageIndex: 0,
+        pageSize: 10,
+        totalCount: 0,
+        isLoading: false
+    });
+
+    userRole = '';
 
     constructor(
         private appService: ApplicationService,
@@ -53,32 +77,82 @@ export class AssignedApplicationsComponent implements OnInit {
     ngOnInit(): void {
         const user = this.authService.getCurrentUser();
         this.userRole = user?.role || '';
-        this.loadApplications();
+        this.loadAllTabs();
     }
 
-    loadApplications() {
-        // Load Pending
-        this.appService.getApplications(LoanApplicationStatus.Pending).subscribe(data => {
-            this.pendingDataSource.data = data;
-            this.pendingDataSource.paginator = this.pendingPaginator;
-        });
+    loadAllTabs(): void {
+        this.loadApplications(LoanApplicationStatus.Pending, this.pendingState);
+        this.loadApplications(LoanApplicationStatus.Approved, this.approvedState);
+        this.loadApplications(LoanApplicationStatus.Rejected, this.rejectedState);
+    }
 
-        // Load Approved
-        this.appService.getApplications(LoanApplicationStatus.Approved).subscribe(data => {
-            this.approvedDataSource.data = data;
-            this.approvedDataSource.paginator = this.approvedPaginator;
-        });
+    loadApplications(status: LoanApplicationStatus, stateSignal: ReturnType<typeof signal<TabPaginationState>>): void {
+        const currentState = stateSignal();
+        stateSignal.set({ ...currentState, isLoading: true });
 
-        // Load Rejected
-        this.appService.getApplications(LoanApplicationStatus.Rejected).subscribe(data => {
-            this.rejectedDataSource.data = data;
-            this.rejectedDataSource.paginator = this.rejectedPaginator;
+        const pagination = createPaginationParams(currentState.pageIndex + 1, currentState.pageSize); // Convert to 1-indexed
+
+        this.appService.getApplications(status, pagination).subscribe({
+            next: (response) => {
+                stateSignal.set({
+                    data: Array.isArray(response.items) ? response.items : [],
+                    totalCount: response.totalCount || 0,
+                    pageIndex: currentState.pageIndex,
+                    pageSize: currentState.pageSize,
+                    isLoading: false
+                });
+            },
+            error: (err) => {
+                console.error('Error loading applications:', err);
+                stateSignal.set({
+                    data: [],
+                    totalCount: 0,
+                    pageIndex: currentState.pageIndex,
+                    pageSize: currentState.pageSize,
+                    isLoading: false
+                });
+            }
         });
     }
 
-    reviewApplication(applicationNumber: string) {
+    onPendingPageChange(event: PageEvent): void {
+        const currentState = this.pendingState();
+        this.pendingState.set({
+            ...currentState,
+            pageIndex: event.pageIndex,
+            pageSize: event.pageSize
+        });
+        this.loadApplications(LoanApplicationStatus.Pending, this.pendingState);
+    }
+
+    onApprovedPageChange(event: PageEvent): void {
+        const currentState = this.approvedState();
+        this.approvedState.set({
+            ...currentState,
+            pageIndex: event.pageIndex,
+            pageSize: event.pageSize
+        });
+        this.loadApplications(LoanApplicationStatus.Approved, this.approvedState);
+    }
+
+    onRejectedPageChange(event: PageEvent): void {
+        const currentState = this.rejectedState();
+        this.rejectedState.set({
+            ...currentState,
+            pageIndex: event.pageIndex,
+            pageSize: event.pageSize
+        });
+        this.loadApplications(LoanApplicationStatus.Rejected, this.rejectedState);
+    }
+
+    reviewApplication(applicationNumber: string): void {
         const user = this.authService.getCurrentUser();
         const basePath = user?.role === 'Admin' ? '/admin' : '/employee';
         this.router.navigate([basePath, 'assigned-applications', applicationNumber, 'review']);
+    }
+
+    // TrackBy function for better performance
+    trackByApplicationNumber(index: number, item: LoanApplicationSummary): string {
+        return item.applicationNumber;
     }
 }

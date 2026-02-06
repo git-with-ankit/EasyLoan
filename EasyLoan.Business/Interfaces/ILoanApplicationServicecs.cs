@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.LoanApplication;
+﻿using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
 
 namespace EasyLoan.Business.Interfaces
@@ -12,6 +13,6 @@ namespace EasyLoan.Business.Interfaces
         Task<LoanApplicationDetailsWithCustomerDataResponseDto> GetApplicationDetailsForReview(string applicationNumber, Guid userId, Role userRole);
         //Task<List<LoanApplicationsAdminResponseDto>> GetAllPendingApplicationsAsync();
         //Task<List<LoanApplicationsResponseDto>> GetAssignedApplicationsAsync(Guid assignedManagerId);
-        Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status);
+        Task<PagedResponseDto<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status, int pageNumber, int pageSize);
     }
 }

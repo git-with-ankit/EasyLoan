@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.Loan;
+﻿using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.Loan;
 using EasyLoan.Dtos.LoanType;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,18 +68,31 @@ namespace EasyLoan.Api.Controllers
 
         [Authorize(Roles = "Customer,Manager")]
         [HttpGet("{loanTypeId}/emi-plan")]
-        [ProducesResponseType(typeof(IEnumerable<EmiScheduleItemResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponseDto<EmiScheduleItemResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
-        public async Task<ActionResult<IEnumerable<EmiScheduleItemResponseDto>>> PreviewEmiPlan(Guid loanTypeId,[FromQuery] PreviewEmiQueryDto query)
+        public async Task<ActionResult<PagedResponseDto<EmiScheduleItemResponseDto>>> PreviewEmiPlan(
+            Guid loanTypeId,
+            [FromQuery] PreviewEmiQueryDto query,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
+            // Validate pagination parameters
+            if (pageNumber < 1)
+                return BadRequest("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return BadRequest("Page size must be between 1 and 100");
+
             var plan = await _service.PreviewEmiAsync(
                 loanTypeId,
                 query.Amount,
-                query.TenureInMonths);
+                query.TenureInMonths,
+                pageNumber,
+                pageSize);
 
             return Ok(plan);
         }

@@ -1,5 +1,6 @@
 ﻿using EasyLoan.Api.Extensions;
 using EasyLoan.Business.Interfaces;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -35,17 +36,27 @@ namespace EasyLoan.Api.Controllers
 
         [Authorize(Roles ="Admin,Manager,Customer")]
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<LoanApplicationsResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponseDto<LoanApplicationsResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(   ProblemDetails), StatusCodes.Status404NotFound)] // Customer not found
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)] // Not owner
-        public async Task<ActionResult<IEnumerable<LoanApplicationsResponseDto>>> GetApplications([FromQuery] LoanApplicationStatus status)
+        public async Task<ActionResult<PagedResponseDto<LoanApplicationsResponseDto>>> GetApplications(
+            [FromQuery] LoanApplicationStatus status,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
+            // Validate pagination parameters
+            if (pageNumber < 1)
+                return BadRequest("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return BadRequest("Page size must be between 1 and 100");
+
             var userId = User.GetUserId();
             var userRole = User.GetRole();
 
-            var applications = await _service.GetApplicationsAsync(userId, userRole, status);
+            var applications = await _service.GetApplicationsAsync(userId, userRole, status, pageNumber, pageSize);
 
             return Ok(applications);
 

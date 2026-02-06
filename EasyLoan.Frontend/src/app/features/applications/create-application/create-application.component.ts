@@ -6,6 +6,7 @@ import { LoanTypeService } from '../../loan-types/loan-type.service';
 import { ApplicationService } from '../application.service';
 import { LoanType, EmiScheduleItem } from '../../loan-types/loan-type.models';
 import { EmiPlanPreviewComponent } from './emi-plan-preview/emi-plan-preview.component';
+import { createPaginationParams } from '../../../shared/models/pagination.models';
 
 @Component({
     selector: 'app-create-application',
@@ -117,10 +118,27 @@ export class CreateApplicationComponent implements OnInit {
         this.isLoadingEmiPlan.set(true);
         this.errorMessage.set('');
 
-        this.loanTypeService.previewEmiPlan(loanTypeId, amount, tenure).subscribe({
-            next: (data) => {
-                this.emiPlan.set(data);
-                this.isLoadingEmiPlan.set(false);
+        // Fetch all EMI schedule items across all pages
+        this.fetchAllEmiPages(loanTypeId, amount, tenure);
+    }
+
+    private fetchAllEmiPages(loanTypeId: string, amount: number, tenure: number, pageNumber: number = 1, accumulatedItems: any[] = []): void {
+        const pagination = createPaginationParams(pageNumber, 100); // Max allowed by backend
+
+        this.loanTypeService.previewEmiPlan(loanTypeId, amount, tenure, pagination).subscribe({
+            next: (response) => {
+                // Accumulate items from this page
+                const allItems = [...accumulatedItems, ...response.items];
+
+                // Check if there are more pages
+                if (pageNumber < response.totalPages) {
+                    // Fetch next page
+                    this.fetchAllEmiPages(loanTypeId, amount, tenure, pageNumber + 1, allItems);
+                } else {
+                    // All pages fetched, set the complete EMI plan
+                    this.emiPlan.set(allItems);
+                    this.isLoadingEmiPlan.set(false);
+                }
             },
             error: (error) => {
                 // this.errorMessage.set(error.error?.message || 'Failed to generate EMI plan');

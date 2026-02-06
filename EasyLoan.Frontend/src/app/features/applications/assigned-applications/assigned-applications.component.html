@@ -7,7 +7,7 @@
         <!-- Pending Tab -->
         <mat-tab label="Pending">
             <div class="table-container mat-elevation-z2">
-                <table mat-table [dataSource]="pendingDataSource">
+                <table mat-table [dataSource]="pendingState().data">
                     <!-- Columns -->
                     <ng-container matColumnDef="applicationNumber">
                         <th mat-header-cell *matHeaderCellDef> App Number </th>
@@ -49,14 +49,17 @@
                     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
-                <mat-paginator #pendingPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+                <mat-paginator [length]="pendingState().totalCount" [pageSize]="pendingState().pageSize"
+                    [pageIndex]="pendingState().pageIndex" [pageSizeOptions]="[5, 10, 20]"
+                    (page)="onPendingPageChange($event)" showFirstLastButtons>
+                </mat-paginator>
             </div>
         </mat-tab>
 
         <!-- Approved Tab -->
         <mat-tab label="Approved">
             <div class="table-container mat-elevation-z2">
-                <table mat-table [dataSource]="approvedDataSource">
+                <table mat-table [dataSource]="approvedState().data">
                     <!-- Same Columns but read-only usage mostly -->
                     <ng-container matColumnDef="applicationNumber">
                         <th mat-header-cell *matHeaderCellDef> App Number </th>
@@ -99,14 +102,17 @@
                     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
-                <mat-paginator #approvedPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+                <mat-paginator [length]="approvedState().totalCount" [pageSize]="approvedState().pageSize"
+                    [pageIndex]="approvedState().pageIndex" [pageSizeOptions]="[5, 10, 20]"
+                    (page)="onApprovedPageChange($event)" showFirstLastButtons>
+                </mat-paginator>
             </div>
         </mat-tab>
 
         <!-- Rejected Tab -->
         <mat-tab label="Rejected">
             <div class="table-container mat-elevation-z2">
-                <table mat-table [dataSource]="rejectedDataSource">
+                <table mat-table [dataSource]="rejectedState().data">
                     <!-- Same Columns -->
                     <ng-container matColumnDef="applicationNumber">
                         <th mat-header-cell *matHeaderCellDef> App Number </th>
@@ -149,7 +155,10 @@
                     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
-                <mat-paginator #rejectedPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+                <mat-paginator [length]="rejectedState().totalCount" [pageSize]="rejectedState().pageSize"
+                    [pageIndex]="rejectedState().pageIndex" [pageSizeOptions]="[5, 10, 20]"
+                    (page)="onRejectedPageChange($event)" showFirstLastButtons>
+                </mat-paginator>
             </div>
         </mat-tab>
     </mat-tab-group>

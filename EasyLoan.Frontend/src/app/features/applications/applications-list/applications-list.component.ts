@@ -4,6 +4,7 @@ import { ApplicationService } from '../application.service';
 import { LoanApplicationSummary, LoanApplicationStatus } from '../application.models';
 import { ApplicationCardComponent } from './application-card/application-card.component';
 import { ApplicationDetailsCardComponent } from './application-details-card/application-details-card.component';
+import { createPaginationParams } from '../../../shared/models/pagination.models';
 
 @Component({
     selector: 'app-applications-list',
@@ -31,13 +32,18 @@ export class ApplicationsListComponent implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        this.applicationService.getApplications(this.selectedStatus()).subscribe({
-            next: (data) => {
-                this.applications.set(data);
+        // Fetch all applications for the selected status (use max allowed page size)
+        const pagination = createPaginationParams(1, 100);
+
+        this.applicationService.getApplications(this.selectedStatus(), pagination).subscribe({
+            next: (response) => {
+                // Extract items from paginated response
+                this.applications.set(response.items);
                 this.isLoading.set(false);
             },
             error: (error) => {
                 this.errorMessage.set(error.message || 'Failed to load applications');
+                this.applications.set([]); // Reset to empty array on error
                 this.isLoading.set(false);
             }
         });

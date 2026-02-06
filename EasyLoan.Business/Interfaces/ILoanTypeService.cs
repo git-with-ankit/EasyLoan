@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.LoanType;
+﻿using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.LoanType;
 
 public interface ILoanTypeService
 {
@@ -7,5 +8,5 @@ public interface ILoanTypeService
     Task<LoanTypeResponseDto> CreateLoanTypeAsync(LoanTypeRequestDto dto);
     Task<LoanTypeResponseDto> UpdateLoanTypeAsync(Guid loanTypeId, UpdateLoanTypeRequestDto dto);
     Task<IEnumerable<LoanTypeResponseDto>> GetLoanTypesAsync();
-    Task<IEnumerable<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId,decimal amount,int tenureInMonths);
+    Task<PagedResponseDto<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths, int pageNumber, int pageSize);
 }

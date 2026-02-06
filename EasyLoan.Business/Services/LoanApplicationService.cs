@@ -3,8 +3,10 @@ using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.LoanApplication;
 using EasyLoan.Models.Common.Enums;
+using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
 namespace EasyLoan.Business.Services
@@ -303,53 +305,65 @@ namespace EasyLoan.Business.Services
         //    }).ToList();
         //}
 
-        public async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status)
+        public async Task<PagedResponseDto<LoanApplicationsResponseDto>> GetApplicationsAsync(Guid userId, Role userRole, LoanApplicationStatus status, int pageNumber, int pageSize)
         {
             return userRole switch
             {
                 Role.Admin =>
-                    await GetApplicationsForAdminAsync(status),
+                    await GetApplicationsForAdminAsync(status, pageNumber, pageSize),
 
                 Role.Manager =>
-                    await GetAssignedApplicationsForManagerAsync(userId, status),
+                    await GetAssignedApplicationsForManagerAsync(userId, status, pageNumber, pageSize),
 
                 Role.Customer =>
-                    await GetApplicationsForCustomerAsync(userId, status),
+                    await GetApplicationsForCustomerAsync(userId, status, pageNumber, pageSize),
 
                 _ =>
                     throw new ForbiddenException(ErrorMessages.AccessDenied)
             };
         }
-        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status)
+        private async Task<PagedResponseDto<LoanApplicationsResponseDto>> GetApplicationsForAdminAsync(LoanApplicationStatus status, int pageNumber, int pageSize)
         {
             var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
+            var query = applications.Where(a => a.Status == status).AsQueryable();
 
-            // Return empty list if no applications found
-            if (!applications.Any())
-                return new List<LoanApplicationsResponseDto>();
+            var totalCount = query.Count();
 
-            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsResponseDto
+            var items = query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new LoanApplicationsResponseDto
+                {
+                    ApplicationNumber = a.ApplicationNumber,
+                    AssignedEmployeeId = a.AssignedEmployeeId,
+                    TenureInMonths = a.RequestedTenureInMonths,
+                    LoanTypeName = a.LoanType.Name,
+                    RequestedAmount = a.RequestedAmount,
+                    Status = a.Status,
+                    CreatedDate = a.CreatedDate
+                })
+                .ToList();
+
+            return new PagedResponseDto<LoanApplicationsResponseDto>
             {
-                ApplicationNumber = a.ApplicationNumber,
-                AssignedEmployeeId = a.AssignedEmployeeId,
-                TenureInMonths = a.RequestedTenureInMonths, 
-                LoanTypeName = a.LoanType.Name,
-                RequestedAmount = a.RequestedAmount,
-                Status = a.Status,
-                CreatedDate = a.CreatedDate
-            });
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
-        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetAssignedApplicationsForManagerAsync(Guid managerId, LoanApplicationStatus status)
+        private async Task<PagedResponseDto<LoanApplicationsResponseDto>> GetAssignedApplicationsForManagerAsync(Guid managerId, LoanApplicationStatus status, int pageNumber, int pageSize)
         {
-
             var applications = await _loanApplicationrepo.GetAllWithDetailsAsync();
+            var query = applications.Where(a => a.AssignedEmployeeId == managerId && a.Status == status).AsQueryable();
 
-            // Return empty list if no applications found
-            if (!applications.Any())
-                return new List<LoanApplicationsResponseDto>();
+            var totalCount = query.Count();
 
-            return applications.Where(a => a.AssignedEmployeeId == managerId && a.Status == status).
-                Select(a => new LoanApplicationsResponseDto
+            var items = query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new LoanApplicationsResponseDto
                 {
                     TenureInMonths = a.RequestedTenureInMonths,
                     ApplicationNumber = a.ApplicationNumber,
@@ -358,29 +372,51 @@ namespace EasyLoan.Business.Services
                     AssignedEmployeeId = a.AssignedEmployeeId,
                     Status = a.Status,
                     CreatedDate = a.CreatedDate
-                });
+                })
+                .ToList();
+
+            return new PagedResponseDto<LoanApplicationsResponseDto>
+            {
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
-        private async Task<IEnumerable<LoanApplicationsResponseDto>> GetApplicationsForCustomerAsync(Guid customerId, LoanApplicationStatus status)
+        private async Task<PagedResponseDto<LoanApplicationsResponseDto>> GetApplicationsForCustomerAsync(Guid customerId, LoanApplicationStatus status, int pageNumber, int pageSize)
         {
             var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId);
-                
-            // Return empty list if no applications found
-            if(!applications.Any())
-                return new List<LoanApplicationsResponseDto>();
 
             if (applications.Any(a => a.CustomerId != customerId))
                 throw new ForbiddenException(ErrorMessages.AccessDenied);
 
-            return applications.Where(a => a.Status == status).Select(a => new LoanApplicationsResponseDto
+            var query = applications.Where(a => a.Status == status).AsQueryable();
+            var totalCount = query.Count();
+
+            var items = query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new LoanApplicationsResponseDto
+                {
+                    ApplicationNumber = a.ApplicationNumber,
+                    LoanTypeName = a.LoanType.Name,
+                    RequestedAmount = a.RequestedAmount,
+                    AssignedEmployeeId = a.AssignedEmployeeId,
+                    TenureInMonths = a.RequestedTenureInMonths,
+                    Status = a.Status,
+                    CreatedDate = a.CreatedDate
+                })
+                .ToList();
+
+            return new PagedResponseDto<LoanApplicationsResponseDto>
             {
-                ApplicationNumber = a.ApplicationNumber,
-                LoanTypeName = a.LoanType.Name,
-                RequestedAmount = a.RequestedAmount,
-                AssignedEmployeeId = a.AssignedEmployeeId,
-                TenureInMonths = a.RequestedTenureInMonths,
-                Status = a.Status,
-                CreatedDate = a.CreatedDate
-            });
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
 
     }

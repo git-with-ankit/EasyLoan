@@ -13,15 +13,19 @@ import {
     LoanApplicationReviewResponse
 } from './review.models';
 import { environment } from '../../../environments/environment';
+import { PagedResponse, PaginationParams } from '../../shared/models/pagination.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationService {
     private baseUrl = `${environment.apiUrl}/loan-applications`;
     private http = inject(HttpClient);
 
-    getApplications(status: LoanApplicationStatus): Observable<LoanApplicationSummary[]> {
-        const params = new HttpParams().set('status', status);
-        return this.http.get<LoanApplicationSummary[]>(this.baseUrl, { params });
+    getApplications(status: LoanApplicationStatus, pagination: PaginationParams): Observable<PagedResponse<LoanApplicationSummary>> {
+        const params = new HttpParams()
+            .set('status', status)
+            .set('pageNumber', pagination.pageNumber.toString())
+            .set('pageSize', pagination.pageSize.toString());
+        return this.http.get<PagedResponse<LoanApplicationSummary>>(this.baseUrl, { params });
     }
 
     getApplicationDetails(applicationNumber: string): Observable<LoanApplicationDetails> {

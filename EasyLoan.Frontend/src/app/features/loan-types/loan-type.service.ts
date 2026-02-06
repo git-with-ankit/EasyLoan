@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoanType, EmiScheduleItem, CreateLoanTypeRequest, UpdateLoanTypeRequest } from './loan-type.models';
+import { PagedResponse, PaginationParams } from '../../shared/models/pagination.models';
 
 @Injectable({
     providedIn: 'root'
@@ -28,11 +29,13 @@ export class LoanTypeService {
         return this.http.patch<LoanType>(`${this.apiUrl}/${id}`, data);
     }
 
-    previewEmiPlan(loanTypeId: string, amount: number, tenureInMonths: number): Observable<EmiScheduleItem[]> {
+    previewEmiPlan(loanTypeId: string, amount: number, tenureInMonths: number, pagination: PaginationParams): Observable<PagedResponse<EmiScheduleItem>> {
         const params = new HttpParams()
             .set('amount', amount.toString())
-            .set('tenureInMonths', tenureInMonths.toString());
+            .set('tenureInMonths', tenureInMonths.toString())
+            .set('pageNumber', pagination.pageNumber.toString())
+            .set('pageSize', pagination.pageSize.toString());
 
-        return this.http.get<EmiScheduleItem[]>(`${this.apiUrl}/${loanTypeId}/emi-plan`, { params });
+        return this.http.get<PagedResponse<EmiScheduleItem>>(`${this.apiUrl}/${loanTypeId}/emi-plan`, { params });
     }
 }

@@ -2,6 +2,7 @@
 using EasyLoan.Business.Exceptions;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.LoanType;
 using EasyLoan.Business.Interfaces;
 
@@ -105,7 +106,7 @@ public class LoanTypeService : ILoanTypeService
             MaxTenureInMonths = t.MaxTenureInMonths
         });
     }
-    public async Task<IEnumerable<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths)
+    public async Task<PagedResponseDto<EmiScheduleItemResponseDto>> PreviewEmiAsync(Guid loanTypeId, decimal amount, int tenureInMonths, int pageNumber, int pageSize)
     {
         var loanType = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
@@ -118,11 +119,27 @@ public class LoanTypeService : ILoanTypeService
         if (amount < loanType.MinAmount)
             throw new BusinessRuleViolationException(ErrorMessages.AmountLessThanMinAmount);
 
-        return _emiCalculatorService.GenerateSchedule(
+        var fullSchedule = _emiCalculatorService.GenerateSchedule(
             principal: amount,
             annualInterestRate: loanType.InterestRate,
             tenureInMonths: tenureInMonths,
-            startDate: DateTime.UtcNow);
+            startDate: DateTime.UtcNow).ToList();
+
+        var totalCount = fullSchedule.Count;
+
+        var items = fullSchedule
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new PagedResponseDto<EmiScheduleItemResponseDto>
+        {
+            Items = items,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        };
     }
 
 }
