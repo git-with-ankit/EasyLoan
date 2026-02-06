@@ -8,7 +8,7 @@ export const roleGuard: CanActivateFn = (route, state) => {
 
     const user = userService.currentUser();
     if (!user) {
-        router.navigate(['/auth/login']);
+        router.navigate(['/landing']);
         return false;
     }
 

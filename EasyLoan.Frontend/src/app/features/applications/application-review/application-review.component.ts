@@ -143,7 +143,7 @@ export class ApplicationReviewComponent implements OnInit {
                 // Navigate based on user role
                 const user = this.authService.getCurrentUser();
                 const basePath = user?.role === 'Admin' ? '/admin' : '/employee';
-                this.router.navigate([basePath, 'dashboard', 'assigned-applications']);
+                this.router.navigate([basePath, 'assigned-applications']);
             },
             error: (error) => {
                 console.error('Error submitting review:', error);

@@ -1,10 +1,29 @@
 .register-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 40px 20px;
+    position: relative;
+}
+
+.back-button-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.back-button {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+    transition: all 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: white;
+    transform: translateX(-2px);
 }
 
 .auth-card {

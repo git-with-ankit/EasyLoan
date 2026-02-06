@@ -1,12 +1,20 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
+import { publicPageGuard } from './guards/public-page.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'auth/login',
+    redirectTo: 'landing',
     pathMatch: 'full',
+  },
+
+  {
+    path: 'landing',
+    canActivate: [publicPageGuard],
+    loadComponent: () =>
+      import('./features/landing/landing.component').then(c => c.LandingComponent),
   },
 
   {

@@ -1,0 +1,55 @@
+<div class="landing-container">
+    <mat-card class="landing-card">
+        <mat-card-header>
+            <mat-card-title class="app-title">
+                <mat-icon class="title-icon">account_balance</mat-icon>
+                Welcome to EasyLoan
+            </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            <p class="subtitle">Your trusted partner for quick and easy loan management</p>
+
+            <div class="action-buttons">
+                <!-- Register Button -->
+                <button mat-raised-button color="primary" class="action-btn" (click)="navigateToRegister()">
+                    <mat-icon>person_add</mat-icon>
+                    Register
+                </button>
+
+                <!-- Login Button with Dropdown -->
+                <button mat-raised-button color="accent" class="action-btn" [matMenuTriggerFor]="loginMenu">
+                    <mat-icon>login</mat-icon>
+                    Login
+                    <mat-icon>arrow_drop_down</mat-icon>
+                </button>
+
+                <mat-menu #loginMenu="matMenu">
+                    <button mat-menu-item (click)="navigateToCustomerLogin()">
+                        <mat-icon>person</mat-icon>
+                        <span>Customer Login</span>
+                    </button>
+                    <button mat-menu-item (click)="navigateToEmployeeLogin()">
+                        <mat-icon>badge</mat-icon>
+                        <span>Employee Login</span>
+                    </button>
+                </mat-menu>
+            </div>
+
+            <div class="features">
+                <div class="feature-item">
+                    <mat-icon>speed</mat-icon>
+                    <span>Quick Approval</span>
+                </div>
+                <div class="feature-item">
+                    <mat-icon>security</mat-icon>
+                    <span>Secure & Safe</span>
+                </div>
+                <div class="feature-item">
+                    <mat-icon>support_agent</mat-icon>
+                    <span>24/7 Support</span>
+                </div>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>

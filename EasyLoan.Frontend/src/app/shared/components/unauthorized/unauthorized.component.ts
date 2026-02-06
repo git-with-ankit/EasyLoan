@@ -4,10 +4,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 
 @Component({
-    standalone: true,
-    selector: 'app-unauthorized',
-    imports: [MatCardModule, MatButtonModule, RouterLink],
-    template: `
+  standalone: true,
+  selector: 'app-unauthorized',
+  imports: [MatCardModule, MatButtonModule, RouterLink],
+  template: `
     <div class="error-container">
       <mat-card>
         <mat-card-header>
@@ -15,14 +15,14 @@ import { RouterLink } from '@angular/router';
         </mat-card-header>
         <mat-card-content>
           <p>You don't have permission to access this page.</p>
-          <button mat-raised-button color="primary" routerLink="/auth/login">
-            Go to Login
+          <button mat-raised-button color="primary" routerLink="/landing">
+            Go to Home
           </button>
         </mat-card-content>
       </mat-card>
     </div>
   `,
-    styles: [`
+  styles: [`
     .error-container {
       display: flex;
       justify-content: center;

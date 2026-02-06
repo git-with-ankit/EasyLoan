@@ -1,4 +1,10 @@
 <div class="register-container">
+  <div class="back-button-container">
+    <button mat-icon-button routerLink="/landing" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </div>
+
   <mat-card class="auth-card">
     <mat-card-header>
       <mat-card-title>{{ isManagerRegistration ? 'Create Manager Account' : 'Register for EasyLoan' }}</mat-card-title>
@@ -55,33 +61,27 @@
         </mat-form-field>
 
         <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
-        <mat-label>Date of Birth</mat-label>
-        <mat-icon matPrefix>cake</mat-icon>
+          <mat-label>Date of Birth</mat-label>
+          <mat-icon matPrefix>cake</mat-icon>
 
-        <input
-          matInput
-          [matDatepicker]="picker"
-          formControlName="dateOfBirth"
-          [max]="maxDate"
-          [min]="minDate"
-          placeholder="Select your date of birth"
-        />
+          <input matInput [matDatepicker]="picker" formControlName="dateOfBirth" [max]="maxDate" [min]="minDate"
+            placeholder="Select your date of birth" />
 
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
 
-        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('required')">
-          Date of birth is required
-        </mat-error>
+          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('required')">
+            Date of birth is required
+          </mat-error>
 
-        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMax')">
-          You must be at least 18 years old
-        </mat-error>
+          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMax')">
+            You must be at least 18 years old
+          </mat-error>
 
-        <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMin')">
-          Age cannot be more than 150 years
-        </mat-error>
-      </mat-form-field>
+          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMin')">
+            Age cannot be more than 150 years
+          </mat-error>
+        </mat-form-field>
 
 
         <!-- Financial Information Section (Customer only) -->

@@ -21,12 +21,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             // Use the utility function to extract error message
             const errorMessage = extractErrorMessage(error);
 
+            // Skip notifications for /auth/me endpoint (used for silent auth checks)
+            const isAuthMeEndpoint = req.url.includes('/auth/me');
+
             // Handle specific status codes
             if (error.status === 401) {
-                // Unauthorized - clear user and redirect to login
+                // Unauthorized - clear user and redirect to landing
                 userService.clearUser();
-                notificationService.error(errorMessage);
-                router.navigate(['/auth/login']);
+
+                // Only show notification if not from auth/me endpoint
+                if (!isAuthMeEndpoint) {
+                    notificationService.error(errorMessage);
+                    router.navigate(['/landing']);
+                }
             } else if (error.status === 403) {
                 // Forbidden - show error and redirect
                 notificationService.error(errorMessage);

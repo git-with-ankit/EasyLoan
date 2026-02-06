@@ -52,12 +52,12 @@ export class AuthService {
     this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
       next: () => {
         this.userService.clearUser();
-        this.router.navigate(['/auth/login']);
+        this.router.navigate(['/landing']);
       },
       error: () => {
         // Even if logout fails, clear local state and redirect
         this.userService.clearUser();
-        this.router.navigate(['/auth/login']);
+        this.router.navigate(['/landing']);
       }
     });
   }
