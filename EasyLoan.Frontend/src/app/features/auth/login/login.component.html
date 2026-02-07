@@ -18,15 +18,22 @@
           <mat-label>Email</mat-label>
           <mat-icon matPrefix>email</mat-icon>
           <input matInput type="email" formControlName="email" placeholder="Enter your email" />
-          <mat-error *ngIf="form.get('email')?.hasError('required')">
+
+          @if (form.get('email')?.hasError('required')) {
+          <mat-error>
             Email is required
           </mat-error>
-          <mat-error *ngIf="form.get('email')?.hasError('maxlength')">
+          }
+          @if (form.get('email')?.hasError('maxlength')) {
+          <mat-error>
             Email is too long (maximum 150 characters)
           </mat-error>
-          <mat-error *ngIf="form.get('email')?.hasError('pattern') && !form.get('email')?.hasError('maxlength')">
+          }
+          @if (form.get('email')?.hasError('pattern') && !form.get('email')?.hasError('maxlength')) {
+          <mat-error>
             Email is not in the correct format
           </mat-error>
+          }
         </mat-form-field>
 
         <!-- Password -->
@@ -39,25 +46,36 @@
             [attr.aria-label]="'Toggle password visibility'">
             <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
-          <mat-error *ngIf="form.get('password')?.hasError('required')">
+
+          @if (form.get('password')?.hasError('required')) {
+          <mat-error>
             Password is required
           </mat-error>
-          <mat-error *ngIf="form.get('password')?.hasError('pattern')">
+          }
+          @if (form.get('password')?.hasError('pattern')) {
+          <mat-error>
             Password must be 8-20 characters with uppercase, lowercase, digit, and special character
           </mat-error>
+          }
         </mat-form-field>
 
         <!-- Submit Button -->
         <button mat-raised-button color="primary" class="full-width submit-btn" type="submit"
           [disabled]="form.invalid || isLoading()">
-          <span *ngIf="!isLoading()">Login</span>
-          <mat-spinner *ngIf="isLoading()" diameter="20"></mat-spinner>
+          @if (!isLoading()) {
+          <span>Login</span>
+          }
+          @if (isLoading()) {
+          <mat-spinner diameter="20"></mat-spinner>
+          }
         </button>
 
         <!-- Register Link - Only show for Customer login -->
-        <div class="register-link" *ngIf="loginType === 'Customer'">
+        @if (loginType === 'Customer') {
+        <div class="register-link">
           <p>Don't have an account? <a routerLink="/auth/register">Register here</a></p>
         </div>
+        }
       </form>
     </mat-card-content>
   </mat-card>

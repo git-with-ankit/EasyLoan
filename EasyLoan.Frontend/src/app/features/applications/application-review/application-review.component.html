@@ -1,4 +1,5 @@
-<div class="page-container" *ngIf="!isLoading() && details(); else loading">
+@if (!isLoading() && details()) {
+  <div class="page-container">
     <div class="header-section">
         <button mat-button (click)="goBack()">
             &larr; Back to List
@@ -67,7 +68,8 @@
         </mat-card>
 
         <!-- Review Form (Manager only, and only if pending) -->
-        <mat-card class="review-card" *ngIf="isManager && isPending()">
+        @if (isManager && isPending()) {
+          <mat-card class="review-card">
             <mat-card-header>
                 <mat-card-title>Review Application</mat-card-title>
             </mat-card-header>
@@ -76,11 +78,15 @@
                     <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Decision</mat-label>
                         <mat-select formControlName="status">
-                            <mat-option *ngFor="let status of statuses" [value]="status.value">
+                            @for (status of statuses; track status.value) {
+                              <mat-option [value]="status.value">
                                 {{status.label}}
-                            </mat-option>
+                              </mat-option>
+                            }
                         </mat-select>
-                        <mat-error *ngIf="reviewForm.get('status')?.hasError('required')">Status is required</mat-error>
+                        @if (reviewForm.get('status')?.hasError('required')) {
+                          <mat-error>Status is required</mat-error>
+                        }
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="full-width">
@@ -89,18 +95,27 @@
                             placeholder="Enter approved amount" step="0.01" [max]="details()!.requestedAmount"
                             (keydown)="onApprovedAmountKeyDown($event)">
                         <mat-hint>Maximum: {{details()!.requestedAmount | currency:'INR'}}</mat-hint>
-                        <mat-error *ngIf="reviewForm.get('approvedAmount')?.hasError('required')">
+
+                        @if (reviewForm.get('approvedAmount')?.hasError('required')) {
+                          <mat-error>
                             Approved amount is required
-                        </mat-error>
-                        <mat-error *ngIf="reviewForm.get('approvedAmount')?.hasError('min')">
+                          </mat-error>
+                        }
+                        @if (reviewForm.get('approvedAmount')?.hasError('min')) {
+                          <mat-error>
                             Amount must be at least ₹1
-                        </mat-error>
-                        <mat-error *ngIf="reviewForm.get('approvedAmount')?.hasError('max')">
+                          </mat-error>
+                        }
+                        @if (reviewForm.get('approvedAmount')?.hasError('max')) {
+                          <mat-error>
                             Amount cannot exceed requested amount of {{details()!.requestedAmount | currency:'INR'}}
-                        </mat-error>
-                        <mat-error *ngIf="reviewForm.get('approvedAmount')?.hasError('decimalPlaces')">
+                          </mat-error>
+                        }
+                        @if (reviewForm.get('approvedAmount')?.hasError('decimalPlaces')) {
+                          <mat-error>
                             Amount can have maximum 2 decimal places
-                        </mat-error>
+                          </mat-error>
+                        }
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="full-width remarks-field">
@@ -108,15 +123,22 @@
                         <textarea matInput formControlName="remarks" rows="4" placeholder="Enter remarks..."
                             maxlength="1000"></textarea>
                         <mat-hint align="end">{{reviewForm.get('remarks')?.value?.length || 0}}/1000</mat-hint>
-                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('required')">
+
+                        @if (reviewForm.get('remarks')?.hasError('required')) {
+                          <mat-error>
                             Remarks are required
-                        </mat-error>
-                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('minlength')">
+                          </mat-error>
+                        }
+                        @if (reviewForm.get('remarks')?.hasError('minlength')) {
+                          <mat-error>
                             Minimum 5 characters required
-                        </mat-error>
-                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('maxlength')">
+                          </mat-error>
+                        }
+                        @if (reviewForm.get('remarks')?.hasError('maxlength')) {
+                          <mat-error>
                             Maximum 1000 characters allowed
-                        </mat-error>
+                          </mat-error>
+                        }
                     </mat-form-field>
 
                     <div class="form-actions">
@@ -127,10 +149,12 @@
                     </div>
                 </form>
             </mat-card-content>
-        </mat-card>
+          </mat-card>
+        }
 
         <!-- Read-only Review Details (if not pending) -->
-        <mat-card class="review-card" *ngIf="!isPending() && details()!.status !== 'Pending'">
+        @if (!isPending() && details()!.status !== 'Pending') {
+          <mat-card class="review-card">
             <mat-card-header>
                 <mat-card-title>Review Outcome</mat-card-title>
             </mat-card-header>
@@ -146,13 +170,13 @@
                     <span class="label">Remarks:</span> <span class="value">{{details()!.managerComments}}</span>
                 </div>
             </mat-card-content>
-        </mat-card>
+          </mat-card>
+        }
 
     </div>
-</div>
-
-<ng-template #loading>
-    <div class="loading-container">
-        <p>Loading application details...</p>
-    </div>
-</ng-template>
+  </div>
+} @else {
+  <div class="loading-container">
+      <p>Loading application details...</p>
+  </div>
+}

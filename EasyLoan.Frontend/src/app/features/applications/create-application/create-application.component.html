@@ -50,9 +50,12 @@
                         <mat-option [value]="loanType.id">{{ loanType.name }}</mat-option>
                         }
                     </mat-select>
-                    <mat-error *ngIf="loanTypeId?.hasError('required')">
+
+                    @if (loanTypeId?.hasError('required')) {
+                    <mat-error>
                         Please select a loan type
                     </mat-error>
+                    }
                 </mat-form-field>
 
                 @if (selectedLoanType()) {
@@ -91,15 +94,22 @@
                         <input matInput type="number" formControlName="requestedAmount" placeholder="Enter amount"
                             min="0" step="1000" (keydown)="onAmountKeyDown($event)">
                         <mat-hint>Maximum amount: ₹10,00,000 (10 lakhs)</mat-hint>
-                        <mat-error *ngIf="requestedAmount?.hasError('required')">
+
+                        @if (requestedAmount?.hasError('required')) {
+                        <mat-error>
                             Amount is required
                         </mat-error>
-                        <mat-error *ngIf="requestedAmount?.hasError('min')">
+                        }
+                        @if (requestedAmount?.hasError('min')) {
+                        <mat-error>
                             Amount must be at least ₹{{ selectedLoanType()?.minAmount || 1 | number:'1.2-2' }}
                         </mat-error>
-                        <mat-error *ngIf="requestedAmount?.hasError('max')">
+                        }
+                        @if (requestedAmount?.hasError('max')) {
+                        <mat-error>
                             Amount cannot exceed ₹10,00,000 (10 lakhs)
                         </mat-error>
+                        }
                     </mat-form-field>
 
                     <!-- Tenure -->
@@ -109,18 +119,27 @@
                         <input matInput type="number" formControlName="requestedTenureInMonths"
                             placeholder="Enter tenure" min="1" (keydown)="onTenureKeyDown($event)">
                         <mat-hint>Enter whole numbers only</mat-hint>
-                        <mat-error *ngIf="requestedTenureInMonths?.hasError('required')">
+
+                        @if (requestedTenureInMonths?.hasError('required')) {
+                        <mat-error>
                             Tenure is required
                         </mat-error>
-                        <mat-error *ngIf="requestedTenureInMonths?.hasError('min')">
+                        }
+                        @if (requestedTenureInMonths?.hasError('min')) {
+                        <mat-error>
                             Tenure must be at least 1 month
                         </mat-error>
-                        <mat-error *ngIf="requestedTenureInMonths?.hasError('max')">
+                        }
+                        @if (requestedTenureInMonths?.hasError('max')) {
+                        <mat-error>
                             Tenure cannot exceed {{ selectedLoanType()?.maxTenureInMonths }} months
                         </mat-error>
-                        <mat-error *ngIf="requestedTenureInMonths?.hasError('notInteger')">
+                        }
+                        @if (requestedTenureInMonths?.hasError('notInteger')) {
+                        <mat-error>
                             Tenure must be a whole number (no decimals)
                         </mat-error>
+                        }
                     </mat-form-field>
                 </div>
             </mat-card-content>

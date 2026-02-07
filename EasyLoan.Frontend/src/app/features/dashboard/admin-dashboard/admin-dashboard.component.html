@@ -4,17 +4,22 @@
         <p>Welcome back! Here's an overview of your system.</p>
     </div>
 
-    <div *ngIf="loading()" class="loading">
+    @if (loading()) {
+    <div class="loading">
         <div class="spinner"></div>
         <p>Loading dashboard...</p>
     </div>
+    }
 
-    <div *ngIf="error() && !loading()" class="error">
+    @if (error() && !loading()) {
+    <div class="error">
         <p>{{ error() }}</p>
         <button class="btn-retry" (click)="loadDashboard()">Retry</button>
     </div>
+    }
 
-    <div *ngIf="!loading() && !error() && dashboardData()" class="stats-grid">
+    @if (!loading() && !error() && dashboardData()) {
+    <div class="stats-grid">
         <div class="stat-card loan-types">
             <div class="stat-content">
                 <div class="stat-number">{{ dashboardData()!.numberOfLoanTypes }}</div>
@@ -50,4 +55,5 @@
             </div>
         </div>
     </div>
+    }
 </div>
