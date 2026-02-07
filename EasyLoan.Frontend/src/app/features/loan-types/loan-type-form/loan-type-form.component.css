@@ -84,6 +84,11 @@ mat-form-field {
     margin-bottom: 1rem;
 }
 
+/* Error hint styling */
+.error-hint {
+    color: #f44336 !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .form-row {

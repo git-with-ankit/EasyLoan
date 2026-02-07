@@ -68,8 +68,8 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Phone Number</mat-label>
           <mat-icon matPrefix>phone</mat-icon>
-          <input matInput formControlName="phoneNumber" placeholder="10-digit Indian mobile number" maxlength="10"
-            (keypress)="onPhoneKeyPress($event)" />
+          <input matInput type="tel" formControlName="phoneNumber" placeholder="10-digit Indian number" maxlength="10"
+            (keydown)="onPhoneNumberKeyDown($event)" (keypress)="onPhoneKeyPress($event)" />
 
           @if (form.get('phoneNumber')?.hasError('required')) {
           <mat-error>
@@ -93,6 +93,7 @@
 
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
+          <mat-hint>Format: MM/DD/YYYY</mat-hint>
 
           @if (form.get('dateOfBirth')?.hasError('required') && !form.get('dateOfBirth')?.hasError('invalidDate')) {
           <mat-error>
@@ -152,6 +153,11 @@
           @if (form.get('annualSalary')?.hasError('max')) {
           <mat-error>
             Annual salary cannot exceed ₹1000 trillion
+          </mat-error>
+          }
+          @if (form.get('annualSalary')?.hasError('decimalPlaces')) {
+          <mat-error>
+            Annual salary can have maximum 2 decimal places
           </mat-error>
           }
         </mat-form-field>
@@ -220,12 +226,7 @@
             Please confirm your password
           </mat-error>
           }
-          @if (form.get('confirmPassword')?.hasError('pattern')) {
-          <mat-error>
-            Password must be 8-20 characters with uppercase, lowercase, digit, and special character
-          </mat-error>
-          }
-          @if (form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
+          @if (form.get('confirmPassword')?.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
           <mat-error>
             Passwords do not match
           </mat-error>

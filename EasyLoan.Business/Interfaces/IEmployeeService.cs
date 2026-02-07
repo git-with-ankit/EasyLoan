@@ -12,8 +12,6 @@ namespace EasyLoan.Business.Interfaces
 {
     public interface IEmployeeService
     {
-        //Task<string> LoginAsync(EmployeeLoginRequestDto dto);
-        //Task<Guid> CreateManagerAsync(CreateEmployeeRequestDto dto);
         Task<EmployeeProfileResponseDto> GetProfileAsync(Guid employeeId);
         Task<EmployeeProfileResponseDto> UpdateProfileAsync(Guid employeeId, UpdateEmployeeProfileRequestDto updateProfile);
         Task<AdminDashboardResponseDto> GetAdminDashboardAsync();

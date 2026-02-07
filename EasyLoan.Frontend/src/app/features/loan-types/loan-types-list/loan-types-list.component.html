@@ -1,23 +1,30 @@
 <div class="loan-types-container">
     <div class="header">
-        <h1>Loan Types Management</h1>
-        <button class="btn-create" (click)="navigateToCreate()">
-            <span class="icon">+</span>
+        <div class="header-content">
+            <h1>Loan Types Management</h1>
+            <p class="subtitle">Manage all loan types in the system</p>
+        </div>
+        <button mat-raised-button color="primary" (click)="navigateToCreate()">
+            <mat-icon>add</mat-icon>
             Create Loan Type
         </button>
     </div>
 
     @if (loading()) {
-    <div class="loading">
-        <div class="spinner"></div>
+    <div class="loading-state">
+        <mat-spinner diameter="48"></mat-spinner>
         <p>Loading loan types...</p>
     </div>
     }
 
     @if (error() && !loading()) {
-    <div class="error">
+    <div class="error-state">
+        <mat-icon color="warn">error_outline</mat-icon>
         <p>{{ error() }}</p>
-        <button class="btn-retry" (click)="loadLoanTypes()">Retry</button>
+        <button mat-stroked-button (click)="loadLoanTypes()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+        </button>
     </div>
     }
 
@@ -25,33 +32,40 @@
     <div class="loan-types-grid">
         @if (loanTypes().length > 0) {
         @for (loanType of loanTypes(); track loanType.id) {
-        <div class="loan-type-card">
-            <div class="card-header">
-                <h3>{{ loanType.name }}</h3>
-                <button class="btn-edit" (click)="navigateToEdit(loanType.id)">
-                    Edit
+        <mat-card class="loan-type-card">
+            <mat-card-header>
+                <mat-card-title>{{ loanType.name }}</mat-card-title>
+                <button mat-icon-button color="primary" (click)="navigateToEdit(loanType.id)"
+                    aria-label="Edit loan type">
+                    <mat-icon>edit</mat-icon>
                 </button>
-            </div>
-            <div class="card-body">
+            </mat-card-header>
+            <mat-card-content>
                 <div class="detail-row">
+                    <mat-icon class="detail-icon">percent</mat-icon>
                     <span class="label">Interest Rate:</span>
                     <span class="value">{{ loanType.interestRate }}%</span>
                 </div>
                 <div class="detail-row">
+                    <mat-icon class="detail-icon">currency_rupee</mat-icon>
                     <span class="label">Minimum Amount:</span>
                     <span class="value">₹{{ loanType.minAmount | number:'1.2-2' }}</span>
                 </div>
                 <div class="detail-row">
+                    <mat-icon class="detail-icon">schedule</mat-icon>
                     <span class="label">Maximum Tenure:</span>
                     <span class="value">{{ loanType.maxTenureInMonths }} months</span>
                 </div>
-            </div>
-        </div>
+            </mat-card-content>
+        </mat-card>
         }
         } @else {
         <div class="empty-state">
-            <p>No loan types found.</p>
-            <button class="btn-create" (click)="navigateToCreate()">
+            <mat-icon>inbox</mat-icon>
+            <h2>No Loan Types Found</h2>
+            <p>Get started by creating your first loan type</p>
+            <button mat-raised-button color="primary" (click)="navigateToCreate()">
+                <mat-icon>add</mat-icon>
                 Create Your First Loan Type
             </button>
         </div>

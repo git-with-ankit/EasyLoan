@@ -1,6 +1,8 @@
 ﻿using EasyLoan.Api.Controllers;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Loan;
 using EasyLoan.Dtos.LoanType;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -9,13 +11,19 @@ namespace EasyLoan.UnitTest.Controllers
     [TestClass]
     public class LoanTypesControllerTests
     {
-        private readonly Mock<ILoanTypeService> _mockLoanTypeService;
-        private readonly LoanTypesController _controller;
+        private Mock<ILoanTypeService> _mockLoanTypeService = null!;
+        private LoanTypesController _controller = null!;
 
-        public LoanTypesControllerTests()
+        [TestInitialize]
+        public void Setup()
         {
-            _mockLoanTypeService = new Mock<ILoanTypeService>();
+            _mockLoanTypeService = new Mock<ILoanTypeService>(MockBehavior.Strict);
             _controller = new LoanTypesController(_mockLoanTypeService.Object);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
         }
 
         [TestMethod]
@@ -50,16 +58,39 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetAllLoanTypes();
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-
-            var data = okResult.Value as IEnumerable<LoanTypeResponseDto>;
+            var data = ok.Value as IEnumerable<LoanTypeResponseDto>;
             Assert.IsNotNull(data);
-
             Assert.AreEqual(2, data.Count());
-            Assert.AreEqual("Home Loan", data.First().Name);
+
+            _mockLoanTypeService.Verify(s => s.GetAllAsync(), Times.Once);
+            _mockLoanTypeService.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async Task GetAllLoanTypes_WhenEmpty_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            _mockLoanTypeService
+                .Setup(s => s.GetAllAsync())
+                .ReturnsAsync(new List<LoanTypeResponseDto>());
+
+            // Act
+            var result = await _controller.GetAllLoanTypes();
+
+            // Assert
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+
+            var data = ok.Value as IEnumerable<LoanTypeResponseDto>;
+            Assert.IsNotNull(data);
+            Assert.AreEqual(0, data.Count());
+
+            _mockLoanTypeService.Verify(s => s.GetAllAsync(), Times.Once);
+            _mockLoanTypeService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
@@ -85,12 +116,11 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetLoanTypesById(loanTypeId);
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-
-            var data = okResult.Value as LoanTypeResponseDto;
+            var data = ok.Value as LoanTypeResponseDto;
             Assert.IsNotNull(data);
 
             Assert.AreEqual(loanTypeId, data.Id);
@@ -98,8 +128,10 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(7.5m, data.InterestRate);
             Assert.AreEqual(100000, data.MinAmount);
             Assert.AreEqual(240, data.MaxTenureInMonths);
-        }
 
+            _mockLoanTypeService.Verify(s => s.GetByIdAsync(loanTypeId), Times.Once);
+            _mockLoanTypeService.VerifyNoOtherCalls();
+        }
 
         [TestMethod]
         public async Task CreateLoanType_ValidRequest_ReturnsCreatedWithLoanType()
@@ -130,23 +162,21 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.CreateLoanType(request);
 
             // Assert
-            Assert.IsNotNull(result);
+            var created = result.Result as CreatedAtActionResult;
+            Assert.IsNotNull(created);
+            Assert.AreEqual(StatusCodes.Status201Created, created.StatusCode);
 
-            var createdResult = result.Result as CreatedAtActionResult;
-            Assert.IsNotNull(createdResult);
+            Assert.AreEqual(nameof(_controller.GetLoanTypesById), created.ActionName);
 
-            Assert.AreEqual(nameof(_controller.GetLoanTypesById), createdResult.ActionName);
-            Assert.IsNotNull(createdResult.RouteValues);
-            Assert.AreEqual(createdLoanType.Id, createdResult.RouteValues["loanTypeId"]);
+            Assert.IsNotNull(created.RouteValues);
+            Assert.AreEqual(createdLoanType.Id, created.RouteValues["loanTypeId"]);
 
-            var data = createdResult.Value as LoanTypeResponseDto;
-            Assert.IsNotNull(data);
+            var dto = created.Value as LoanTypeResponseDto;
+            Assert.IsNotNull(dto);
+            Assert.AreEqual(createdLoanType.Id, dto.Id);
 
-            Assert.AreEqual(createdLoanType.Id, data.Id);
-            Assert.AreEqual("Home Loan", data.Name);
-            Assert.AreEqual(7.5m, data.InterestRate);
-            Assert.AreEqual(100000, data.MinAmount);
-            Assert.AreEqual(240, data.MaxTenureInMonths);
+            _mockLoanTypeService.Verify(s => s.CreateLoanTypeAsync(request), Times.Once);
+            _mockLoanTypeService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
@@ -165,9 +195,10 @@ namespace EasyLoan.UnitTest.Controllers
             var updatedLoanType = new LoanTypeResponseDto
             {
                 Id = loanTypeId,
-                InterestRate = request.InterestRate.Value,
-                MinAmount = request.MinAmount.Value,
-                MaxTenureInMonths = request.MaxTenureInMonths.Value
+                Name = "Updated Loan",
+                InterestRate = request.InterestRate!.Value,
+                MinAmount = request.MinAmount!.Value,
+                MaxTenureInMonths = request.MaxTenureInMonths!.Value
             };
 
             _mockLoanTypeService
@@ -178,22 +209,24 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.CreateLoanType(loanTypeId, request);
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var dto = ok.Value as LoanTypeResponseDto;
+            Assert.IsNotNull(dto);
 
-            var data = okResult.Value as LoanTypeResponseDto;
-            Assert.IsNotNull(data);
+            Assert.AreEqual(loanTypeId, dto.Id);
+            Assert.AreEqual(6.9m, dto.InterestRate);
+            Assert.AreEqual(150000, dto.MinAmount);
+            Assert.AreEqual(300, dto.MaxTenureInMonths);
 
-            Assert.AreEqual(loanTypeId, data.Id);
-            Assert.AreEqual(6.9m, data.InterestRate);
-            Assert.AreEqual(150000, data.MinAmount);
-            Assert.AreEqual(300, data.MaxTenureInMonths);
+            _mockLoanTypeService.Verify(s => s.UpdateLoanTypeAsync(loanTypeId, request), Times.Once);
+            _mockLoanTypeService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public async Task PreviewEmiPlan_ValidRequest_ReturnsOkWithEmiSchedule()
+        public async Task PreviewEmiPlan_PageNumberLessThan1_ReturnsBadRequest()
         {
             // Arrange
             var loanTypeId = Guid.NewGuid();
@@ -204,7 +237,91 @@ namespace EasyLoan.UnitTest.Controllers
                 TenureInMonths = 240
             };
 
-             var emiSchedule = new List<EmiScheduleItemResponseDto>
+            // Act
+            var result = await _controller.PreviewEmiPlan(
+                loanTypeId,
+                query,
+                pageNumber: 0,
+                pageSize: 10);
+
+            // Assert
+            var bad = result.Result as BadRequestObjectResult;
+            Assert.IsNotNull(bad);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, bad.StatusCode);
+            Assert.AreEqual("Page number must be greater than 0", bad.Value);
+
+            _mockLoanTypeService.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async Task PreviewEmiPlan_PageSizeLessThan1_ReturnsBadRequest()
+        {
+            // Arrange
+            var loanTypeId = Guid.NewGuid();
+
+            var query = new PreviewEmiQueryDto
+            {
+                Amount = 500000m,
+                TenureInMonths = 240
+            };
+
+            // Act
+            var result = await _controller.PreviewEmiPlan(
+                loanTypeId,
+                query,
+                pageNumber: 1,
+                pageSize: 0);
+
+            // Assert
+            var bad = result.Result as BadRequestObjectResult;
+            Assert.IsNotNull(bad);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, bad.StatusCode);
+            Assert.AreEqual("Page size must be between 1 and 100", bad.Value);
+
+            _mockLoanTypeService.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async Task PreviewEmiPlan_PageSizeGreaterThan100_ReturnsBadRequest()
+        {
+            // Arrange
+            var loanTypeId = Guid.NewGuid();
+
+            var query = new PreviewEmiQueryDto
+            {
+                Amount = 500000m,
+                TenureInMonths = 240
+            };
+
+            // Act
+            var result = await _controller.PreviewEmiPlan(
+                loanTypeId,
+                query,
+                pageNumber: 1,
+                pageSize: 101);
+
+            // Assert
+            var bad = result.Result as BadRequestObjectResult;
+            Assert.IsNotNull(bad);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, bad.StatusCode);
+            Assert.AreEqual("Page size must be between 1 and 100", bad.Value);
+
+            _mockLoanTypeService.VerifyNoOtherCalls();
+        }
+
+        [TestMethod]
+        public async Task PreviewEmiPlan_ValidRequest_ReturnsOkWithPagedSchedule()
+        {
+            // Arrange
+            var loanTypeId = Guid.NewGuid();
+
+            var query = new PreviewEmiQueryDto
+            {
+                Amount = 500000m,
+                TenureInMonths = 240
+            };
+
+            var scheduleItems = new List<EmiScheduleItemResponseDto>
             {
                 new EmiScheduleItemResponseDto
                 {
@@ -226,31 +343,53 @@ namespace EasyLoan.UnitTest.Controllers
                 }
             };
 
+            var paged = new PagedResponseDto<EmiScheduleItemResponseDto>
+            {
+                Items = scheduleItems,
+                PageNumber = 1,
+                PageSize = 10,
+                TotalCount = 2,
+                TotalPages = 1
+            };
+
             _mockLoanTypeService
                 .Setup(s => s.PreviewEmiAsync(
                     loanTypeId,
                     query.Amount,
-                    query.TenureInMonths))
-                .ReturnsAsync(emiSchedule);
+                    query.TenureInMonths,
+                    1,
+                    10))
+                .ReturnsAsync(paged);
 
             // Act
-            var result = await _controller.PreviewEmiPlan(loanTypeId, query);
+            var result = await _controller.PreviewEmiPlan(
+                loanTypeId,
+                query,
+                pageNumber: 1,
+                pageSize: 10);
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var dto = ok.Value as PagedResponseDto<EmiScheduleItemResponseDto>;
+            Assert.IsNotNull(dto);
 
-            var data = okResult.Value as IEnumerable<EmiScheduleItemResponseDto>;
-            Assert.IsNotNull(data);
+            Assert.AreEqual(1, dto.PageNumber);
+            Assert.AreEqual(10, dto.PageSize);
+            Assert.AreEqual(2, dto.TotalCount);
+            Assert.AreEqual(1, dto.TotalPages);
 
-            Assert.AreEqual(2, data.Count());
-            Assert.AreEqual(1, data.First().EmiNumber);
-            Assert.AreEqual(4700, data.First().TotalEmiAmount);
+            Assert.IsNotNull(dto.Items);
+            Assert.AreEqual(2, dto.Items.Count());
+            Assert.AreEqual(1, dto.Items.First().EmiNumber);
+
+            _mockLoanTypeService.Verify(
+                s => s.PreviewEmiAsync(loanTypeId, query.Amount, query.TenureInMonths, 1, 10),
+                Times.Once);
+
+            _mockLoanTypeService.VerifyNoOtherCalls();
         }
-
-
-
     }
 }

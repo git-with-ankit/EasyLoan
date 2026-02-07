@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 import { LoanService } from '../../../services/loan.service';
 import { LoanSummary, LoanStatus } from '../../../models/loan.models';
 import { LoanCardComponent } from './loan-card/loan-card.component';
@@ -8,20 +9,22 @@ import { LoanDetailsCardComponent } from './loan-details-card/loan-details-card.
 @Component({
     selector: 'app-loans-list',
     standalone: true,
-    imports: [CommonModule, LoanCardComponent, LoanDetailsCardComponent],
+    imports: [CommonModule, LoanCardComponent],
     templateUrl: './loans-list.component.html',
     styleUrl: './loans-list.component.css'
 })
 export class LoansListComponent implements OnInit {
     loans = signal<LoanSummary[]>([]);
     selectedStatus = signal<LoanStatus>(LoanStatus.Active);
-    selectedLoanNumber = signal<string | null>(null);
     isLoading = signal(false);
     errorMessage = signal('');
 
-    LoanStatus = LoanStatus; 
+    LoanStatus = LoanStatus;
 
-    constructor(private loanService: LoanService) { }
+    constructor(
+        private loanService: LoanService,
+        private dialog: MatDialog
+    ) { }
 
     ngOnInit(): void {
         this.loadLoans();
@@ -49,14 +52,15 @@ export class LoansListComponent implements OnInit {
     }
 
     onViewDetails(loanNumber: string): void {
-        this.selectedLoanNumber.set(loanNumber);
-    }
+        const dialogRef = this.dialog.open(LoanDetailsCardComponent, {
+            data: { loanNumber },
+            width: '900px',
+            maxWidth: '95vw',
+            maxHeight: '90vh'
+        });
 
-    onCloseDetails(): void {
-        this.selectedLoanNumber.set(null);
-    }
-
-    onPaymentSuccess(): void {
-        this.loadLoans(); // Refresh loans after payment
+        dialogRef.afterClosed().subscribe(() => {
+            this.loadLoans(); // Refresh loans after dialog closes (in case payment was made)
+        });
     }
 }

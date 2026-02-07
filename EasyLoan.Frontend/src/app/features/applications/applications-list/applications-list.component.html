@@ -31,7 +31,6 @@
     </div>
     } @else if (applications().length === 0) {
     <div class="empty-state">
-        <div class="empty-icon">📝</div>
         <h3>No {{ selectedStatus() }} Applications</h3>
         <p>You don't have any {{ selectedStatus().toLowerCase() }} loan applications.</p>
     </div>
@@ -42,10 +41,5 @@
         </app-application-card>
         }
     </div>
-    }
-
-    @if (selectedApplicationNumber()) {
-    <app-application-details-card [applicationNumber]="selectedApplicationNumber()!" (close)="onCloseDetails()">
-    </app-application-details-card>
     }
 </div>

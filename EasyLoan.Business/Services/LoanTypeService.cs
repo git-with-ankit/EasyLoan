@@ -49,6 +49,10 @@ public class LoanTypeService : ILoanTypeService
     {
         if (dto.MinAmount > BusinessConstants.MaximumLoanAmount)
             throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxAmount);
+
+        if (dto.MaxTenureInMonths > BusinessConstants.MaximumTenureInMonthsAllowed)
+            throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxTenure);
+
         var type = new LoanType
         {
             Id = Guid.NewGuid(),
@@ -75,6 +79,12 @@ public class LoanTypeService : ILoanTypeService
     {
         var type = await _loanTypeRepo.GetByIdAsync(loanTypeId)
             ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
+
+        if (dto.MinAmount > BusinessConstants.MaximumLoanAmount)
+            throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxAmount);
+
+        if (dto.MaxTenureInMonths > BusinessConstants.MaximumTenureInMonthsAllowed)
+            throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxTenure);
 
         type.InterestRate = dto.InterestRate ?? type.InterestRate;
         type.MinAmount = dto.MinAmount ?? type.MinAmount;

@@ -156,18 +156,33 @@ export class LoanTypeFormComponent implements OnInit {
 
     // Prevent 'e', '+', '-' for min amount field
     onMinAmountKeyDown(event: KeyboardEvent): void {
+        const input = event.target as HTMLInputElement;
+        const currentValue = input.value;
+
+        // Prevent 'e', 'E', '+', '-'
         if (['e', 'E', '+', '-'].includes(event.key)) {
             event.preventDefault();
             return;
         }
 
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
         const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (allowedKeys.includes(event.key)) {
             return;
         }
 
+        // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
         if (event.ctrlKey || event.metaKey) {
             return;
+        }
+
+        // Prevent input if already at 7 characters (1000000 = 1 million)
+        if (currentValue.length >= 7 && !input.selectionStart !== !input.selectionEnd) {
+            return;
+        }
+
+        if (currentValue.length >= 7) {
+            event.preventDefault();
         }
     }
 

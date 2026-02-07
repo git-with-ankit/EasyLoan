@@ -1,4 +1,5 @@
-﻿using EasyLoan.Dtos.Common;
+﻿using EasyLoan.Dtos.Auth;
+using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
 using EasyLoan.Models.Common.Enums;
@@ -16,7 +17,7 @@ namespace EasyLoan.Business.Interfaces
         Task<string> LoginCustomerAsync(CustomerLoginRequestDto dto);
         Task<RegisterManagerResponseDto> RegisterManagerAsync(CreateManagerRequestDto dto);
         Task<string> LoginEmployeeAsync(EmployeeLoginRequestDto dto);
-        Task<string> LoginAsync(LoginRequestDto dto);
+        //Task<string> LoginAsync(LoginRequestDto dto);
         Task ChangePasswordAsync(Guid userId, Role role, ChangePasswordRequestDto dto);
     }
 }

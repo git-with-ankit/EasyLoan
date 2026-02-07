@@ -8,7 +8,7 @@
         public const string InvalidToken = "The token is invalid.";
 
         // Customer
-        public const string CustomerNotFound = "Customer not found.";
+        public const string CustomerNotFound = "User not found.";
         public const string EmailAlreadyExists = "Email already exists.";
         public const string PanAlreadyExists = "PAN number already exists.";
 

@@ -49,10 +49,4 @@
         }
     </div>
     }
-
-    @if (selectedLoanNumber()) {
-    <app-loan-details-card [loanNumber]="selectedLoanNumber()!" (close)="onCloseLoanDetails()"
-        (paymentSuccess)="onPaymentSuccess()">
-    </app-loan-details-card>
-    }
 </div>

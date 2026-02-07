@@ -81,31 +81,54 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="name">Name *</label>
-                            <input type="text" id="name" formControlName="name"
+                            <input type="text" id="name" formControlName="name" maxlength="100"
                                 [class.invalid]="profileForm.get('name')?.invalid && profileForm.get('name')?.touched" />
-                            @if (profileForm.get('name')?.invalid && profileForm.get('name')?.touched) {
-                            <span class="error-text">Name is required (max 100 characters)</span>
+                            @if (profileForm.get('name')?.hasError('required') && profileForm.get('name')?.touched) {
+                            <span class="error-text">Name is required</span>
+                            }
+                            @if (profileForm.get('name')?.hasError('maxlength') && profileForm.get('name')?.touched) {
+                            <span class="error-text">Name cannot exceed 100 characters</span>
                             }
                         </div>
 
                         <div class="form-group">
                             <label for="phoneNumber">Phone Number *</label>
                             <input type="tel" id="phoneNumber" formControlName="phoneNumber"
-                                placeholder="10-digit Indian number"
+                                placeholder="10-digit Indian number" maxlength="10"
+                                (keydown)="onPhoneNumberKeyDown($event)"
                                 [class.invalid]="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" />
-                            @if (profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched) {
-                            <span class="error-text">Please enter a valid 10-digit Indian phone number</span>
+                            @if (profileForm.get('phoneNumber')?.hasError('required') &&
+                            profileForm.get('phoneNumber')?.touched) {
+                            <span class="error-text">Phone number is required</span>
+                            }
+                            @if (profileForm.get('phoneNumber')?.hasError('pattern') &&
+                            profileForm.get('phoneNumber')?.touched) {
+                            <span class="error-text">Phone number must be a valid 10-digit Indian number starting with
+                                6-9</span>
                             }
                         </div>
 
                         @if (isCustomer()) {
                         <div class="form-group">
-                            <label for="annualSalary">Annual Salary *</label>
+                            <label for="annualSalary">Annual Salary (₹) *</label>
                             <input type="number" id="annualSalary" formControlName="annualSalary"
-                                placeholder="Enter annual salary"
+                                placeholder="Enter annual salary in rupees" (keydown)="onSalaryKeyDown($event)"
                                 [class.invalid]="profileForm.get('annualSalary')?.invalid && profileForm.get('annualSalary')?.touched" />
-                            @if (profileForm.get('annualSalary')?.invalid && profileForm.get('annualSalary')?.touched) {
-                            <span class="error-text">Please enter a valid salary amount</span>
+                            @if (profileForm.get('annualSalary')?.hasError('required') &&
+                            profileForm.get('annualSalary')?.touched) {
+                            <span class="error-text">Annual salary is required</span>
+                            }
+                            @if (profileForm.get('annualSalary')?.hasError('min') &&
+                            profileForm.get('annualSalary')?.touched) {
+                            <span class="error-text">Annual salary must be a positive number</span>
+                            }
+                            @if (profileForm.get('annualSalary')?.hasError('max') &&
+                            profileForm.get('annualSalary')?.touched) {
+                            <span class="error-text">Annual salary cannot exceed ₹1000 trillion</span>
+                            }
+                            @if (profileForm.get('annualSalary')?.hasError('decimalPlaces') &&
+                            profileForm.get('annualSalary')?.touched) {
+                            <span class="error-text">Annual salary can have maximum 2 decimal places</span>
                             }
                         </div>
                         }

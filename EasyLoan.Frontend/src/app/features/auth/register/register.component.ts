@@ -83,8 +83,6 @@ export class RegisterComponent implements OnInit {
         phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
         password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
         confirmPassword: ['', Validators.required]
-      }, {
-        validators: this.passwordMatchValidator
       });
     } else {
       this.form = this.fb.group({
@@ -93,25 +91,33 @@ export class RegisterComponent implements OnInit {
         email: ['', [Validators.required, Validators.pattern(this.EMAIL_REGEX), Validators.maxLength(150)]],
         phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
         dateOfBirth: ['', Validators.required],
-        annualSalary: ['', [Validators.required, Validators.min(0), Validators.max(this.MAX_ANNUAL_SALARY)]],
+        annualSalary: ['', [Validators.required, Validators.min(0), Validators.max(this.MAX_ANNUAL_SALARY), this.decimalPlacesValidator(2)]],
         panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
         password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
-        confirmPassword: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
-      }, {
-        validators: this.passwordMatchValidator
+        confirmPassword: ['', Validators.required]
       });
     }
+
+    // Add dynamic password match validator to confirmPassword
+    const confirmPasswordControl = this.form.get('confirmPassword');
+    confirmPasswordControl?.addValidators(this.passwordMatchValidator());
+
+    // Re-validate confirmPassword when password changes
+    this.form.get('password')?.valueChanges.subscribe(() => {
+      confirmPasswordControl?.updateValueAndValidity();
+    });
   }
 
-  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
+  // Custom validator that checks if passwords match
+  passwordMatchValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) return null;
 
-    if (!password || !confirmPassword) {
-      return null;
-    }
+      const password = this.form?.get('password')?.value;
+      if (!password) return null;
 
-    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+      return control.value !== password ? { passwordMismatch: true } : null;
+    };
   }
 
   submit(): void {
@@ -193,7 +199,7 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  // Prevent 'e', '+', '-' for annual salary and limit input to 16 digits
+  // Prevent 'e', '+', '-' for annual salary and limit input to 16 digits and 2 decimal places
   onSalaryKeyDown(event: KeyboardEvent): void {
     const input = event.target as HTMLInputElement;
     const currentValue = input.value;
@@ -215,14 +221,37 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
-    // Prevent input if already at 16 characters (1000 trillion = 1,000,000,000,000,000)
-    if (currentValue.length >= 16 && !input.selectionStart !== !input.selectionEnd) {
-      // Allow if there's a selection (user is replacing text)
+    // Prevent multiple decimal points
+    if (event.key === '.' && currentValue.includes('.')) {
+      event.preventDefault();
       return;
     }
 
-    if (currentValue.length >= 16) {
-      event.preventDefault();
+    // Limit to 2 decimal places if value contains a decimal point
+    if (currentValue.includes('.')) {
+      const parts = currentValue.split('.');
+      const decimalPart = parts[1] || '';
+      const selectionStart = input.selectionStart || 0;
+      const selectionEnd = input.selectionEnd || 0;
+      const decimalIndex = currentValue.indexOf('.');
+
+      // If we already have 2 decimal places and cursor is after decimal point
+      if (decimalPart.length >= 2 && selectionStart > decimalIndex && selectionStart === selectionEnd && event.key >= '0' && event.key <= '9') {
+        event.preventDefault();
+        return;
+      }
+    }
+
+    // Prevent input if already at 16 characters (1000 trillion = 1,000,000,000,000,000)
+    // Don't count the decimal point in the character limit
+    const valueWithoutDecimal = currentValue.replace('.', '');
+    if (valueWithoutDecimal.length >= 16 && event.key >= '0' && event.key <= '9') {
+      const selectionStart = input.selectionStart || 0;
+      const selectionEnd = input.selectionEnd || 0;
+      // Allow if there's a selection (user is replacing text)
+      if (selectionStart === selectionEnd) {
+        event.preventDefault();
+      }
     }
   }
 
@@ -239,5 +268,62 @@ export class RegisterComponent implements OnInit {
         control.setErrors({ invalidDate: true });
       }
     }
+  }
+
+  // Prevent invalid characters for phone number and limit to 10 digits
+  onPhoneNumberKeyDown(event: KeyboardEvent): void {
+    const input = event.target as HTMLInputElement;
+    const currentValue = input.value;
+
+    // Allow control keys (backspace, delete, tab, arrows, etc.)
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+
+    // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+    if (event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    // Only allow numeric keys (0-9)
+    if (event.key < '0' || event.key > '9') {
+      event.preventDefault();
+      return;
+    }
+
+    // Prevent input if already at 10 digits
+    if (currentValue.length >= 10) {
+      const selectionStart = input.selectionStart || 0;
+      const selectionEnd = input.selectionEnd || 0;
+      // Allow if there's a selection (user is replacing text)
+      if (selectionStart === selectionEnd) {
+        event.preventDefault();
+      }
+    }
+  }
+
+  // Custom validator for decimal places
+  decimalPlacesValidator(maxDecimalPlaces: number) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (control.value === null || control.value === undefined || control.value === '') {
+        return null;
+      }
+
+      const value = control.value.toString();
+      const decimalIndex = value.indexOf('.');
+
+      if (decimalIndex === -1) {
+        return null; // No decimal point, valid
+      }
+
+      const decimalPlaces = value.length - decimalIndex - 1;
+
+      if (decimalPlaces > maxDecimalPlaces) {
+        return { decimalPlaces: { max: maxDecimalPlaces, actual: decimalPlaces } };
+      }
+
+      return null;
+    };
   }
 }

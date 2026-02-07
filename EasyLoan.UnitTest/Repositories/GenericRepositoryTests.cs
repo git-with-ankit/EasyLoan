@@ -2,7 +2,6 @@
 using EasyLoan.DataAccess.Models;
 using EasyLoan.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyLoan.UnitTest.Repositories
 {
@@ -16,7 +15,7 @@ namespace EasyLoan.UnitTest.Repositories
         public void Setup()
         {
             var options = new DbContextOptionsBuilder<EasyLoanDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseInMemoryDatabase($"EasyLoan_TestDb_{Guid.NewGuid()}")
                 .Options;
 
             _context = new EasyLoanDbContext(options);
@@ -30,17 +29,17 @@ namespace EasyLoan.UnitTest.Repositories
             _context.Dispose();
         }
 
-        private static Customer CreateValidCustomer()
+        private static Customer CreateValidCustomer(string? email = null, string? pan = null)
         {
             return new Customer
             {
                 Id = Guid.NewGuid(),
                 Name = "Test User",
-                Email = $"user{Guid.NewGuid()}@test.com",
+                Email = email ?? $"user{Guid.NewGuid()}@test.com",
                 PhoneNumber = "9876543210",
                 DateOfBirth = DateTime.UtcNow.AddYears(-25),
                 AnnualSalary = 500000,
-                PanNumber = "ABCDE1234F",
+                PanNumber = pan ?? $"ABCDE{new Random().Next(1000, 9999)}F",
                 Password = "HashedPassword123!",
                 CreditScore = 750,
                 CreatedDate = DateTime.UtcNow
@@ -48,7 +47,26 @@ namespace EasyLoan.UnitTest.Repositories
         }
 
         [TestMethod]
-        public async Task AddAsync_WhenCalled_PersistsEntity()
+        public async Task AddAsync_WhenCalled_DoesNotPersistUntilSaveChanges()
+        {
+            // Arrange
+            var customer = CreateValidCustomer();
+
+            // Act
+            await _repo.AddAsync(customer);
+
+            // Assert (not yet saved)
+            Assert.AreEqual(0, await _context.Customers.CountAsync());
+
+            // Act
+            await _repo.SaveChangesAsync();
+
+            // Assert (saved now)
+            Assert.AreEqual(1, await _context.Customers.CountAsync());
+        }
+
+        [TestMethod]
+        public async Task AddAsync_WhenCalled_PersistsEntityAfterSaveChanges()
         {
             // Arrange
             var customer = CreateValidCustomer();
@@ -90,6 +108,26 @@ namespace EasyLoan.UnitTest.Repositories
         }
 
         [TestMethod]
+        public async Task GetByIdAsync_WhenEntityAlreadyTracked_ReturnsSameInstance()
+        {
+            // Arrange
+            var customer = CreateValidCustomer();
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            // Load tracked entity into context
+            var tracked = await _context.Customers.FirstAsync(c => c.Id == customer.Id);
+
+            // Act
+            var result = await _repo.GetByIdAsync(customer.Id);
+
+            // Assert
+            Assert.IsNotNull(result);
+
+            Assert.AreSame(tracked, result);
+        }
+
+        [TestMethod]
         public async Task GetAllAsync_WhenEntitiesExist_ReturnsAll()
         {
             // Arrange
@@ -118,6 +156,24 @@ namespace EasyLoan.UnitTest.Repositories
         }
 
         [TestMethod]
+        public async Task GetAllAsync_ReturnsEntitiesAsNoTracking()
+        {
+            // Arrange
+            var customer = CreateValidCustomer();
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = (await _repo.GetAllAsync()).ToList();
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+
+            var entry = _context.Entry(result[0]);
+            Assert.AreEqual(EntityState.Detached, entry.State);
+        }
+
+        [TestMethod]
         public async Task UpdateAsync_WhenCalled_UpdatesEntity()
         {
             // Arrange
@@ -133,7 +189,30 @@ namespace EasyLoan.UnitTest.Repositories
 
             // Assert
             var updated = await _context.Customers.FindAsync(customer.Id);
-            Assert.AreEqual("Updated Name", updated!.Name);
+            Assert.IsNotNull(updated);
+            Assert.AreEqual("Updated Name", updated.Name);
+        }
+
+        [TestMethod]
+        public async Task UpdateAsync_WhenEntityDetached_StillUpdatesEntity()
+        {
+            // Arrange
+            var customer = CreateValidCustomer();
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            _context.ChangeTracker.Clear();
+
+            customer.Name = "Detached Update";
+
+            // Act
+            await _repo.UpdateAsync(customer);
+            await _repo.SaveChangesAsync();
+
+            // Assert
+            var updated = await _context.Customers.FindAsync(customer.Id);
+            Assert.IsNotNull(updated);
+            Assert.AreEqual("Detached Update", updated.Name);
         }
 
         [TestMethod]

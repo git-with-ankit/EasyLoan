@@ -5,55 +5,84 @@
     </div>
 
     @if (loading()) {
-    <div class="loading">
-        <div class="spinner"></div>
+    <div class="loading-state">
+        <mat-spinner diameter="48"></mat-spinner>
         <p>Loading dashboard...</p>
     </div>
     }
 
     @if (error() && !loading()) {
-    <div class="error">
+    <div class="error-state">
+        <mat-icon color="warn">error_outline</mat-icon>
         <p>{{ error() }}</p>
-        <button class="btn-retry" (click)="loadDashboard()">Retry</button>
+        <button mat-stroked-button (click)="loadDashboard()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+        </button>
     </div>
     }
 
     @if (!loading() && !error() && dashboardData()) {
     <div class="stats-grid">
-        <div class="stat-card loan-types">
-            <div class="stat-content">
-                <div class="stat-number">{{ dashboardData()!.numberOfLoanTypes }}</div>
-                <div class="stat-label">Loan Types</div>
-            </div>
-        </div>
+        <mat-card class="stat-card loan-types">
+            <mat-card-content>
+                <div class="stat-icon">
+                    <mat-icon>description</mat-icon>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-number">{{ dashboardData()!.numberOfLoanTypes }}</div>
+                    <div class="stat-label">Loan Types</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
 
-        <div class="stat-card pending">
-            <div class="stat-content">
-                <div class="stat-number">{{ dashboardData()!.numberOfPendingApplications }}</div>
-                <div class="stat-label">Pending Applications</div>
-            </div>
-        </div>
+        <mat-card class="stat-card pending">
+            <mat-card-content>
+                <div class="stat-icon">
+                    <mat-icon>pending_actions</mat-icon>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-number">{{ dashboardData()!.numberOfPendingApplications }}</div>
+                    <div class="stat-label">Pending Applications</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
 
-        <div class="stat-card approved">
-            <div class="stat-content">
-                <div class="stat-number">{{ dashboardData()!.numberOfApprovedApplications }}</div>
-                <div class="stat-label">Approved Applications</div>
-            </div>
-        </div>
+        <mat-card class="stat-card approved">
+            <mat-card-content>
+                <div class="stat-icon">
+                    <mat-icon>check_circle</mat-icon>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-number">{{ dashboardData()!.numberOfApprovedApplications }}</div>
+                    <div class="stat-label">Approved Applications</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
 
-        <div class="stat-card rejected">
-            <div class="stat-content">
-                <div class="stat-number">{{ dashboardData()!.numberOfRejectedApplications }}</div>
-                <div class="stat-label">Rejected Applications</div>
-            </div>
-        </div>
+        <mat-card class="stat-card rejected">
+            <mat-card-content>
+                <div class="stat-icon">
+                    <mat-icon>cancel</mat-icon>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-number">{{ dashboardData()!.numberOfRejectedApplications }}</div>
+                    <div class="stat-label">Rejected Applications</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
 
-        <div class="stat-card managers">
-            <div class="stat-content">
-                <div class="stat-number">{{ dashboardData()!.numberOfManagers }}</div>
-                <div class="stat-label">Total Managers</div>
-            </div>
-        </div>
+        <mat-card class="stat-card managers">
+            <mat-card-content>
+                <div class="stat-icon">
+                    <mat-icon>people</mat-icon>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-number">{{ dashboardData()!.numberOfManagers }}</div>
+                    <div class="stat-label">Total Managers</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
     </div>
     }
 </div>

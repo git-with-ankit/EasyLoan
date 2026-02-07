@@ -3,6 +3,7 @@ using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Auth;
 using EasyLoan.Dtos.Common;
 using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
@@ -128,36 +129,36 @@ namespace EasyLoan.Business.Services
             }
         }
 
-        public async Task<string> LoginAsync(LoginRequestDto dto)
-        {
-            var customer = await _customerRepo.GetByEmailAsync(dto.Email.ToLower().Trim());
+        //public async Task<string> LoginAsync(LoginRequestDto dto)
+        //{
+        //    var customer = await _customerRepo.GetByEmailAsync(dto.Email.ToLower().Trim());
 
-            if (customer != null)
-            {
-                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, customer.Password);
-                if (!passwordResult)
-                    throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+        //    if (customer != null)
+        //    {
+        //        var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, customer.Password);
+        //        if (!passwordResult)
+        //            throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-                return _tokenGenerator.GenerateToken(customer.Id, customer.Email, Role.Customer);//Generate token
-            }
-            else
-            {
+        //        return _tokenGenerator.GenerateToken(customer.Id, customer.Email, Role.Customer);//Generate token
+        //    }
+        //    else
+        //    {
 
-                var employee = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim()) 
-                    ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+        //        var employee = await _employeeRepo.GetByEmailAsync(dto.Email.ToLower().Trim()) 
+        //            ?? throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
                 
-                var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, employee.Password);
+        //        var passwordResult = BCrypt.Net.BCrypt.Verify(dto.Password, employee.Password);
 
-                if (!passwordResult)
-                    throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
+        //        if (!passwordResult)
+        //            throw new AuthenticationFailedException(ErrorMessages.InvalidCredentials);
 
-                var role = employee.Role == EmployeeRole.Manager ? Role.Manager : Role.Admin;
+        //        var role = employee.Role == EmployeeRole.Manager ? Role.Manager : Role.Admin;
 
-                var token = _tokenGenerator.GenerateToken(employee.Id, employee.Email, role);
+        //        var token = _tokenGenerator.GenerateToken(employee.Id, employee.Email, role);
 
-                return token;
-            }
-        }
+        //        return token;
+        //    }
+        //}
 
         public async Task ChangePasswordAsync(Guid userId, Role role, ChangePasswordRequestDto dto)
         {

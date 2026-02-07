@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace EasyLoan.Business.Constants
 {
-    internal static class BusinessConstants
+    public static class BusinessConstants
     {
         public const decimal MaximumLoanAmount = 1000000m;
         public const int MinimumDaysRequiredForAnotherLoan = 15;
+        public const int MaximumTenureInMonthsAllowed = 480;
     }
 }

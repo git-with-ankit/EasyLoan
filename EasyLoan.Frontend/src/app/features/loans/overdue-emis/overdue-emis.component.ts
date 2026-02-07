@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 import { LoanService } from '../../../services/loan.service';
 import { LoanDetailsCardComponent } from '../loans-list/loan-details-card/loan-details-card.component';
 import { EmiDueStatus, LoanEmiGroup } from '../../../models/loan.models';
@@ -7,7 +8,7 @@ import { EmiDueStatus, LoanEmiGroup } from '../../../models/loan.models';
 @Component({
     selector: 'app-overdue-emis',
     standalone: true,
-    imports: [CommonModule, LoanDetailsCardComponent],
+    imports: [CommonModule],
     templateUrl: 'overdue-emis.component.html',
     styleUrl: './overdue-emis.component.css'
 })
@@ -15,9 +16,11 @@ export class OverdueEmis implements OnInit {
     emisByLoan = signal<LoanEmiGroup[]>([]);
     isLoading = signal(false);
     errorMessage = signal('');
-    selectedLoanNumber = signal<string | null>(null);
 
-    constructor(private loanService: LoanService) { }
+    constructor(
+        private loanService: LoanService,
+        private dialog: MatDialog
+    ) { }
 
     ngOnInit(): void {
         this.loadDueEmis();
@@ -40,16 +43,16 @@ export class OverdueEmis implements OnInit {
     }
 
     onLoanClick(loanNumber: string): void {
-        this.selectedLoanNumber.set(loanNumber);
-    }
+        const dialogRef = this.dialog.open(LoanDetailsCardComponent, {
+            data: { loanNumber },
+            width: '900px',
+            maxWidth: '95vw',
+            maxHeight: '90vh'
+        });
 
-    onCloseLoanDetails(): void {
-        this.selectedLoanNumber.set(null);
-    }
-
-    onPaymentSuccess(): void {
-        this.selectedLoanNumber.set(null);
-        this.loadDueEmis(); // Refresh the EMI list
+        dialogRef.afterClosed().subscribe(() => {
+            this.loadDueEmis(); // Refresh EMI list after dialog closes (in case payment was made)
+        });
     }
 
     getLoanTotalDue(loanGroup: LoanEmiGroup): number {

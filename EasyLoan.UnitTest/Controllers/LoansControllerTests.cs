@@ -1,45 +1,39 @@
 ﻿using EasyLoan.Api.Controllers;
+using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Loan;
 using EasyLoan.Dtos.LoanPayment;
 using EasyLoan.Models.Common.Enums;
+using EasyLoan.UnitTest.Helpers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using EasyLoan.UnitTest.Helpers;
-;
+using System.Security.Claims;
 
 namespace EasyLoan.UnitTest.Controllers
 {
+    [TestClass]
     public class LoansControllerTests
     {
-        private readonly Mock<ILoanService> _mockLoanService;
-        private readonly Mock<ILoanPaymentService> _mockPaymentService;
-        private readonly LoansController _controller;
+        private Mock<ILoanService> _mockLoanService = null!;
+        private Mock<ILoanPaymentService> _mockPaymentService = null!;
+        private LoansController _controller = null!;
 
-        public LoansControllerTests()
+        [TestInitialize]
+        public void Setup()
         {
-            _mockLoanService = new Mock<ILoanService>();
-            _mockPaymentService = new Mock<ILoanPaymentService>();
-            _controller = new LoansController(_mockLoanService.Object, _mockPaymentService.Object);
-        }
-    //    private void ControllerTestHelper.SetUser(Guid customerId)
-    //    {
-    //        var claims = new List<Claim>
-    //{
-    //    new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
-    //    new Claim(ClaimTypes.Role, "Customer")
-    //};
+            _mockLoanService = new Mock<ILoanService>(MockBehavior.Strict);
+            _mockPaymentService = new Mock<ILoanPaymentService>(MockBehavior.Strict);
 
-    //        _controller.ControllerContext = new ControllerContext
-    //        {
-    //            HttpContext = new DefaultHttpContext
-    //            {
-    //                User = new ClaimsPrincipal(
-    //                    new ClaimsIdentity(claims, "TestAuth")
-    //                )
-    //            }
-    //        };
-    //    }
+            _controller = new LoansController(
+                _mockLoanService.Object,
+                _mockPaymentService.Object);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+        }
 
         [TestMethod]
         public async Task GetCustomerLoans_ValidStatusForCustomer_ReturnsOkWithLoans()
@@ -51,15 +45,15 @@ namespace EasyLoan.UnitTest.Controllers
             var status = LoanStatus.Active;
 
             var loans = new List<LoanSummaryResponseDto>
-    {
-        new LoanSummaryResponseDto
-        {
-            LoanNumber = "LN-001",
-            PrincipalRemaining = 500000,
-            InterestRate = 7.5m,
-            Status = LoanStatus.Active
-        }
-    };
+            {
+                new LoanSummaryResponseDto
+                {
+                    LoanNumber = "LN-001",
+                    PrincipalRemaining = 500000,
+                    InterestRate = 7.5m,
+                    Status = LoanStatus.Active
+                }
+            };
 
             _mockLoanService
                 .Setup(s => s.GetCustomerLoansAsync(customerId, status))
@@ -69,12 +63,17 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetCustomerLoans(status);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as IEnumerable<LoanSummaryResponseDto>;
+            var data = ok.Value as IEnumerable<LoanSummaryResponseDto>;
             Assert.IsNotNull(data);
             Assert.AreEqual(1, data.Count());
+
+            _mockLoanService.Verify(s => s.GetCustomerLoansAsync(customerId, status), Times.Once);
+            _mockLoanService.VerifyNoOtherCalls();
+            _mockPaymentService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
@@ -84,7 +83,7 @@ namespace EasyLoan.UnitTest.Controllers
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var loanNumber = "LN-001";
+            var loanNumber = "LN-ABCDEFGH";
 
             var loan = new LoanDetailsResponseDto
             {
@@ -105,12 +104,17 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetDetails(loanNumber);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as LoanDetailsResponseDto;
+            var data = ok.Value as LoanDetailsResponseDto;
             Assert.IsNotNull(data);
             Assert.AreEqual(loanNumber, data.LoanNumber);
+
+            _mockLoanService.Verify(s => s.GetLoanDetailsAsync(customerId, loanNumber), Times.Once);
+            _mockLoanService.VerifyNoOtherCalls();
+            _mockPaymentService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
@@ -120,7 +124,7 @@ namespace EasyLoan.UnitTest.Controllers
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var loanNumber = "LN-001";
+            var loanNumber = "LN-ABCDEFGH";
             var request = new MakeLoanPaymentRequestDto { Amount = 10000 };
 
             var response = new LoanPaymentResponseDto
@@ -138,154 +142,157 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.MakePayment(loanNumber, request);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as LoanPaymentResponseDto;
+            var data = ok.Value as LoanPaymentResponseDto;
             Assert.IsNotNull(data);
             Assert.AreEqual(10000, data.Amount);
+
+            _mockPaymentService.Verify(
+                s => s.MakePaymentAsync(customerId, loanNumber, request),
+                Times.Once);
+
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public async Task GetAllDueEmisAsync_OverdueStatusForCustomer_ReturnsOkWithGroupedEmis()
+        public async Task GetAllDueEmisAsync_UpcomingStatus_ReturnsOkWithLoanGroups()
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            ControllerTestHelper.SetUser(_controller,customerId,Role.Customer);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var status = EmiDueStatus.Overdue;
+            var status = EmiDueStatus.Upcoming;
 
-            var emis = new List<List<DueEmisResponseDto>>
+            var groups = new List<LoanEmiGroupResponseDto>
             {
-                new List<DueEmisResponseDto>
+                new LoanEmiGroupResponseDto
                 {
-                    new DueEmisResponseDto
+                    LoanNumber = "LN-11111111",
+                    Emis = new List<DueEmisResponseDto>
                     {
-                        DueDate = DateTime.UtcNow.AddMonths(1),
-                        EmiAmount = 5000,
-                        InterestComponent = 2000,
-                        PrincipalComponent = 3000,
-                        PrincipalRemainingAfterPayment = 470000,
-                        RemainingEmiAmount = 495000
-                    },
-                    new DueEmisResponseDto
-                    {
-                        DueDate = DateTime.UtcNow.AddMonths(2),
-                        EmiAmount = 5000,
-                        InterestComponent = 1950,
-                        PrincipalComponent = 3050,
-                        PrincipalRemainingAfterPayment = 466950,
-                        RemainingEmiAmount = 490000
+                        new DueEmisResponseDto
+                        {
+                            DueDate = DateTime.UtcNow.AddDays(10),
+                            EmiAmount = 5000,
+                            InterestComponent = 2000,
+                            PrincipalComponent = 3000,
+                            RemainingEmiAmount = 5000,
+                            PenaltyAmount = 0
+                        }
                     }
                 },
-                new List<DueEmisResponseDto>
+                new LoanEmiGroupResponseDto
                 {
-                    new DueEmisResponseDto
+                    LoanNumber = "LN-22222222",
+                    Emis = new List<DueEmisResponseDto>
                     {
-                        DueDate = DateTime.UtcNow.AddMonths(1),
-                        EmiAmount = 8000,
-                        InterestComponent = 3000,
-                        PrincipalComponent = 5000,
-                        PrincipalRemainingAfterPayment = 780000,
-                        RemainingEmiAmount = 792000
+                        new DueEmisResponseDto
+                        {
+                            DueDate = DateTime.UtcNow.AddDays(20),
+                            EmiAmount = 8000,
+                            InterestComponent = 3000,
+                            PrincipalComponent = 5000,
+                            RemainingEmiAmount = 8000,
+                            PenaltyAmount = 0
+                        }
                     }
                 }
             };
 
-            //_mockPaymentService
-            //    .Setup(s => s.GetAllDueEmisAsync(customerId, status))
-            //    .ReturnsAsync(emis);
+            _mockPaymentService
+                .Setup(s => s.GetAllDueEmisAsync(customerId, status))
+                .ReturnsAsync(groups);
 
             // Act
             var result = await _controller.GetAllDueEmisAsync(status);
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-
-            var data = okResult.Value as IEnumerable<IEnumerable<DueEmisResponseDto>>;
+            var data = ok.Value as IEnumerable<LoanEmiGroupResponseDto>;
             Assert.IsNotNull(data);
 
-            Assert.AreEqual(2, data.Count());              // two loan groups
-            Assert.AreEqual(2, data.First().Count());      // first loan has two EMIs
-            Assert.AreEqual(5000, data.First().First().EmiAmount);
+            var list = data.ToList();
+            Assert.AreEqual(2, list.Count);
+
+            Assert.AreEqual("LN-11111111", list[0].LoanNumber);
+            Assert.AreEqual(1, list[0].Emis.Count());
+
+            _mockPaymentService.Verify(s => s.GetAllDueEmisAsync(customerId, status), Times.Once);
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
+
         [TestMethod]
-        public async Task GetAllDueEmisAsync_UpcomingStatusForCustomer_ReturnsOkWithGroupedEmis()
+        public async Task GetAllDueEmisAsync_OverdueStatus_ReturnsOkWithLoanGroups()
         {
             // Arrange
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var status = EmiDueStatus.Upcoming;
+            var status = EmiDueStatus.Overdue;
 
-            var emis = new List<List<DueEmisResponseDto>>
-    {
-        new List<DueEmisResponseDto>
-        {
-            new DueEmisResponseDto
+            var groups = new List<LoanEmiGroupResponseDto>
             {
-                DueDate = DateTime.UtcNow.AddMonths(1),
-                EmiAmount = 5000,
-                InterestComponent = 2000,
-                PrincipalComponent = 3000,
-                PrincipalRemainingAfterPayment = 470000,
-                RemainingEmiAmount = 495000
-            },
-            new DueEmisResponseDto
-            {
-                DueDate = DateTime.UtcNow.AddMonths(2),
-                EmiAmount = 5000,
-                InterestComponent = 1950,
-                PrincipalComponent = 3050,
-                PrincipalRemainingAfterPayment = 466950,
-                RemainingEmiAmount = 490000
-            }
-        },
-        new List<DueEmisResponseDto>
-        {
-            new DueEmisResponseDto
-            {
-                DueDate = DateTime.UtcNow.AddMonths(1),
-                EmiAmount = 8000,
-                InterestComponent = 3000,
-                PrincipalComponent = 5000,
-                PrincipalRemainingAfterPayment = 780000,
-                RemainingEmiAmount = 792000
-            }
-        }
-    };
+                new LoanEmiGroupResponseDto
+                {
+                    LoanNumber = "LN-33333333",
+                    Emis = new List<DueEmisResponseDto>
+                    {
+                        new DueEmisResponseDto
+                        {
+                            DueDate = DateTime.UtcNow.AddMonths(-1),
+                            EmiAmount = 5200,
+                            InterestComponent = 2000,
+                            PrincipalComponent = 3000,
+                            RemainingEmiAmount = 5000,
+                            PenaltyAmount = 200
+                        }
+                    }
+                }
+            };
 
-            //_mockPaymentService
-            //    .Setup(s => s.GetAllDueEmisAsync(customerId, status))
-            //    .ReturnsAsync(emis);
+            _mockPaymentService
+                .Setup(s => s.GetAllDueEmisAsync(customerId, status))
+                .ReturnsAsync(groups);
 
             // Act
             var result = await _controller.GetAllDueEmisAsync(status);
 
             // Assert
-            Assert.IsNotNull(result);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-
-            var data = okResult.Value as IEnumerable<IEnumerable<DueEmisResponseDto>>;
+            var data = ok.Value as IEnumerable<LoanEmiGroupResponseDto>;
             Assert.IsNotNull(data);
 
-            Assert.AreEqual(2, data.Count());              // two loan groups
-            Assert.AreEqual(2, data.First().Count());      // first loan has two EMIs
-            Assert.AreEqual(5000, data.First().First().EmiAmount);
+            var list = data.ToList();
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual("LN-33333333", list[0].LoanNumber);
+
+            var emi = list[0].Emis.Single();
+            Assert.IsTrue(emi.PenaltyAmount > 0);
+
+            _mockPaymentService.Verify(s => s.GetAllDueEmisAsync(customerId, status), Times.Once);
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public async Task GetDueEmisAsync_OverdueStatusForLoan_ReturnsOkWithEmis()
+        public async Task GetDueEmisAsync_Overdue_ReturnsOkWithEmis()
         {
             // Arrange
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
-            var loanNumber = "LN-001";
+
+            var loanNumber = "LN-ABCDEFGH";
             var status = EmiDueStatus.Overdue;
 
             var emis = new List<DueEmisResponseDto>
@@ -293,7 +300,8 @@ namespace EasyLoan.UnitTest.Controllers
                 new DueEmisResponseDto
                 {
                     DueDate = DateTime.UtcNow.AddMonths(-1),
-                    EmiAmount = 5200
+                    EmiAmount = 5200,
+                    PenaltyAmount = 200
                 }
             };
 
@@ -305,28 +313,42 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetDueEmisAsync(loanNumber, status);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as IEnumerable<DueEmisResponseDto>;
+            var data = ok.Value as IEnumerable<DueEmisResponseDto>;
             Assert.IsNotNull(data);
+
+            var list = data.ToList();
+            Assert.AreEqual(1, list.Count);
+            Assert.IsTrue(list[0].PenaltyAmount > 0);
+
+            _mockPaymentService.Verify(
+                s => s.GetDueEmisAsync(customerId, loanNumber, status),
+                Times.Once);
+
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
+
         [TestMethod]
-        public async Task GetDueEmisAsync_UpcomingStatusForLoan_ReturnsOkWithEmis()
+        public async Task GetDueEmisAsync_Upcoming_ReturnsOkWithEmis()
         {
             // Arrange
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var loanNumber = "LN-001";
+            var loanNumber = "LN-ABCDEFGH";
             var status = EmiDueStatus.Upcoming;
 
             var emis = new List<DueEmisResponseDto>
             {
                 new DueEmisResponseDto
                 {
-                    DueDate = DateTime.UtcNow.AddMonths(-1),
-                    EmiAmount = 5200
+                    DueDate = DateTime.UtcNow.AddDays(10),
+                    EmiAmount = 5000,
+                    PenaltyAmount = 0
                 }
             };
 
@@ -338,21 +360,33 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetDueEmisAsync(loanNumber, status);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as IEnumerable<DueEmisResponseDto>;
+            var data = ok.Value as IEnumerable<DueEmisResponseDto>;
             Assert.IsNotNull(data);
+
+            var list = data.ToList();
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual(0, list[0].PenaltyAmount);
+
+            _mockPaymentService.Verify(
+                s => s.GetDueEmisAsync(customerId, loanNumber, status),
+                Times.Once);
+
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public async Task GetPaymentsHistory_ValidLoanNumberForCustomer_ReturnsOkWithPaymentHistory()
+        public async Task GetPaymentsHistory_ValidLoanNumber_ReturnsOkWithHistory()
         {
             // Arrange
             var customerId = Guid.NewGuid();
             ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
-            var loanNumber = "LN-001";
+            var loanNumber = "LN-ABCDEFGH";
 
             var history = new List<LoanPaymentHistoryResponseDto>
             {
@@ -372,11 +406,43 @@ namespace EasyLoan.UnitTest.Controllers
             var result = await _controller.GetPaymentsHistory(loanNumber);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            Assert.AreEqual(StatusCodes.Status200OK, ok.StatusCode);
 
-            var data = okResult.Value as IEnumerable<LoanPaymentHistoryResponseDto>;
+            var data = ok.Value as IEnumerable<LoanPaymentHistoryResponseDto>;
             Assert.IsNotNull(data);
+            Assert.AreEqual(1, data.Count());
+
+            _mockPaymentService.Verify(
+                s => s.GetPaymentsHistoryAsync(customerId, loanNumber),
+                Times.Once);
+
+            _mockPaymentService.VerifyNoOtherCalls();
+            _mockLoanService.VerifyNoOtherCalls();
         }
+
+        [TestMethod]
+        public async Task GetCustomerLoans_WhenUserIdMissing_ThrowsAuthenticationFailedException()
+        {
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            var identity = new ClaimsIdentity(new[]
+            {
+        new Claim(ClaimTypes.Role, Role.Customer.ToString())
+    }, "TestAuth");
+
+            _controller.HttpContext.User = new ClaimsPrincipal(identity);
+
+            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+                _controller.GetCustomerLoans(LoanStatus.Active));
+
+            _mockLoanService.VerifyNoOtherCalls();
+            _mockPaymentService.VerifyNoOtherCalls();
+        }
+
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ProfileService, UserProfile, UpdateUserProfile } from '../../services/profile.service';
 import { UserService } from '../../services/user.service';
 import { CustomerProfile } from '../../models/customer-profile.models';
@@ -25,6 +25,8 @@ export class ProfileComponent implements OnInit {
     isCustomer = signal(false);
     isEmployee = signal(false);
 
+    private readonly MAX_ANNUAL_SALARY = 1000000000000000; // 1000 trillion rupees
+
     constructor(
         private profileService: ProfileService,
         private userService: UserService,
@@ -48,7 +50,7 @@ export class ProfileComponent implements OnInit {
             this.profileForm = this.fb.group({
                 name: ['', [Validators.required, Validators.maxLength(100)]],
                 phoneNumber: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
-                annualSalary: ['', [Validators.required, Validators.min(0)]]
+                annualSalary: ['', [Validators.required, Validators.min(0), Validators.max(this.MAX_ANNUAL_SALARY), this.decimalPlacesValidator(2)]]
             });
         } else {
             this.profileForm = this.fb.group({
@@ -185,5 +187,120 @@ export class ProfileComponent implements OnInit {
             return (this.profile() as CustomerProfile).creditScore;
         }
         return 0;
+    }
+
+    // Prevent invalid characters for phone number and limit to 10 digits
+    onPhoneNumberKeyDown(event: KeyboardEvent): void {
+        const input = event.target as HTMLInputElement;
+        const currentValue = input.value;
+
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(event.key)) {
+            return;
+        }
+
+        // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
+
+        // Only allow numeric keys (0-9)
+        if (event.key < '0' || event.key > '9') {
+            event.preventDefault();
+            return;
+        }
+
+        // Prevent input if already at 10 digits
+        if (currentValue.length >= 10) {
+            const selectionStart = input.selectionStart || 0;
+            const selectionEnd = input.selectionEnd || 0;
+            // Allow if there's a selection (user is replacing text)
+            if (selectionStart === selectionEnd) {
+                event.preventDefault();
+            }
+        }
+    }
+
+    // Prevent 'e', '+', '-' for annual salary and limit input to 16 digits and 2 decimal places
+    onSalaryKeyDown(event: KeyboardEvent): void {
+        const input = event.target as HTMLInputElement;
+        const currentValue = input.value;
+
+        // Prevent 'e', 'E', '+', '-'
+        if (['e', 'E', '+', '-'].includes(event.key)) {
+            event.preventDefault();
+            return;
+        }
+
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(event.key)) {
+            return;
+        }
+
+        // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
+
+        // Prevent multiple decimal points
+        if (event.key === '.' && currentValue.includes('.')) {
+            event.preventDefault();
+            return;
+        }
+
+        // Limit to 2 decimal places if value contains a decimal point
+        if (currentValue.includes('.')) {
+            const selectionStart = input.selectionStart || 0;
+            const selectionEnd = input.selectionEnd || 0;
+            const decimalIndex = currentValue.indexOf('.');
+            const decimalPart = currentValue.substring(decimalIndex + 1);
+
+            // Only check for numeric keys (0-9)
+            const isNumericKey = event.key >= '0' && event.key <= '9';
+
+            // If cursor is after decimal point, we already have 2 decimal places, and user is typing a number
+            if (isNumericKey && selectionStart > decimalIndex && decimalPart.length >= 2 && selectionStart === selectionEnd) {
+                event.preventDefault();
+                return;
+            }
+        }
+
+        // Prevent input if already at 16 characters (1000 trillion = 1,000,000,000,000,000)
+        // Don't count the decimal point in the character limit
+        const valueWithoutDecimal = currentValue.replace('.', '');
+        if (valueWithoutDecimal.length >= 16 && event.key >= '0' && event.key <= '9') {
+            const selectionStart = input.selectionStart || 0;
+            const selectionEnd = input.selectionEnd || 0;
+            // Allow if there's a selection (user is replacing text)
+            if (selectionStart === selectionEnd) {
+                event.preventDefault();
+            }
+        }
+    }
+
+    // Custom validator for decimal places
+    decimalPlacesValidator(maxDecimalPlaces: number) {
+        return (control: AbstractControl): ValidationErrors | null => {
+            if (control.value === null || control.value === undefined || control.value === '') {
+                return null;
+            }
+
+            const value = control.value.toString();
+            const decimalIndex = value.indexOf('.');
+
+            if (decimalIndex === -1) {
+                return null; // No decimal point, valid
+            }
+
+            const decimalPlaces = value.length - decimalIndex - 1;
+
+            if (decimalPlaces > maxDecimalPlaces) {
+                return { decimalPlaces: { max: maxDecimalPlaces, actual: decimalPlaces } };
+            }
+
+            return null;
+        };
     }
 }

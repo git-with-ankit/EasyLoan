@@ -1,46 +1,41 @@
 ﻿using EasyLoan.Api.Controllers;
+using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Dtos.Customer;
+using EasyLoan.Models.Common.Enums;
+using EasyLoan.UnitTest.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using EasyLoan.UnitTest.Helpers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using System.Security.Claims;
-;
 
 namespace EasyLoan.UnitTest.Controllers
 {
+    [TestClass]
     public class CustomersControllerTests
     {
-        private Mock<ICustomerService> _mockCustomerService;
-        private Mock<IAuthService> _mockAuthService;
-        private CustomersController _controller;
+        private Mock<ICustomerService> _mockCustomerService = null!;
+        private Mock<IAuthService> _mockAuthService = null!;
+        private CustomersController _controller = null!;
 
-        public CustomersControllerTests()
+        [TestInitialize]
+        public void Setup()
         {
-            _mockCustomerService = new Mock<ICustomerService>();
-            _mockAuthService = new Mock<IAuthService>();
-            _controller = new CustomersController(_mockCustomerService.Object, _mockAuthService.Object);
+            _mockCustomerService = new Mock<ICustomerService>(MockBehavior.Strict);
+            _mockAuthService = new Mock<IAuthService>(MockBehavior.Strict);
+
+            _controller = new CustomersController(
+                _mockCustomerService.Object,
+                _mockAuthService.Object);
+
+            // Controller MUST have HttpContext for cookies and RequestServices
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
         }
-        //private static void ControllerTestHelper.SetUser(ControllerBase controller, Guid customerId)
-        //{
-        //    var claims = new List<Claim>
-        //    {
-        //        new Claim(ClaimTypes.NameIdentifier, customerId.ToString()),
-        //        new Claim(ClaimTypes.Role, "Customer")
-        //    };
 
-        //    var identity = new ClaimsIdentity(claims, "TestAuth");
-        //    var principal = new ClaimsPrincipal(identity);
-
-        //    controller.ControllerContext = new ControllerContext
-        //    {
-        //        HttpContext = new DefaultHttpContext
-        //        {
-        //            User = principal
-        //        }
-        //    };
-        //}
         [TestMethod]
         public async Task GetProfile_WhenAuthorizedCustomer_ReturnsOkWithProfile()
         {
@@ -58,7 +53,7 @@ namespace EasyLoan.UnitTest.Controllers
                 CreditScore = 750
             };
 
-            ControllerTestHelper.SetUser(_controller, customerId,Role.Customer);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             _mockCustomerService
                 .Setup(s => s.GetProfileAsync(customerId))
@@ -82,7 +77,12 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(profile.AnnualSalary, response.AnnualSalary);
             Assert.AreEqual(profile.PanNumber, response.PanNumber);
             Assert.AreEqual(profile.CreditScore, response.CreditScore);
+
+            _mockCustomerService.Verify(s => s.GetProfileAsync(customerId), Times.Once);
+            _mockCustomerService.VerifyNoOtherCalls();
+            _mockAuthService.VerifyNoOtherCalls();
         }
+
         [TestMethod]
         public async Task UpdateProfile_WhenAuthorizedCustomer_ReturnsOkWithUpdatedProfile()
         {
@@ -107,7 +107,7 @@ namespace EasyLoan.UnitTest.Controllers
                 CreditScore = 780
             };
 
-            ControllerTestHelper.SetUser(_controller, customerId,Role.Customer);
+            ControllerTestHelper.SetUser(_controller, customerId, Role.Customer);
 
             _mockCustomerService
                 .Setup(s => s.UpdateProfileAsync(customerId, request))
@@ -131,7 +131,15 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(updatedProfile.AnnualSalary, response.AnnualSalary);
             Assert.AreEqual(updatedProfile.PanNumber, response.PanNumber);
             Assert.AreEqual(updatedProfile.CreditScore, response.CreditScore);
+
+            _mockCustomerService.Verify(
+                s => s.UpdateProfileAsync(customerId, request),
+                Times.Once);
+
+            _mockCustomerService.VerifyNoOtherCalls();
+            _mockAuthService.VerifyNoOtherCalls();
         }
+
         [TestMethod]
         public async Task Register_WhenValidRequest_ReturnsCreatedWithCustomerProfile()
         {
@@ -169,6 +177,7 @@ namespace EasyLoan.UnitTest.Controllers
             var createdResult = result.Result as CreatedAtActionResult;
             Assert.IsNotNull(createdResult);
             Assert.AreEqual(StatusCodes.Status201Created, createdResult.StatusCode);
+
             Assert.AreEqual(nameof(_controller.GetProfile), createdResult.ActionName);
 
             var response = createdResult.Value as CustomerProfileResponseDto;
@@ -181,9 +190,14 @@ namespace EasyLoan.UnitTest.Controllers
             Assert.AreEqual(createdCustomer.AnnualSalary, response.AnnualSalary);
             Assert.AreEqual(createdCustomer.DateOfBirth, response.DateOfBirth);
             Assert.AreEqual(createdCustomer.CreditScore, response.CreditScore);
+
+            _mockAuthService.Verify(s => s.RegisterCustomerAsync(request), Times.Once);
+            _mockAuthService.VerifyNoOtherCalls();
+            _mockCustomerService.VerifyNoOtherCalls();
         }
+
         [TestMethod]
-        public async Task Login_WhenValidCustomerCredentials_ReturnsOkWithToken()
+        public async Task Login_WhenValidCredentials_ReturnsNoContent_AndSetsCookie()
         {
             // Arrange
             var request = new CustomerLoginRequestDto
@@ -198,18 +212,90 @@ namespace EasyLoan.UnitTest.Controllers
                 .Setup(s => s.LoginCustomerAsync(request))
                 .ReturnsAsync(expectedToken);
 
+            var settings = new Dictionary<string, string?>
+            {
+                { "Jwt:AccessTokenExpiryMinutes", "60" }
+            };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(settings!)
+                .Build();
+
+            var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(config);
+
+            _controller.HttpContext.RequestServices = services.BuildServiceProvider();
+
             // Act
             var result = await _controller.Login(request);
 
             // Assert
-            var okResult = result.Result as OkObjectResult;
-            Assert.IsNotNull(okResult);
-            Assert.AreEqual(StatusCodes.Status200OK, okResult.StatusCode);
+            Assert.IsInstanceOfType(result, typeof(NoContentResult));
 
-            var token = okResult.Value as string;
-            Assert.IsNotNull(token);
-            Assert.AreEqual(expectedToken, token);
+            var noContent = result as NoContentResult;
+            Assert.IsNotNull(noContent);
+            Assert.AreEqual(StatusCodes.Status204NoContent, noContent.StatusCode);
+
+            var setCookieHeader = _controller.Response.Headers["Set-Cookie"].ToString();
+            Assert.IsFalse(string.IsNullOrWhiteSpace(setCookieHeader));
+            Assert.IsTrue(setCookieHeader.Contains("easyloan_auth="));
+
+            _mockAuthService.Verify(s => s.LoginCustomerAsync(request), Times.Once);
+            _mockAuthService.VerifyNoOtherCalls();
+            _mockCustomerService.VerifyNoOtherCalls();
         }
 
+        [TestMethod]
+        public async Task Login_WhenExpiryMinutesMissingInConfig_ThrowsException()
+        {
+            // Arrange
+            var request = new CustomerLoginRequestDto
+            {
+                Email = "customer@test.com",
+                Password = "Password@123"
+            };
+
+            _mockAuthService
+                .Setup(s => s.LoginCustomerAsync(request))
+                .ReturnsAsync("token");
+
+            var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+            _controller.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            // Act + Assert
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() =>
+                _controller.Login(request));
+
+            _mockAuthService.Verify(s => s.LoginCustomerAsync(request), Times.Once);
+            _mockAuthService.VerifyNoOtherCalls();
+            _mockCustomerService.VerifyNoOtherCalls();
+        }
+
+
+        [TestMethod]
+        public async Task GetProfile_WhenUserIdClaimMissing_ThrowsException()
+        {
+            // Arrange
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            var identity = new System.Security.Claims.ClaimsIdentity(new[]
+            {
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, Role.Customer.ToString())
+            }, "TestAuth");
+
+            _controller.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(identity);
+
+            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+                _controller.GetProfile());
+
+            _mockCustomerService.VerifyNoOtherCalls();
+            _mockAuthService.VerifyNoOtherCalls();
+        }
     }
 }

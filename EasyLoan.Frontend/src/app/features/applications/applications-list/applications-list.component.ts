@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 import { ApplicationService } from '../../../services/application.service';
 import { LoanApplicationSummary, LoanApplicationStatus } from '../../../models/application.models';
 import { ApplicationCardComponent } from './application-card/application-card.component';
@@ -9,20 +10,22 @@ import { createPaginationParams } from '../../../models/pagination.models';
 @Component({
     selector: 'app-applications-list',
     standalone: true,
-    imports: [CommonModule, ApplicationCardComponent, ApplicationDetailsCardComponent],
+    imports: [CommonModule, ApplicationCardComponent],
     templateUrl: './applications-list.component.html',
     styleUrl: './applications-list.component.css'
 })
 export class ApplicationsListComponent implements OnInit {
     applications = signal<LoanApplicationSummary[]>([]);
     selectedStatus = signal<LoanApplicationStatus>(LoanApplicationStatus.Pending);
-    selectedApplicationNumber = signal<string | null>(null);
     isLoading = signal(false);
     errorMessage = signal('');
 
     LoanApplicationStatus = LoanApplicationStatus; // Expose enum to template
 
-    constructor(private applicationService: ApplicationService) { }
+    constructor(
+        private applicationService: ApplicationService,
+        private dialog: MatDialog
+    ) { }
 
     ngOnInit(): void {
         this.loadApplications();
@@ -55,10 +58,10 @@ export class ApplicationsListComponent implements OnInit {
     }
 
     onViewDetails(applicationNumber: string): void {
-        this.selectedApplicationNumber.set(applicationNumber);
-    }
-
-    onCloseDetails(): void {
-        this.selectedApplicationNumber.set(null);
+        this.dialog.open(ApplicationDetailsCardComponent, {
+            data: { applicationNumber },
+            width: '700px',
+            maxWidth: '90vw'
+        });
     }
 }

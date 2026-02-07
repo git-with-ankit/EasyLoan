@@ -1,6 +1,4 @@
-﻿//Business rules , Exceptions , Decision logic , Correct repository interactions
-
-;
+﻿using EasyLoan.Business.Constants;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Business.Services;
@@ -45,7 +43,7 @@ namespace EasyLoan.UnitTest.Services
                 _loanTypeRepo.Object,
                 _publicIdService.Object,
                 _emiCalculator.Object
-                );
+            );
         }
 
         [TestMethod]
@@ -58,7 +56,7 @@ namespace EasyLoan.UnitTest.Services
             {
                 LoanTypeId = Guid.NewGuid(),
                 RequestedAmount = 500000,
-                RequestedTenureInMonths = 240
+                RequestedTenureInMonths = 120
             };
 
             _customerRepo
@@ -66,9 +64,12 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync((Customer?)null);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
                 _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.CustomerNotFound, ex.Message);
         }
+
         [TestMethod]
         public async Task CreateAsync_LowCreditScore_ThrowsBusinessRuleViolation()
         {
@@ -85,7 +86,7 @@ namespace EasyLoan.UnitTest.Services
             {
                 LoanTypeId = Guid.NewGuid(),
                 RequestedAmount = 500000,
-                RequestedTenureInMonths = 240
+                RequestedTenureInMonths = 120
             };
 
             _customerRepo
@@ -93,9 +94,12 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(customer);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.CreditScoreTooLow, ex.Message);
         }
+
         [TestMethod]
         public async Task CreateAsync_LoanTypeNotFound_ThrowsNotFoundException()
         {
@@ -112,71 +116,163 @@ namespace EasyLoan.UnitTest.Services
             {
                 LoanTypeId = Guid.NewGuid(),
                 RequestedAmount = 500000,
-                RequestedTenureInMonths = 240
+                RequestedTenureInMonths = 120
             };
 
-            _customerRepo.Setup(r => r.GetByIdAsync(customerId)).ReturnsAsync(customer);
-            _loanTypeRepo.Setup(r => r.GetByIdAsync(dto.LoanTypeId)).ReturnsAsync((LoanType?)null);
+            _customerRepo
+                .Setup(r => r.GetByIdAsync(customerId))
+                .ReturnsAsync(customer);
+
+            _loanTypeRepo
+                .Setup(r => r.GetByIdAsync(dto.LoanTypeId))
+                .ReturnsAsync((LoanType?)null);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
                 _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.LoanTypeNotFound, ex.Message);
         }
+
+        [TestMethod]
+        public async Task CreateAsync_RequestedAmountExceedsMaximum_ThrowsBusinessRuleViolation()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var loanTypeId = Guid.NewGuid();
+
+            _customerRepo.Setup(r => r.GetByIdAsync(customerId))
+                .ReturnsAsync(new Customer { Id = customerId, CreditScore = 700 });
+
+            _loanTypeRepo.Setup(r => r.GetByIdAsync(loanTypeId))
+                .ReturnsAsync(new LoanType { Id = loanTypeId, MaxTenureInMonths = 240 });
+
+            var dto = new CreateLoanApplicationRequestDto
+            {
+                LoanTypeId = loanTypeId,
+                RequestedAmount = BusinessConstants.MaximumLoanAmount + 1,
+                RequestedTenureInMonths = 120
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.ExceededMaxAmount, ex.Message);
+        }
+
         [TestMethod]
         public async Task CreateAsync_TenureExceedsMax_ThrowsBusinessRuleViolation()
         {
             // Arrange
             var customerId = Guid.NewGuid();
+            var loanTypeId = Guid.NewGuid();
 
             _customerRepo.Setup(r => r.GetByIdAsync(customerId))
                 .ReturnsAsync(new Customer { Id = customerId, CreditScore = 700 });
 
-            var loanType = new LoanType { Id = Guid.NewGuid(), MaxTenureInMonths = 120 };
+            var loanType = new LoanType
+            {
+                Id = loanTypeId,
+                MaxTenureInMonths = 120
+            };
+
+            _loanTypeRepo.Setup(r => r.GetByIdAsync(loanTypeId))
+                .ReturnsAsync(loanType);
 
             var dto = new CreateLoanApplicationRequestDto
             {
-                LoanTypeId = loanType.Id,
+                LoanTypeId = loanTypeId,
                 RequestedAmount = 500000,
                 RequestedTenureInMonths = 240
             };
 
-            _loanTypeRepo.Setup(r => r.GetByIdAsync(loanType.Id)).ReturnsAsync(loanType);
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.ExceededMaxTenure, ex.Message);
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_WhenRateLimitingTriggered_ThrowsBusinessRuleViolation()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var loanTypeId = Guid.NewGuid();
+
+            _customerRepo.Setup(r => r.GetByIdAsync(customerId))
+                .ReturnsAsync(new Customer { Id = customerId, CreditScore = 700 });
+
+            _loanTypeRepo.Setup(r => r.GetByIdAsync(loanTypeId))
+                .ReturnsAsync(new LoanType { Id = loanTypeId, MaxTenureInMonths = 240 });
+
+            // Customer has a recent application
+            _loanAppRepo.Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
+                .ReturnsAsync(new List<LoanApplication>
+                {
+                    new LoanApplication
+                    {
+                        CustomerId = customerId,
+                        CreatedDate = DateTime.UtcNow.AddDays(-(BusinessConstants.MinimumDaysRequiredForAnotherLoan - 1))
+                    }
+                });
+
+            var dto = new CreateLoanApplicationRequestDto
+            {
+                LoanTypeId = loanTypeId,
+                RequestedAmount = 500000,
+                RequestedTenureInMonths = 120
+            };
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.CreateAsync(customerId, dto));
+
+            Assert.IsTrue(ex.Message.Contains(BusinessConstants.MinimumDaysRequiredForAnotherLoan.ToString()));
         }
+
         [TestMethod]
         public async Task CreateAsync_NoManagersAvailable_ThrowsBusinessRuleViolation()
         {
             // Arrange
             var customerId = Guid.NewGuid();
+            var loanTypeId = Guid.NewGuid();
 
             _customerRepo.Setup(r => r.GetByIdAsync(customerId))
                 .ReturnsAsync(new Customer { Id = customerId, CreditScore = 700 });
 
-            _loanTypeRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(new LoanType { MaxTenureInMonths = 300 });
+            _loanTypeRepo.Setup(r => r.GetByIdAsync(loanTypeId))
+                .ReturnsAsync(new LoanType { Id = loanTypeId, MaxTenureInMonths = 240 });
 
+            // Rate limiting passes
+            _loanAppRepo.Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
+                .ReturnsAsync(new List<LoanApplication>());
+
+            // No managers returned
             _employeeRepo.Setup(r => r.GetAllWithDetailsAsync())
                 .ReturnsAsync(new List<Employee>());
 
+            var dto = new CreateLoanApplicationRequestDto
+            {
+                LoanTypeId = loanTypeId,
+                RequestedAmount = 500000,
+                RequestedTenureInMonths = 120
+            };
+
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.CreateAsync(customerId, new CreateLoanApplicationRequestDto
-                {
-                    LoanTypeId = Guid.NewGuid(),
-                    RequestedAmount = 500000,
-                    RequestedTenureInMonths = 120
-                }));
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.CreateAsync(customerId, dto));
+
+            Assert.AreEqual(ErrorMessages.ManagersNotAvailable, ex.Message);
         }
+
         [TestMethod]
-        public async Task CreateAsync_ValidRequest_CreatesApplicationSuccessfully()
+        public async Task CreateAsync_ValidRequest_AssignsLeastLoadedManager_AndCreatesApplication()
         {
             // Arrange
             var customerId = Guid.NewGuid();
             var loanTypeId = Guid.NewGuid();
-            var managerId = Guid.NewGuid();
 
             _customerRepo.Setup(r => r.GetByIdAsync(customerId))
                 .ReturnsAsync(new Customer { Id = customerId, CreditScore = 750 });
@@ -184,18 +280,45 @@ namespace EasyLoan.UnitTest.Services
             _loanTypeRepo.Setup(r => r.GetByIdAsync(loanTypeId))
                 .ReturnsAsync(new LoanType { Id = loanTypeId, MaxTenureInMonths = 240 });
 
-            _employeeRepo.Setup(r => r.GetAllWithDetailsAsync())
-                .ReturnsAsync(new List<Employee>
-                {
-            new Employee
+            // Rate limiting passes
+            _loanAppRepo.Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
+                .ReturnsAsync(new List<LoanApplication>());
+
+            var manager1 = new Employee
             {
-                Id = managerId,
-                AssignedLoanApplications = new List<LoanApplication>()
-            }
-                });
+                Id = Guid.NewGuid(),
+                Role = EmployeeRole.Manager,
+                AssignedLoanApplications = new List<LoanApplication>
+                {
+                    new LoanApplication(),
+                    new LoanApplication()
+                }
+            };
+
+            var manager2 = new Employee
+            {
+                Id = Guid.NewGuid(),
+                Role = EmployeeRole.Manager,
+                AssignedLoanApplications = new List<LoanApplication>
+                {
+                    new LoanApplication()
+                }
+            };
+
+            _employeeRepo.Setup(r => r.GetAllWithDetailsAsync())
+                .ReturnsAsync(new List<Employee> { manager1, manager2 });
 
             _publicIdService.Setup(s => s.GenerateApplicationNumber())
                 .Returns("LA-ABCDEFGH");
+
+            LoanApplication? savedApp = null;
+
+            _loanAppRepo.Setup(r => r.AddAsync(It.IsAny<LoanApplication>()))
+                .Callback<LoanApplication>(a => savedApp = a)
+                .Returns(Task.CompletedTask);
+
+            _loanAppRepo.Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
 
             var dto = new CreateLoanApplicationRequestDto
             {
@@ -210,25 +333,36 @@ namespace EasyLoan.UnitTest.Services
             // Assert
             Assert.IsNotNull(result);
             Assert.AreEqual("LA-ABCDEFGH", result.ApplicationNumber);
+            Assert.AreEqual(LoanApplicationStatus.Pending, result.Status);
+
+            Assert.IsNotNull(savedApp);
+            Assert.AreEqual(manager2.Id, savedApp!.AssignedEmployeeId); // least loaded
 
             _loanAppRepo.Verify(r => r.AddAsync(It.IsAny<LoanApplication>()), Times.Once);
             _loanAppRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
+
         [TestMethod]
         public async Task UpdateReviewAsync_InvalidApplicationNumber_ThrowsBusinessRuleViolation()
         {
+            // Arrange
             var dto = new ReviewLoanApplicationRequestDto
             {
                 IsApproved = true,
                 ApprovedAmount = 10000
             };
 
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.UpdateReviewAsync("INVALID", Guid.NewGuid(), dto));
+
+            Assert.AreEqual(ErrorMessages.WrongFormatForLoanApplication, ex.Message);
         }
+
         [TestMethod]
         public async Task UpdateReviewAsync_ApplicationNotFound_ThrowsKeyNotFound()
         {
+            // Arrange
             _loanAppRepo
                 .Setup(r => r.GetByApplicationNumberWithDetailsAsync(It.IsAny<string>()))
                 .ReturnsAsync((LoanApplication?)null);
@@ -239,6 +373,7 @@ namespace EasyLoan.UnitTest.Services
                 ApprovedAmount = 10000
             };
 
+            // Act & Assert
             await Assert.ThrowsExceptionAsync<KeyNotFoundException>(() =>
                 _service.UpdateReviewAsync("LA-ABCDEFGH", Guid.NewGuid(), dto));
         }
@@ -246,6 +381,7 @@ namespace EasyLoan.UnitTest.Services
         [TestMethod]
         public async Task UpdateReviewAsync_ManagerNotAssigned_ThrowsForbidden()
         {
+            // Arrange
             var application = new LoanApplication
             {
                 ApplicationNumber = "LA-ABCDEFGH",
@@ -264,12 +400,17 @@ namespace EasyLoan.UnitTest.Services
                 ApprovedAmount = 10000
             };
 
-            await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
                 _service.UpdateReviewAsync(application.ApplicationNumber, Guid.NewGuid(), dto));
+
+            Assert.AreEqual(ErrorMessages.AccessDenied, ex.Message);
         }
+
         [TestMethod]
         public async Task UpdateReviewAsync_AlreadyReviewed_ThrowsBusinessRuleViolation()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var application = new LoanApplication
@@ -290,12 +431,17 @@ namespace EasyLoan.UnitTest.Services
                 ApprovedAmount = 10000
             };
 
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto));
+
+            Assert.AreEqual(ErrorMessages.LoanApplicationAlreadyReviewed, ex.Message);
         }
+
         [TestMethod]
         public async Task UpdateReviewAsync_ApprovedAmountExceedsRequested_ThrowsBusinessRuleViolation()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var application = new LoanApplication
@@ -317,12 +463,17 @@ namespace EasyLoan.UnitTest.Services
                 ApprovedAmount = 60000
             };
 
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto));
+
+            Assert.AreEqual(ErrorMessages.ApprovedAmountCannotExceedRequestedAmount, ex.Message);
         }
+
         [TestMethod]
         public async Task UpdateReviewAsync_ApprovedAmountBelowMin_ThrowsBusinessRuleViolation()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var application = new LoanApplication
@@ -344,12 +495,17 @@ namespace EasyLoan.UnitTest.Services
                 ApprovedAmount = 10000
             };
 
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto));
+
+            Assert.AreEqual(ErrorMessages.BelowMinimumLoanAmount, ex.Message);
         }
+
         [TestMethod]
-        public async Task UpdateReviewAsync_Approved_CreatesLoanAndReturnsApprovedResponse()
+        public async Task UpdateReviewAsync_Approved_CreatesLoanWithEmis_AndReturnsApprovedResponse()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var application = new LoanApplication
@@ -385,30 +541,56 @@ namespace EasyLoan.UnitTest.Services
                     It.IsAny<DateTime>()))
                 .Returns(new List<EmiScheduleItemResponseDto>
                 {
-            new() { EmiNumber = 1, TotalEmiAmount = 5000 },
-            new() { EmiNumber = 2, TotalEmiAmount = 5000 }
+                    new() { EmiNumber = 1, DueDate = DateTime.UtcNow.AddMonths(1), TotalEmiAmount = 5000, InterestComponent = 100, PrincipalComponent = 4900, PrincipalRemainingAfterPayment = 25100 },
+                    new() { EmiNumber = 2, DueDate = DateTime.UtcNow.AddMonths(2), TotalEmiAmount = 5000, InterestComponent = 90, PrincipalComponent = 4910, PrincipalRemainingAfterPayment = 20190 }
                 });
+
+            LoanDetails? createdLoan = null;
+
+            _loanDetailsRepo.Setup(r => r.AddAsync(It.IsAny<LoanDetails>()))
+                .Callback<LoanDetails>(l => createdLoan = l)
+                .Returns(Task.CompletedTask);
+
+            _loanDetailsRepo.Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
+
+            _loanAppRepo.Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
 
             var dto = new ReviewLoanApplicationRequestDto
             {
                 IsApproved = true,
                 ApprovedAmount = 30000,
-                ManagerComments = "Approved"
+                ManagerComments = "  Approved  "
             };
 
-            var result =
-                await _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto);
+            // Act
+            var result = await _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto);
 
+            // Assert
             Assert.AreEqual(LoanApplicationStatus.Approved, result.Status);
             Assert.AreEqual(30000, result.ApprovedAmount);
+            Assert.AreEqual("Approved", result.ManagerComments);
+
+            Assert.IsNotNull(createdLoan);
+            Assert.AreEqual(LoanStatus.Active, createdLoan!.Status);
+            Assert.AreEqual(30000, createdLoan.ApprovedAmount);
+            Assert.AreEqual(application.CustomerId, createdLoan.CustomerId);
+            Assert.AreEqual(application.Id, createdLoan.LoanApplicationId);
+            Assert.AreEqual(application.LoanTypeId, createdLoan.LoanTypeId);
+            Assert.AreEqual(application.RequestedTenureInMonths, createdLoan.TenureInMonths);
+            Assert.AreEqual(application.LoanType.InterestRate, createdLoan.InterestRate);
+            Assert.AreEqual(2, createdLoan.Emis.Count);
 
             _loanDetailsRepo.Verify(r => r.AddAsync(It.IsAny<LoanDetails>()), Times.Once);
             _loanDetailsRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
             _loanAppRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
+
         [TestMethod]
-        public async Task UpdateReviewAsync_Rejected_DoesNotCreateLoan()
+        public async Task UpdateReviewAsync_Rejected_DoesNotCreateLoan_AndSaves()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var application = new LoanApplication
@@ -416,6 +598,7 @@ namespace EasyLoan.UnitTest.Services
                 ApplicationNumber = "LA-ABCDEFGH",
                 AssignedEmployeeId = managerId,
                 Status = LoanApplicationStatus.Pending,
+                RequestedAmount = 50000,
                 LoanType = new LoanType { MinAmount = 5000 }
             };
 
@@ -423,57 +606,80 @@ namespace EasyLoan.UnitTest.Services
                 .Setup(r => r.GetByApplicationNumberWithDetailsAsync(application.ApplicationNumber))
                 .ReturnsAsync(application);
 
+            _loanDetailsRepo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+            _loanAppRepo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+
             var dto = new ReviewLoanApplicationRequestDto
             {
                 IsApproved = false,
                 ManagerComments = "Rejected"
             };
 
-            var result =
-                await _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto);
+            // Act
+            var result = await _service.UpdateReviewAsync(application.ApplicationNumber, managerId, dto);
 
+            // Assert
             Assert.AreEqual(LoanApplicationStatus.Rejected, result.Status);
+            Assert.AreEqual(0, result.ApprovedAmount);
 
             _loanDetailsRepo.Verify(r => r.AddAsync(It.IsAny<LoanDetails>()), Times.Never);
+            _loanDetailsRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _loanAppRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
+
         [TestMethod]
         public async Task GetApplicationDetailsForReview_InvalidApplicationNumber_ThrowsBusinessRuleViolation()
         {
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.GetApplicationDetailsForReview("INVALID", Guid.NewGuid()));
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.GetApplicationDetailsForReview("INVALID", Guid.NewGuid(), Role.Manager));
+
+            Assert.AreEqual(ErrorMessages.WrongFormatForLoanApplication, ex.Message);
         }
+
         [TestMethod]
         public async Task GetApplicationDetailsForReview_ApplicationNotFound_ThrowsNotFoundException()
         {
+            // Arrange
             _loanAppRepo
                 .Setup(r => r.GetByApplicationNumberWithDetailsAsync(It.IsAny<string>()))
                 .ReturnsAsync((LoanApplication?)null);
 
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
-                _service.GetApplicationDetailsForReview("LA-ABCDEFGH", Guid.NewGuid()));
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+                _service.GetApplicationDetailsForReview("LA-ABCDEFGH", Guid.NewGuid(), Role.Manager));
+
+            Assert.AreEqual(ErrorMessages.LoanApplicationNotFound, ex.Message);
         }
-        //[TestMethod]
-        //public async Task GetApplicationDetailsForReview_ManagerNotAssigned_ThrowsForbidden()
-        //{
-        //    var application = new LoanApplication
-        //    {
-        //        ApplicationNumber = "LA-ABCDEFGH",
-        //        AssignedEmployeeId = Guid.NewGuid()
-        //    };
 
-        //    _loanAppRepo
-        //        .Setup(r => r.GetByApplicationNumberWithDetailsAsync(application.ApplicationNumber))
-        //        .ReturnsAsync(application);
-
-        //    await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
-        //        _service.GetApplicationDetailsForReview(
-        //            application.ApplicationNumber,
-        //            Guid.NewGuid()));
-        //}
         [TestMethod]
-        public async Task GetApplicationDetailsForReview_ValidRequest_ReturnsCorrectDetails()
+        public async Task GetApplicationDetailsForReview_WhenManagerNotAssigned_ThrowsForbidden()
         {
             // Arrange
+            var application = new LoanApplication
+            {
+                ApplicationNumber = "LA-ABCDEFGH",
+                AssignedEmployeeId = Guid.NewGuid(), // different manager
+                Customer = new Customer { Name = "X", Loans = new List<LoanDetails>() },
+                LoanType = new LoanType { Name = "Home", InterestRate = 8 }
+            };
+
+            _loanAppRepo
+                .Setup(r => r.GetByApplicationNumberWithDetailsAsync(application.ApplicationNumber))
+                .ReturnsAsync(application);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
+                _service.GetApplicationDetailsForReview(application.ApplicationNumber, Guid.NewGuid(), Role.Manager));
+
+            Assert.AreEqual(ErrorMessages.AccessDenied, ex.Message);
+        }
+
+        [TestMethod]
+        public async Task GetApplicationDetailsForReview_WhenRoleIsAdmin_IgnoresAssignment_AndReturnsDetails()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
             var managerId = Guid.NewGuid();
 
             var customer = new Customer
@@ -485,10 +691,10 @@ namespace EasyLoan.UnitTest.Services
                 DateOfBirth = new DateTime(1990, 5, 10),
                 PanNumber = "ABCDE1234F",
                 Loans = new List<LoanDetails>
-        {
-            new() { Status = LoanStatus.Active },
-            new() { Status = LoanStatus.Closed }
-        }
+                {
+                    new() { Status = LoanStatus.Active },
+                    new() { Status = LoanStatus.Closed }
+                }
             };
 
             var loanType = new LoanType
@@ -502,6 +708,7 @@ namespace EasyLoan.UnitTest.Services
                 ApplicationNumber = "LA-ABCDEFGH",
                 AssignedEmployeeId = managerId,
                 RequestedAmount = 500000,
+                RequestedTenureInMonths = 120,
                 ApprovedAmount = 450000,
                 Status = LoanApplicationStatus.Pending,
                 ManagerComments = "Under review",
@@ -514,8 +721,7 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(application);
 
             // Act
-            var result =
-                await _service.GetApplicationDetailsForReview(application.ApplicationNumber, managerId);
+            var result = await _service.GetApplicationDetailsForReview(application.ApplicationNumber, adminId, Role.Admin);
 
             // Assert
             Assert.IsNotNull(result);
@@ -527,20 +733,28 @@ namespace EasyLoan.UnitTest.Services
             Assert.AreEqual(customer.CreditScore, result.CreditScore);
             Assert.AreEqual(customer.DateOfBirth, result.DateOfBirth);
             Assert.AreEqual(customer.PanNumber, result.PanNumber);
+
             Assert.AreEqual(loanType.Name, result.LoanType);
             Assert.AreEqual(application.RequestedAmount, result.RequestedAmount);
-            //Assert.AreEqual(application.ApprovedAmount, result.AppprovedAmount);
+            Assert.AreEqual(application.RequestedTenureInMonths, result.RequestedTenureInMonths);
+            Assert.AreEqual(application.ApprovedAmount, result.ApprovedAmount);
             Assert.AreEqual(loanType.InterestRate, result.InterestRate);
+
             Assert.AreEqual(application.Status, result.Status);
             Assert.AreEqual(application.ManagerComments, result.ManagerComments);
+
             Assert.AreEqual(1, result.TotalOngoingLoans);
         }
+
         [TestMethod]
         public async Task GetByApplicationNumberAsync_InvalidFormat_ThrowsBusinessRuleViolation()
         {
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
                 _service.GetByApplicationNumberAsync("INVALID"));
+
+            Assert.AreEqual(ErrorMessages.WrongFormatForLoanApplication, ex.Message);
         }
+
         [TestMethod]
         public async Task GetByApplicationNumberAsync_NotFound_ThrowsNotFoundException()
         {
@@ -548,9 +762,12 @@ namespace EasyLoan.UnitTest.Services
                 .Setup(r => r.GetByApplicationNumberWithDetailsAsync(It.IsAny<string>()))
                 .ReturnsAsync((LoanApplication?)null);
 
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
                 _service.GetByApplicationNumberAsync("LA-ABCDEFGH"));
+
+            Assert.AreEqual(ErrorMessages.LoanApplicationNotFound, ex.Message);
         }
+
         [TestMethod]
         public async Task GetByApplicationNumberAsync_ValidApplication_ReturnsMappedDetails()
         {
@@ -564,17 +781,8 @@ namespace EasyLoan.UnitTest.Services
                 AssignedEmployeeId = Guid.NewGuid(),
                 Status = LoanApplicationStatus.Approved,
                 ManagerComments = "Approved",
-
-                Customer = new Customer
-                {
-                    Name = "Ankit Sharma"
-                },
-
-                LoanType = new LoanType
-                {
-                    Name = "Home Loan",
-                    InterestRate = 8.75m
-                }
+                Customer = new Customer { Name = "Ankit Sharma" },
+                LoanType = new LoanType { Name = "Home Loan", InterestRate = 8.75m }
             };
 
             _loanAppRepo
@@ -582,8 +790,7 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(application);
 
             // Act
-            var result =
-                await _service.GetByApplicationNumberAsync(application.ApplicationNumber);
+            var result = await _service.GetByApplicationNumberAsync(application.ApplicationNumber);
 
             // Assert
             Assert.IsNotNull(result);
@@ -593,187 +800,246 @@ namespace EasyLoan.UnitTest.Services
             Assert.AreEqual(application.LoanType.Name, result.LoanType);
             Assert.AreEqual(application.RequestedAmount, result.RequestedAmount);
             Assert.AreEqual(application.LoanType.InterestRate, result.InterestRate);
-            //Assert.AreEqual(application.ApprovedAmount, result.AppprovedAmount);
+            Assert.AreEqual(application.ApprovedAmount, result.ApprovedAmount);
             Assert.AreEqual(application.AssignedEmployeeId, result.AssignedEmployeeId);
             Assert.AreEqual(application.RequestedTenureInMonths, result.RequestedTenureInMonths);
             Assert.AreEqual(application.Status, result.Status);
             Assert.AreEqual(application.ManagerComments, result.ManagerComments);
         }
+
         [TestMethod]
-        public async Task GetApplicationsAsync_Admin_ReturnsFilteredApplications()
+        public async Task GetApplicationsAsync_Admin_ReturnsPagedFilteredApplications()
         {
+            // Arrange
             var apps = new List<LoanApplication>
-    {
-        new()
-        {
-            ApplicationNumber = "LA-1",
-            Status = LoanApplicationStatus.Pending,
-            RequestedAmount = 100000,
-            RequestedTenureInMonths = 120,
-            CreatedDate = DateTime.UtcNow,
-            LoanType = new LoanType { Name = "Home Loan" }
-        },
-        new()
-        {
-            ApplicationNumber = "LA-2",
-            Status = LoanApplicationStatus.Approved,
-            RequestedAmount = 200000,
-            RequestedTenureInMonths = 240,
-            CreatedDate = DateTime.UtcNow,
-            LoanType = new LoanType { Name = "Car Loan" }
-        }
-    };
+            {
+                new()
+                {
+                    ApplicationNumber = "LA-AAAA1111",
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedAmount = 100000,
+                    RequestedTenureInMonths = 120,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Home Loan" }
+                },
+                new()
+                {
+                    ApplicationNumber = "LA-BBBB2222",
+                    Status = LoanApplicationStatus.Approved,
+                    RequestedAmount = 200000,
+                    RequestedTenureInMonths = 240,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Car Loan" }
+                }
+            };
 
             _loanAppRepo
                 .Setup(r => r.GetAllWithDetailsAsync())
                 .ReturnsAsync(apps);
 
+            // Act
             var result = await _service.GetApplicationsAsync(
-                Guid.NewGuid(),
-                Role.Admin,
-                LoanApplicationStatus.Pending);
+                userId: Guid.NewGuid(),
+                userRole: Role.Admin,
+                status: LoanApplicationStatus.Pending,
+                pageNumber: 1,
+                pageSize: 10);
 
-            Assert.AreEqual(1, result.Count());
-            Assert.AreEqual("LA-1", result.First().ApplicationNumber);
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Items.Count);
+            Assert.AreEqual("LA-AAAA1111", result.Items.First().ApplicationNumber);
+            Assert.AreEqual(1, result.TotalCount);
+            Assert.AreEqual(1, result.TotalPages);
         }
-        [TestMethod]
-        public async Task GetApplicationsAsync_Admin_NoApplications_ThrowsNotFound()
-        {
-            _loanAppRepo
-                .Setup(r => r.GetAllWithDetailsAsync())
-                .ReturnsAsync(new List<LoanApplication>());
 
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
-                _service.GetApplicationsAsync(
-                    Guid.NewGuid(),
-                    Role.Admin,
-                    LoanApplicationStatus.Pending));
-        }
         [TestMethod]
         public async Task GetApplicationsAsync_Manager_ReturnsOnlyAssignedApplications()
         {
+            // Arrange
             var managerId = Guid.NewGuid();
 
             var apps = new List<LoanApplication>
-    {
-        new()
-        {
-            ApplicationNumber = "LA-1",
-            AssignedEmployeeId = managerId,
-            Status = LoanApplicationStatus.Pending,
-            RequestedTenureInMonths = 120,
-            CreatedDate = DateTime.UtcNow,
-            LoanType = new LoanType { Name = "Home Loan" }
-        },
-        new()
-        {
-            ApplicationNumber = "LA-2",
-            AssignedEmployeeId = Guid.NewGuid(),
-            Status = LoanApplicationStatus.Pending,
-            RequestedTenureInMonths = 240,
-            CreatedDate = DateTime.UtcNow,
-            LoanType = new LoanType { Name = "Car Loan" }
-        }
-    };
+            {
+                new()
+                {
+                    ApplicationNumber = "LA-AAAA1111",
+                    AssignedEmployeeId = managerId,
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 120,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Home Loan" }
+                },
+                new()
+                {
+                    ApplicationNumber = "LA-BBBB2222",
+                    AssignedEmployeeId = Guid.NewGuid(),
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 240,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Car Loan" }
+                }
+            };
 
             _loanAppRepo
                 .Setup(r => r.GetAllWithDetailsAsync())
                 .ReturnsAsync(apps);
 
+            // Act
             var result = await _service.GetApplicationsAsync(
-                managerId,
-                Role.Manager,
-                LoanApplicationStatus.Pending);
+                userId: managerId,
+                userRole: Role.Manager,
+                status: LoanApplicationStatus.Pending,
+                pageNumber: 1,
+                pageSize: 10);
 
-            Assert.AreEqual(1, result.Count());
-            Assert.AreEqual("LA-1", result.First().ApplicationNumber);
+            // Assert
+            Assert.AreEqual(1, result.Items.Count);
+            Assert.AreEqual("LA-AAAA1111", result.Items.First().ApplicationNumber);
+            Assert.AreEqual(1, result.TotalCount);
         }
+
         [TestMethod]
         public async Task GetApplicationsAsync_Customer_ReturnsOwnApplications()
         {
+            // Arrange
             var customerId = Guid.NewGuid();
 
             var apps = new List<LoanApplication>
-    {
-        new()
-        {
-            CustomerId = customerId,
-            ApplicationNumber = "LA-1",
-            Status = LoanApplicationStatus.Pending,
-            RequestedTenureInMonths = 120,
-            CreatedDate = DateTime.UtcNow,
-            LoanType = new LoanType { Name = "Home Loan" }
-        }
-    };
+            {
+                new()
+                {
+                    CustomerId = customerId,
+                    ApplicationNumber = "LA-AAAA1111",
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 120,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Home Loan" }
+                }
+            };
 
             _loanAppRepo
                 .Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
                 .ReturnsAsync(apps);
 
+            // Act
             var result = await _service.GetApplicationsAsync(
-                customerId,
-                Role.Customer,
-                LoanApplicationStatus.Pending);
+                userId: customerId,
+                userRole: Role.Customer,
+                status: LoanApplicationStatus.Pending,
+                pageNumber: 1,
+                pageSize: 10);
 
-            Assert.AreEqual(1, result.Count());
-            Assert.AreEqual("LA-1", result.First().ApplicationNumber);
+            // Assert
+            Assert.AreEqual(1, result.Items.Count);
+            Assert.AreEqual("LA-AAAA1111", result.Items.First().ApplicationNumber);
         }
 
-        [TestMethod]
-        public async Task GetApplicationsForCustomerAsync_WhenNoApplications_ThrowsNotFoundException()
-        {
-            // Arrange
-            var customerId = Guid.NewGuid();
-            var status = LoanApplicationStatus.Pending;
-
-            _loanAppRepo
-                .Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
-                .ReturnsAsync(Enumerable.Empty<LoanApplication>());
-
-            // Act & Assert
-            await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
-                _service.GetApplicationsAsync(
-                    customerId,
-                    Role.Customer,
-                    status));
-        }
         [TestMethod]
         public async Task GetApplicationsAsync_Customer_OtherCustomerApplication_ThrowsForbidden()
         {
+            // Arrange
             var customerId = Guid.NewGuid();
 
             var apps = new List<LoanApplication>
-    {
-        new()
-        {
-            CustomerId = Guid.NewGuid(), // NOT the same
-            ApplicationNumber = "LA-1",
-            Status = LoanApplicationStatus.Pending,
-            LoanType = new LoanType { Name = "Home Loan" }
-        }
-    };
+            {
+                new()
+                {
+                    CustomerId = Guid.NewGuid(), // not same customer
+                    ApplicationNumber = "LA-AAAA1111",
+                    Status = LoanApplicationStatus.Pending,
+                    LoanType = new LoanType { Name = "Home Loan" }
+                }
+            };
 
             _loanAppRepo
                 .Setup(r => r.GetByCustomerIdWithDetailsAsync(customerId))
                 .ReturnsAsync(apps);
 
-            await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
                 _service.GetApplicationsAsync(
-                    customerId,
-                    Role.Customer,
-                    LoanApplicationStatus.Pending));
+                    userId: customerId,
+                    userRole: Role.Customer,
+                    status: LoanApplicationStatus.Pending,
+                    pageNumber: 1,
+                    pageSize: 10));
+
+            Assert.AreEqual(ErrorMessages.AccessDenied, ex.Message);
         }
+
         [TestMethod]
         public async Task GetApplicationsAsync_InvalidRole_ThrowsForbidden()
         {
-            await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<ForbiddenException>(() =>
                 _service.GetApplicationsAsync(
-                    Guid.NewGuid(),
-                    (Role)999,
-                    LoanApplicationStatus.Pending));
+                    userId: Guid.NewGuid(),
+                    userRole: (Role)999,
+                    status: LoanApplicationStatus.Pending,
+                    pageNumber: 1,
+                    pageSize: 10));
+
+            Assert.AreEqual(ErrorMessages.AccessDenied, ex.Message);
         }
 
+        [TestMethod]
+        public async Task GetApplicationsAsync_Admin_Pagination_WorksCorrectly()
+        {
+            // Arrange
+            var apps = new List<LoanApplication>
+            {
+                new()
+                {
+                    ApplicationNumber = "LA-AAAA1111",
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 120,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Home Loan" }
+                },
+                new()
+                {
+                    ApplicationNumber = "LA-BBBB2222",
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 240,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Car Loan" }
+                },
+                new()
+                {
+                    ApplicationNumber = "LA-CCCC3333",
+                    Status = LoanApplicationStatus.Pending,
+                    RequestedTenureInMonths = 60,
+                    CreatedDate = DateTime.UtcNow,
+                    LoanType = new LoanType { Name = "Personal Loan" }
+                }
+            };
 
+            _loanAppRepo
+                .Setup(r => r.GetAllWithDetailsAsync())
+                .ReturnsAsync(apps);
+
+            // Act
+            var page1 = await _service.GetApplicationsAsync(
+                userId: Guid.NewGuid(),
+                userRole: Role.Admin,
+                status: LoanApplicationStatus.Pending,
+                pageNumber: 1,
+                pageSize: 2);
+
+            var page2 = await _service.GetApplicationsAsync(
+                userId: Guid.NewGuid(),
+                userRole: Role.Admin,
+                status: LoanApplicationStatus.Pending,
+                pageNumber: 2,
+                pageSize: 2);
+
+            // Assert
+            Assert.AreEqual(2, page1.Items.Count);
+            Assert.AreEqual(1, page2.Items.Count);
+
+            Assert.AreEqual(3, page1.TotalCount);
+            Assert.AreEqual(2, page1.TotalPages);
+        }
     }
-
 }

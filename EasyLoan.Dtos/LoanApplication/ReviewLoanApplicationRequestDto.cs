@@ -1,24 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EasyLoan.Dtos.LoanApplication
 {
     public class ReviewLoanApplicationRequestDto
     {
-        [Required]
+        [Required(ErrorMessage = "Decision is required.")]
         public bool IsApproved { get; set; }
 
-        [MaxLength(1000)]
+        [MaxLength(1000, ErrorMessage = "Manager comments cannot exceed 1000 characters.")]
         public string? ManagerComments { get; set; }
 
-        [Required]
-        [Precision(18,2)]
-        [Range(0,double.MaxValue)]
+        [Required(ErrorMessage = "Approved amount is required.")]
+        [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "Amount should have Max 2 decimals")]
+        [Range(0, double.MaxValue, ErrorMessage = "Approved amount must be a positive number.")]
         public decimal ApprovedAmount { get; set; }
     }
 }

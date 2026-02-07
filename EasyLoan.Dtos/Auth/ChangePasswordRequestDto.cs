@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace EasyLoan.Dtos.Common
+namespace EasyLoan.Dtos.Auth
 {
     public class ChangePasswordRequestDto
     {

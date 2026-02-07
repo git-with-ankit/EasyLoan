@@ -1,18 +1,14 @@
-﻿;
+﻿using EasyLoan.Business.Constants;
 using EasyLoan.Business.Exceptions;
 using EasyLoan.Business.Interfaces;
 using EasyLoan.Business.Services;
 using EasyLoan.DataAccess.Interfaces;
 using EasyLoan.DataAccess.Models;
+using EasyLoan.Dtos.Auth;
 using EasyLoan.Dtos.Customer;
 using EasyLoan.Dtos.Employee;
 using EasyLoan.Models.Common.Enums;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EasyLoan.UnitTest.Services
 {
@@ -37,43 +33,99 @@ namespace EasyLoan.UnitTest.Services
                 _tokenGeneratorMock.Object
             );
         }
+
         private static RegisterCustomerRequestDto CreateValidRegisterDto()
         {
             return new RegisterCustomerRequestDto
             {
-                Name = "Test User",
-                Email = "test@example.com",
-                PhoneNumber = "9876543210",
+                Name = " Test User ",
+                Email = "TEST@EXAMPLE.COM ",
+                PhoneNumber = "9876543210 ",
                 DateOfBirth = DateTime.UtcNow.AddYears(-25),
                 AnnualSalary = 500000,
-                PanNumber = "ABCDE1234F",
+                PanNumber = " ABCDE1234F ",
                 Password = "Strong@123"
             };
         }
 
+        private static CreateManagerRequestDto CreateValidManagerRequest()
+        {
+            return new CreateManagerRequestDto
+            {
+                Name = " Manager Name ",
+                Email = "MANAGER@TEST.COM ",
+                PhoneNumber = "9876543210 ",
+                Password = "Strong@123"
+            };
+        }
+
+        private static ChangePasswordRequestDto CreateChangePasswordDto(string oldPass, string newPass)
+        {
+            return new ChangePasswordRequestDto
+            {
+                OldPassword = oldPass,
+                NewPassword = newPass
+            };
+        }
+
         [TestMethod]
-        public async Task RegisterCustomerAsync_EmailAlreadyExists_ThrowsBusinessRuleViolationException()
+        public async Task RegisterCustomerAsync_WhenCustomerEmailAlreadyExists_ThrowsBusinessRuleViolationException()
         {
             // Arrange
             var dto = CreateValidRegisterDto();
+            var normalizedEmail = dto.Email.ToLower().Trim();
 
             _customerRepoMock
-                .Setup(r => r.ExistsByEmailAsync(dto.Email))
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
                 .ReturnsAsync(true);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.RegisterCustomerAsync(dto)
-            );
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterCustomerAsync(dto));
+
+            Assert.AreEqual(ErrorMessages.EmailAlreadyExists, ex.Message);
+
+            _employeeRepoMock.Verify(r => r.ExistsByEmailAsync(It.IsAny<string>()), Times.Never);
+            _customerRepoMock.Verify(r => r.ExistsByPanAsync(It.IsAny<string>()), Times.Never);
         }
+
         [TestMethod]
-        public async Task RegisterCustomerAsync_PanAlreadyExists_ThrowsBusinessRuleViolationException()
+        public async Task RegisterCustomerAsync_WhenEmployeeEmailAlreadyExists_ThrowsBusinessRuleViolationException()
         {
             // Arrange
             var dto = CreateValidRegisterDto();
+            var normalizedEmail = dto.Email.ToLower().Trim();
 
             _customerRepoMock
-                .Setup(r => r.ExistsByEmailAsync(dto.Email))
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterCustomerAsync(dto));
+
+            Assert.AreEqual(ErrorMessages.EmailAlreadyExists, ex.Message);
+
+            _customerRepoMock.Verify(r => r.ExistsByPanAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task RegisterCustomerAsync_WhenPanAlreadyExists_ThrowsBusinessRuleViolationException()
+        {
+            // Arrange
+            var dto = CreateValidRegisterDto();
+            var normalizedEmail = dto.Email.ToLower().Trim();
+
+            _customerRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
                 .ReturnsAsync(false);
 
             _customerRepoMock
@@ -81,20 +133,27 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(true);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.RegisterCustomerAsync(dto)
-            );
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterCustomerAsync(dto));
+
+            Assert.AreEqual(ErrorMessages.PanAlreadyExists, ex.Message);
         }
 
         [TestMethod]
-        public async Task RegisterCustomerAsync_CustomerUnder18_ThrowsBusinessRuleViolationException()
+        public async Task RegisterCustomerAsync_WhenCustomerUnder18_ThrowsBusinessRuleViolationException()
         {
             // Arrange
             var dto = CreateValidRegisterDto();
             dto.DateOfBirth = DateTime.UtcNow.AddYears(-17);
 
+            var normalizedEmail = dto.Email.ToLower().Trim();
+
             _customerRepoMock
-                .Setup(r => r.ExistsByEmailAsync(dto.Email))
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
                 .ReturnsAsync(false);
 
             _customerRepoMock
@@ -102,20 +161,27 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(false);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.RegisterCustomerAsync(dto)
-            );
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterCustomerAsync(dto));
+
+            Assert.AreEqual("Customer must be at least 18 years old.", ex.Message);
         }
+
         [TestMethod]
-        public async Task RegisterCustomerAsync_ValidRequest_CreatesCustomerAndReturnsProfile()
+        public async Task RegisterCustomerAsync_WhenValidRequest_CreatesCustomerAndReturnsProfile()
         {
             // Arrange
             var dto = CreateValidRegisterDto();
+            var normalizedEmail = dto.Email.ToLower().Trim();
 
             Customer? savedCustomer = null;
 
             _customerRepoMock
-                .Setup(r => r.ExistsByEmailAsync(dto.Email))
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
                 .ReturnsAsync(false);
 
             _customerRepoMock
@@ -127,24 +193,36 @@ namespace EasyLoan.UnitTest.Services
                 .Callback<Customer>(c => savedCustomer = c)
                 .Returns(Task.CompletedTask);
 
+            _customerRepoMock
+                .Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
+
             // Act
             var result = await _service.RegisterCustomerAsync(dto);
 
-            // Assert – repository interactions
+            // Assert - repo calls
             _customerRepoMock.Verify(r => r.AddAsync(It.IsAny<Customer>()), Times.Once);
             _customerRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
 
-            // Assert – entity state
+            // Assert - saved entity correctness
             Assert.IsNotNull(savedCustomer);
             Assert.AreEqual(800, savedCustomer!.CreditScore);
+
+            Assert.AreEqual(dto.Name.Trim(), savedCustomer.Name);
+            Assert.AreEqual(normalizedEmail, savedCustomer.Email);
+            Assert.AreEqual(dto.PhoneNumber.Trim(), savedCustomer.PhoneNumber);
+            Assert.AreEqual(dto.PanNumber.Trim(), savedCustomer.PanNumber);
+
             Assert.IsTrue(BCrypt.Net.BCrypt.Verify(dto.Password, savedCustomer.Password));
 
-            // Assert – returned DTO
-            Assert.AreEqual(dto.Name, result.Name);
-            Assert.AreEqual(dto.Email.ToLower(), result.Email);
-            Assert.AreEqual(dto.PhoneNumber, result.PhoneNumber);
+            // Assert - returned DTO correctness
+            Assert.AreEqual(dto.Name.Trim(), result.Name);
+            Assert.AreEqual(normalizedEmail, result.Email);
+            Assert.AreEqual(dto.PhoneNumber.Trim(), result.PhoneNumber);
             Assert.AreEqual(800, result.CreditScore);
+            Assert.AreEqual(dto.PanNumber.Trim(), result.PanNumber);
         }
+
         [TestMethod]
         public async Task LoginCustomerAsync_WhenCredentialsValid_ReturnsToken()
         {
@@ -171,7 +249,7 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(customer);
 
             _tokenGeneratorMock
-                .Setup(t => t.GenerateToken(customerId, Role.Customer))
+                .Setup(t => t.GenerateToken(customerId, customer.Email, Role.Customer))
                 .Returns("jwt-token");
 
             // Act
@@ -181,9 +259,10 @@ namespace EasyLoan.UnitTest.Services
             Assert.AreEqual("jwt-token", result);
 
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(customerId, Role.Customer),
+                t => t.GenerateToken(customerId, customer.Email, Role.Customer),
                 Times.Once);
         }
+
         [TestMethod]
         public async Task LoginCustomerAsync_WhenCustomerNotFound_ThrowsAuthenticationFailed()
         {
@@ -199,13 +278,16 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync((Customer?)null);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
                 _service.LoginCustomerAsync(dto));
 
+            Assert.AreEqual(ErrorMessages.InvalidCredentials, ex.Message);
+
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<Role>()),
+                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Role>()),
                 Times.Never);
         }
+
         [TestMethod]
         public async Task LoginCustomerAsync_WhenPasswordIncorrect_ThrowsAuthenticationFailed()
         {
@@ -230,21 +312,75 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(customer);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
                 _service.LoginCustomerAsync(dto));
 
+            Assert.AreEqual(ErrorMessages.InvalidCredentials, ex.Message);
+
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<Role>()),
+                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Role>()),
                 Times.Never);
         }
+
+        [TestMethod]
+        public async Task RegisterManagerAsync_WhenEmployeeEmailAlreadyExists_ThrowsBusinessRuleViolation()
+        {
+            // Arrange
+            var request = CreateValidManagerRequest();
+            var normalizedEmail = request.Email.ToLower().Trim();
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterManagerAsync(request));
+
+            Assert.AreEqual(ErrorMessages.EmailAlreadyExists, ex.Message);
+
+            _employeeRepoMock.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Never);
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task RegisterManagerAsync_WhenCustomerEmailAlreadyExists_ThrowsBusinessRuleViolation()
+        {
+            // Arrange
+            var request = CreateValidManagerRequest();
+            var normalizedEmail = request.Email.ToLower().Trim();
+
+            _employeeRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _customerRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(true);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
+                _service.RegisterManagerAsync(request));
+
+            Assert.AreEqual(ErrorMessages.EmailAlreadyExists, ex.Message);
+
+            _employeeRepoMock.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Never);
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
         [TestMethod]
         public async Task RegisterManagerAsync_WhenEmailDoesNotExist_CreatesManager()
         {
             // Arrange
             var request = CreateValidManagerRequest();
+            var normalizedEmail = request.Email.ToLower().Trim();
 
             _employeeRepoMock
-                .Setup(r => r.ExistsByEmailAsync("manager@test.com"))
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
+                .ReturnsAsync(false);
+
+            _customerRepoMock
+                .Setup(r => r.ExistsByEmailAsync(normalizedEmail))
                 .ReturnsAsync(false);
 
             Employee? savedEmployee = null;
@@ -263,13 +399,18 @@ namespace EasyLoan.UnitTest.Services
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.AreEqual("Manager Name", result.Name);
-            Assert.AreEqual("manager@test.com", result.Email);
-            Assert.AreEqual("9876543210", result.PhoneNumber);
+
+            Assert.AreEqual(request.Name.Trim(), result.Name);
+            Assert.AreEqual(normalizedEmail, result.Email);
+            Assert.AreEqual(request.PhoneNumber.Trim(), result.PhoneNumber);
             Assert.AreEqual(EmployeeRole.Manager, result.Role);
 
             Assert.IsNotNull(savedEmployee);
-            Assert.AreEqual(EmployeeRole.Manager, savedEmployee.Role);
+            Assert.AreEqual(EmployeeRole.Manager, savedEmployee!.Role);
+            Assert.AreEqual(request.Name.Trim(), savedEmployee.Name);
+            Assert.AreEqual(normalizedEmail, savedEmployee.Email);
+            Assert.AreEqual(request.PhoneNumber.Trim(), savedEmployee.PhoneNumber);
+
             Assert.IsTrue(
                 BCrypt.Net.BCrypt.Verify(request.Password, savedEmployee.Password),
                 "Password must be stored as BCrypt hash"
@@ -278,33 +419,7 @@ namespace EasyLoan.UnitTest.Services
             _employeeRepoMock.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Once);
             _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
-        [TestMethod]
-        public async Task RegisterManagerAsync_WhenEmailAlreadyExists_ThrowsBusinessRuleViolation()
-        {
-            // Arrange
-            var request = CreateValidManagerRequest();
 
-            _employeeRepoMock
-                .Setup(r => r.ExistsByEmailAsync("manager@test.com"))
-                .ReturnsAsync(true);
-
-            // Act & Assert
-            await Assert.ThrowsExceptionAsync<BusinessRuleViolationException>(() =>
-                _service.RegisterManagerAsync(request));
-
-            _employeeRepoMock.Verify(r => r.AddAsync(It.IsAny<Employee>()), Times.Never);
-            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
-        }
-        private static CreateManagerRequestDto CreateValidManagerRequest()
-        {
-            return new CreateManagerRequestDto
-            {
-                Name = " Manager Name ",
-                Email = "MANAGER@TEST.COM ",
-                PhoneNumber = "9876543210 ",
-                Password = "Strong@123"
-            };
-        }
         [TestMethod]
         public async Task LoginEmployeeAsync_WhenManagerCredentialsAreValid_ReturnsManagerToken()
         {
@@ -332,7 +447,7 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(employee);
 
             _tokenGeneratorMock
-                .Setup(t => t.GenerateToken(employeeId, Role.Manager))
+                .Setup(t => t.GenerateToken(employeeId, employee.Email, Role.Manager))
                 .Returns("manager-token");
 
             // Act
@@ -342,9 +457,10 @@ namespace EasyLoan.UnitTest.Services
             Assert.AreEqual("manager-token", token);
 
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(employeeId, Role.Manager),
+                t => t.GenerateToken(employeeId, employee.Email, Role.Manager),
                 Times.Once);
         }
+
         [TestMethod]
         public async Task LoginEmployeeAsync_WhenAdminCredentialsAreValid_ReturnsAdminToken()
         {
@@ -372,7 +488,7 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(employee);
 
             _tokenGeneratorMock
-                .Setup(t => t.GenerateToken(employeeId, Role.Admin))
+                .Setup(t => t.GenerateToken(employeeId, employee.Email, Role.Admin))
                 .Returns("admin-token");
 
             // Act
@@ -382,9 +498,10 @@ namespace EasyLoan.UnitTest.Services
             Assert.AreEqual("admin-token", token);
 
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(employeeId, Role.Admin),
+                t => t.GenerateToken(employeeId, employee.Email, Role.Admin),
                 Times.Once);
         }
+
         [TestMethod]
         public async Task LoginEmployeeAsync_WhenEmailNotFound_ThrowsAuthenticationFailed()
         {
@@ -400,13 +517,16 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync((Employee?)null);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
                 _service.LoginEmployeeAsync(request));
 
+            Assert.AreEqual(ErrorMessages.InvalidCredentials, ex.Message);
+
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<Role>()),
+                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Role>()),
                 Times.Never);
         }
+
         [TestMethod]
         public async Task LoginEmployeeAsync_WhenPasswordIsInvalid_ThrowsAuthenticationFailed()
         {
@@ -430,12 +550,180 @@ namespace EasyLoan.UnitTest.Services
                 .ReturnsAsync(employee);
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
                 _service.LoginEmployeeAsync(request));
 
+            Assert.AreEqual(ErrorMessages.InvalidCredentials, ex.Message);
+
             _tokenGeneratorMock.Verify(
-                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<Role>()),
+                t => t.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Role>()),
                 Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsCustomer_AndCustomerNotFound_ThrowsNotFound()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("Old@123", "New@123");
+
+            _customerRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync((Customer?)null);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+                _service.ChangePasswordAsync(userId, Role.Customer, dto));
+
+            Assert.AreEqual(ErrorMessages.CustomerNotFound, ex.Message);
+
+            _customerRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsCustomer_AndOldPasswordWrong_ThrowsAuthenticationFailed()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("WrongOld@123", "New@123");
+
+            var customer = new Customer
+            {
+                Id = userId,
+                Email = "c@test.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("CorrectOld@123")
+            };
+
+            _customerRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync(customer);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+                _service.ChangePasswordAsync(userId, Role.Customer, dto));
+
+            Assert.AreEqual("Old password is incorrect.", ex.Message);
+
+            _customerRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsCustomer_AndOldPasswordCorrect_UpdatesPassword_AndSaves()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("CorrectOld@123", "New@123");
+
+            var customer = new Customer
+            {
+                Id = userId,
+                Email = "c@test.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("CorrectOld@123")
+            };
+
+            _customerRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync(customer);
+
+            _customerRepoMock
+                .Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
+
+            var oldHash = customer.Password;
+
+            // Act
+            await _service.ChangePasswordAsync(userId, Role.Customer, dto);
+
+            // Assert
+            Assert.AreNotEqual(oldHash, customer.Password);
+            Assert.IsTrue(BCrypt.Net.BCrypt.Verify(dto.NewPassword, customer.Password));
+
+            _customerRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsManagerOrAdmin_AndEmployeeNotFound_ThrowsNotFound()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("Old@123", "New@123");
+
+            _employeeRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync((Employee?)null);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<NotFoundException>(() =>
+                _service.ChangePasswordAsync(userId, Role.Manager, dto));
+
+            Assert.AreEqual(ErrorMessages.EmployeeNotFound, ex.Message);
+
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsManagerOrAdmin_AndOldPasswordWrong_ThrowsAuthenticationFailed()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("WrongOld@123", "New@123");
+
+            var employee = new Employee
+            {
+                Id = userId,
+                Email = "e@test.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("CorrectOld@123"),
+                Role = EmployeeRole.Manager
+            };
+
+            _employeeRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync(employee);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsExceptionAsync<AuthenticationFailedException>(() =>
+                _service.ChangePasswordAsync(userId, Role.Admin, dto));
+
+            Assert.AreEqual("Old password is incorrect.", ex.Message);
+
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_WhenRoleIsManagerOrAdmin_AndOldPasswordCorrect_UpdatesPassword_AndSaves()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dto = CreateChangePasswordDto("CorrectOld@123", "New@123");
+
+            var employee = new Employee
+            {
+                Id = userId,
+                Email = "e@test.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("CorrectOld@123"),
+                Role = EmployeeRole.Admin
+            };
+
+            _employeeRepoMock
+                .Setup(r => r.GetByIdAsync(userId))
+                .ReturnsAsync(employee);
+
+            _employeeRepoMock
+                .Setup(r => r.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
+
+            var oldHash = employee.Password;
+
+            // Act
+            await _service.ChangePasswordAsync(userId, Role.Admin, dto);
+
+            // Assert
+            Assert.AreNotEqual(oldHash, employee.Password);
+            Assert.IsTrue(BCrypt.Net.BCrypt.Verify(dto.NewPassword, employee.Password));
+
+            _employeeRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _customerRepoMock.Verify(r => r.SaveChangesAsync(), Times.Never);
         }
     }
 }

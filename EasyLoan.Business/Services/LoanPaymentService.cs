@@ -397,7 +397,13 @@ namespace EasyLoan.Business.Services
             if (!unpaidEmis.Any())
                 throw new BusinessRuleViolationException("All EMIs are already paid.");
 
-            var totalOutstanding = unpaidEmis.Sum(e => e.RemainingAmount + e.PenaltyAmount);
+            foreach (var emi in unpaidEmis)
+            {
+                ApplyPenaltyIfOverdue(emi);
+            }
+
+            var totalOutstanding = unpaidEmis.Sum(e => e.RemainingAmount + e.PenaltyAmount
+            );
 
             if (dto.Amount > totalOutstanding)
             {
@@ -477,27 +483,25 @@ namespace EasyLoan.Business.Services
                 if (paymentAmount <= 0)
                     break;
 
-                ApplyPenaltyIfOverdue(emi);
-
                 var penaltyPaid = Math.Min(paymentAmount, emi.PenaltyAmount);
-                emi.PaidPenaltyAmount += penaltyPaid;
                 emi.PenaltyAmount -= penaltyPaid;
+                emi.PaidPenaltyAmount += penaltyPaid;
                 paymentAmount -= penaltyPaid;
 
-                // Pay interest second
                 var interestPaid = Math.Min(paymentAmount, emi.InterestComponent);
                 emi.InterestComponent -= interestPaid;
                 paymentAmount -= interestPaid;
 
-                // Pay principal last
                 var principalPaid = Math.Min(paymentAmount, emi.PrincipalComponent);
                 emi.PrincipalComponent -= principalPaid;
                 paymentAmount -= principalPaid;
 
-                // Update remaining amount (penalty is NOT part of RemainingAmount, only interest + principal)
                 emi.RemainingAmount -= (interestPaid + principalPaid);
                 loan.PrincipalRemaining -= principalPaid;
 
+                if (emi.RemainingAmount < 0) emi.RemainingAmount = 0;
+                if (emi.PenaltyAmount < 0) emi.PenaltyAmount = 0;
+                if (loan.PrincipalRemaining < 0) loan.PrincipalRemaining = 0;
 
                 var interestCleared = emi.InterestComponent == 0m;
                 var principalCleared = emi.PrincipalComponent == 0m;
@@ -520,7 +524,6 @@ namespace EasyLoan.Business.Services
                 loan.Status = LoanStatus.Closed;
             }
         }
-        
         private static void UpdateCreditScore(Customer customer, IEnumerable<LoanEmi> newlyPaidEmis)
         {
             var today = DateTime.UtcNow.Date;

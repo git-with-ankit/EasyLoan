@@ -1,16 +1,14 @@
 using EasyLoan.Models.Common.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace EasyLoan.Dtos.Common
+namespace EasyLoan.Dtos.Auth
 {
     public class MeResponseDto
     {
-        [Required]
+        [Required(ErrorMessage = "Email is missing in the response.")]
         public required string Email { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "User role is missing in the response.")]
         public required Role Role { get; set; }
     }
 }
-
-

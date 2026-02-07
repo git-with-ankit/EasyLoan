@@ -44,7 +44,7 @@
 
 using EasyLoan.Api.Extensions;
 using EasyLoan.Business.Interfaces;
-using EasyLoan.Dtos.Common;
+using EasyLoan.Dtos.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

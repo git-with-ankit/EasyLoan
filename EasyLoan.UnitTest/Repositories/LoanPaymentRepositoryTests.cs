@@ -16,7 +16,7 @@ namespace EasyLoan.UnitTest.Repositories
         public void Setup()
         {
             var options = new DbContextOptionsBuilder<EasyLoanDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseInMemoryDatabase($"EasyLoan_TestDb_{Guid.NewGuid()}")
                 .Options;
 
             _context = new EasyLoanDbContext(options);
@@ -30,67 +30,70 @@ namespace EasyLoan.UnitTest.Repositories
             _context.Dispose();
         }
 
-        [TestMethod]
-        public async Task GetByLoanIdAsync_ExistingLoan_ReturnsPayments()
+        private static LoanPayment CreatePayment(
+            Guid loanId,
+            Guid customerId,
+            decimal amount,
+            LoanPaymentStatus status)
         {
-            // Arrange
+            return new LoanPayment
+            {
+                Id = Guid.NewGuid(),
+                LoanDetailsId = loanId,
+                CustomerId = customerId,
+                Amount = amount,
+                TransactionId = Guid.NewGuid(),
+                Status = status,
+                PaymentDate = DateTime.UtcNow
+            };
+        }
+
+        [TestMethod]
+        public async Task GetByLoanIdAsync_WhenPaymentsExist_ReturnsOnlyMatchingLoanPayments()
+        {
             var loanId = Guid.NewGuid();
+            var otherLoanId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
 
-            var p1 = new LoanPayment
-            {
-                Id = Guid.NewGuid(),
-                LoanDetailsId = loanId,
-                CustomerId = customerId,
-                Amount = 5000,
-                TransactionId = Guid.NewGuid(),
-                Status = LoanPaymentStatus.Paid,
-                PaymentDate = DateTime.UtcNow
-            };
-
-            var p2 = new LoanPayment
-            {
-                Id = Guid.NewGuid(),
-                LoanDetailsId = loanId,
-                CustomerId = customerId,
-                Amount = 7000,
-                TransactionId = Guid.NewGuid(),
-                Status = LoanPaymentStatus.Paid,
-                PaymentDate = DateTime.UtcNow
-            };
-
-            var otherPayment = new LoanPayment
-            {
-                Id = Guid.NewGuid(),
-                LoanDetailsId = Guid.NewGuid(),
-                CustomerId = customerId,
-                Amount = 1000,
-                TransactionId = Guid.NewGuid(),
-                Status = LoanPaymentStatus.Paid,
-                PaymentDate = DateTime.UtcNow
-            };
+            var p1 = CreatePayment(loanId, customerId, 5000, LoanPaymentStatus.Paid);
+            var p2 = CreatePayment(loanId, customerId, 7000, LoanPaymentStatus.Paid);
+            var otherPayment = CreatePayment(otherLoanId, customerId, 1000, LoanPaymentStatus.Paid);
 
             _context.LoanPayments.AddRange(p1, p2, otherPayment);
             await _context.SaveChangesAsync();
 
-            // Act
-            var result = await _repo.GetByLoanIdAsync(loanId);
+            var result = (await _repo.GetByLoanIdAsync(loanId)).ToList();
 
-            // Assert
-            var list = result.ToList();
-            Assert.AreEqual(2, list.Count);
-            Assert.IsTrue(list.All(p => p.LoanDetailsId == loanId));
+            Assert.AreEqual(2, result.Count);
+            Assert.IsTrue(result.All(p => p.LoanDetailsId == loanId));
         }
 
         [TestMethod]
-        public async Task GetByLoanIdAsync_NoPayments_ReturnsEmptyList()
+        public async Task GetByLoanIdAsync_WhenNoPaymentsExist_ReturnsEmpty()
         {
-            // Act
             var result = await _repo.GetByLoanIdAsync(Guid.NewGuid());
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.AreEqual(0, result.Count());
+        }
+
+        [TestMethod]
+        public async Task GetByLoanIdAsync_WhenPaymentsExist_ReturnsAsNoTrackingEntities()
+        {
+            var loanId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+
+            var payment = CreatePayment(loanId, customerId, 2500, LoanPaymentStatus.Paid);
+
+            _context.LoanPayments.Add(payment);
+            await _context.SaveChangesAsync();
+
+            _context.ChangeTracker.Clear();
+
+            var result = (await _repo.GetByLoanIdAsync(loanId)).ToList();
+
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual(EntityState.Detached, _context.Entry(result[0]).State);
         }
     }
 }
