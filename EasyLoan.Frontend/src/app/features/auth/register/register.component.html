@@ -42,8 +42,11 @@
           <mat-error *ngIf="form.get('email')?.hasError('required')">
             Email is required
           </mat-error>
-          <mat-error *ngIf="form.get('email')?.hasError('email')">
-            Enter a valid email address
+          <mat-error *ngIf="form.get('email')?.hasError('maxlength')">
+            Email is too long (maximum 150 characters)
+          </mat-error>
+          <mat-error *ngIf="form.get('email')?.hasError('pattern') && !form.get('email')?.hasError('maxlength')">
+            Email is not in the correct format
           </mat-error>
         </mat-form-field>
 
@@ -51,7 +54,8 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Phone Number</mat-label>
           <mat-icon matPrefix>phone</mat-icon>
-          <input matInput formControlName="phoneNumber" placeholder="10-digit Indian mobile number" />
+          <input matInput formControlName="phoneNumber" placeholder="10-digit Indian mobile number" maxlength="10"
+            (keypress)="onPhoneKeyPress($event)" />
           <mat-error *ngIf="form.get('phoneNumber')?.hasError('required')">
             Phone number is required
           </mat-error>
@@ -65,13 +69,22 @@
           <mat-icon matPrefix>cake</mat-icon>
 
           <input matInput [matDatepicker]="picker" formControlName="dateOfBirth" [max]="maxDate" [min]="minDate"
-            placeholder="Select your date of birth" />
+            placeholder="Select your date of birth" (input)="onDateInput($event)" />
 
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
 
-          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('required')">
+          <mat-error
+            *ngIf="form.get('dateOfBirth')?.hasError('required') && !form.get('dateOfBirth')?.hasError('invalidDate')">
             Date of birth is required
+          </mat-error>
+
+          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('invalidDate')">
+            Invalid date format. Please use the date picker
+          </mat-error>
+
+          <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerParse')">
+            Invalid date. Please enter a valid date
           </mat-error>
 
           <mat-error *ngIf="form.get('dateOfBirth')?.hasError('matDatepickerMax')">
@@ -89,14 +102,18 @@
 
         <!-- Annual Salary (Customer only) -->
         <mat-form-field *ngIf="!isManagerRegistration" appearance="outline" class="full-width">
-          <mat-label>Annual Salary</mat-label>
-          <mat-icon matPrefix>attach_money</mat-icon>
-          <input matInput type="number" formControlName="annualSalary" placeholder="Enter your annual salary" />
+          <mat-label>Annual Salary (₹)</mat-label>
+          <mat-icon matPrefix>currency_rupee</mat-icon>
+          <input matInput type="number" formControlName="annualSalary" placeholder="Enter your annual salary in rupees"
+            maxlength="16" (keydown)="onSalaryKeyDown($event)" />
           <mat-error *ngIf="form.get('annualSalary')?.hasError('required')">
             Annual salary is required
           </mat-error>
           <mat-error *ngIf="form.get('annualSalary')?.hasError('min')">
             Annual salary must be a positive number
+          </mat-error>
+          <mat-error *ngIf="form.get('annualSalary')?.hasError('max')">
+            Annual salary cannot exceed ₹1000 trillion
           </mat-error>
         </mat-form-field>
 
@@ -165,7 +182,7 @@
 
         <!-- Login Link (Customer only) -->
         <div *ngIf="!isManagerRegistration" class="login-link">
-          <p>Already have an account? <a routerLink="/auth/login">Login here</a></p>
+          <p>Already have an account? <a routerLink="/auth/customer/login">Login here</a></p>
         </div>
       </form>
     </mat-card-content>

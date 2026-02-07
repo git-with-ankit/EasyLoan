@@ -43,6 +43,7 @@ export class LoginComponent implements OnInit {
 
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+  private readonly EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
   constructor(
     private fb: FormBuilder,
@@ -60,7 +61,7 @@ export class LoginComponent implements OnInit {
     });
 
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.pattern(this.EMAIL_REGEX), Validators.maxLength(150)]],
       password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
     });
   }

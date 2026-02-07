@@ -86,7 +86,8 @@
                     <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Approved Amount</mat-label>
                         <input matInput type="number" formControlName="approvedAmount"
-                            placeholder="Enter approved amount" step="0.01" [max]="details()!.requestedAmount">
+                            placeholder="Enter approved amount" step="0.01" [max]="details()!.requestedAmount"
+                            (keydown)="onApprovedAmountKeyDown($event)">
                         <mat-hint>Maximum: {{details()!.requestedAmount | currency:'INR'}}</mat-hint>
                         <mat-error *ngIf="reviewForm.get('approvedAmount')?.hasError('required')">
                             Approved amount is required
@@ -102,13 +103,20 @@
                         </mat-error>
                     </mat-form-field>
 
-                    <mat-form-field appearance="outline" class="full-width">
+                    <mat-form-field appearance="outline" class="full-width remarks-field">
                         <mat-label>Remarks</mat-label>
-                        <textarea matInput formControlName="remarks" rows="4" placeholder="Enter remarks..."></textarea>
-                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('required')">Remarks are
-                            required</mat-error>
-                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('minlength')">Min 5 chars
-                            required</mat-error>
+                        <textarea matInput formControlName="remarks" rows="4" placeholder="Enter remarks..."
+                            maxlength="1000"></textarea>
+                        <mat-hint align="end">{{reviewForm.get('remarks')?.value?.length || 0}}/1000</mat-hint>
+                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('required')">
+                            Remarks are required
+                        </mat-error>
+                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('minlength')">
+                            Minimum 5 characters required
+                        </mat-error>
+                        <mat-error *ngIf="reviewForm.get('remarks')?.hasError('maxlength')">
+                            Maximum 1000 characters allowed
+                        </mat-error>
                     </mat-form-field>
 
                     <div class="form-actions">

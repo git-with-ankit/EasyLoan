@@ -55,7 +55,7 @@ export class ApplicationReviewComponent implements OnInit {
         this.reviewForm = this.fb.group({
             status: ['', Validators.required],
             approvedAmount: ['', [Validators.required, Validators.min(1)]],
-            remarks: ['', [Validators.required, Validators.minLength(5)]]
+            remarks: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1000)]]
         });
     }
 
@@ -175,6 +175,26 @@ export class ApplicationReviewComponent implements OnInit {
 
             return null;
         };
+    }
+
+    // Prevent 'e', '+', '-' for approved amount field
+    onApprovedAmountKeyDown(event: KeyboardEvent): void {
+        // Prevent 'e', 'E', '+', '-'
+        if (['e', 'E', '+', '-'].includes(event.key)) {
+            event.preventDefault();
+            return;
+        }
+
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(event.key)) {
+            return;
+        }
+
+        // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
     }
 
     goBack() {

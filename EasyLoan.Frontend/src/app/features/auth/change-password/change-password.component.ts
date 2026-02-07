@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -44,17 +44,35 @@ export class ChangePasswordComponent {
         this.form = this.fb.group({
             oldPassword: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
             newPassword: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
-        }, { validators: this.samePasswordCheck });
+        });
+
+        // Add custom validator to newPassword that checks against oldPassword
+        const newPasswordControl = this.form.get('newPassword');
+        newPasswordControl?.addValidators(this.samePasswordValidator());
+
+        // Re-validate newPassword when oldPassword changes
+        this.form.get('oldPassword')?.valueChanges.subscribe(() => {
+            newPasswordControl?.updateValueAndValidity();
+        });
     }
 
-    samePasswordCheck(group: FormGroup) {
-        const oldPass = group.get('oldPassword')?.value;
-        const newPass = group.get('newPassword')?.value;
-        return oldPass && newPass && oldPass === newPass ? { samePassword: true } : null;
+    // Custom validator that checks if new password matches old password
+    samePasswordValidator() {
+        return (control: AbstractControl): ValidationErrors | null => {
+            if (!control.value) return null;
+
+            const oldPassword = this.form?.get('oldPassword')?.value;
+            if (!oldPassword) return null;
+
+            return control.value === oldPassword ? { samePassword: true } : null;
+        };
     }
 
     submit(): void {
-        if (this.form.invalid) return;
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            return;
+        }
 
         this.isLoading.set(true);
         this.errorMessage.set('');

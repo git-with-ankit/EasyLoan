@@ -47,6 +47,8 @@ public class LoanTypeService : ILoanTypeService
     }
     public async Task<LoanTypeResponseDto> CreateLoanTypeAsync(LoanTypeRequestDto dto)
     {
+        if (dto.MinAmount > BusinessConstants.MaximumLoanAmount)
+            throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxAmount);
         var type = new LoanType
         {
             Id = Guid.NewGuid(),

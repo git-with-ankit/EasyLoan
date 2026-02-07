@@ -146,6 +146,19 @@
     margin: 0 0 1.5rem 0;
 }
 
+/* Material Card Spacing */
+.form-section mat-card-header {
+    margin-bottom: 1.5rem;
+}
+
+.form-section mat-card-content {
+    padding-top: 1rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
 .form-group {
     margin-bottom: 1.5rem;
 }

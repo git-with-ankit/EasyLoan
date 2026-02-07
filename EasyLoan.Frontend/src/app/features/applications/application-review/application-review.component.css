@@ -52,6 +52,10 @@
     width: 100%;
 }
 
+.remarks-field {
+    margin-top: 16px;
+}
+
 .form-actions {
     margin-top: 16px;
     text-align: right;

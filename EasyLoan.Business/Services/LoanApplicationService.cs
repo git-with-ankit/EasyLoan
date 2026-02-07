@@ -50,10 +50,13 @@ namespace EasyLoan.Business.Services
 
             var loanType = await _loanTypeRepo.GetByIdAsync(dto.LoanTypeId) ?? throw new NotFoundException(ErrorMessages.LoanTypeNotFound);
 
-
+            if (dto.RequestedAmount > BusinessConstants.MaximumLoanAmount)
+                throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxAmount);
 
             if (dto.RequestedTenureInMonths > loanType.MaxTenureInMonths)
                 throw new BusinessRuleViolationException(ErrorMessages.ExceededMaxTenure);
+
+            await RateLimittingApplicationAsync(customerId);
 
             var managers = await _employeeRepo.GetAllWithDetailsAsync();
 
@@ -90,6 +93,31 @@ namespace EasyLoan.Business.Services
                 CreatedDate = application.CreatedDate
             };
         }
+
+        private async Task RateLimittingApplicationAsync(Guid customerId)
+        {
+            var applications = await _loanApplicationrepo.GetByCustomerIdWithDetailsAsync(customerId);
+
+            var lastApplication = applications
+                .OrderByDescending(a => a.CreatedDate)
+                .FirstOrDefault();
+
+            if (lastApplication == null)
+                return;
+
+            var daysSinceLastApplication = (DateTime.UtcNow - lastApplication.CreatedDate).TotalDays;
+
+            if (daysSinceLastApplication < BusinessConstants.MinimumDaysRequiredForAnotherLoan)
+            {
+                throw new BusinessRuleViolationException(
+                    string.Format(
+                        ErrorMessages.TooFrequentLoanApplications,
+                        BusinessConstants.MinimumDaysRequiredForAnotherLoan
+                    )
+                );
+            }
+        }
+
 
         public async Task<LoanApplicationReviewResponseDto> UpdateReviewAsync(string applicationNumber,Guid managerId, ReviewLoanApplicationRequestDto dto)
         {

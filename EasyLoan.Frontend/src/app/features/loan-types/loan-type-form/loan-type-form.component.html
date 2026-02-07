@@ -1,0 +1,132 @@
+<mat-card class="form-card">
+    <mat-card-header>
+        <mat-card-title>
+            {{ isCreateMode ? 'Create Loan Type' : 'Edit Loan Type' }}
+        </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+        <p class="subtitle" *ngIf="isCreateMode">Add a new loan type to the system</p>
+        <p class="subtitle" *ngIf="isUpdateMode && loanType()">Update details for {{ loanType()!.name }}</p>
+        <p class="subtitle" *ngIf="isUpdateMode && loading()">Loading loan type...</p>
+
+        <!-- Loading State -->
+        <div *ngIf="loading()" class="loading-state">
+            <mat-spinner diameter="48"></mat-spinner>
+            <p>Loading loan type details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error() && !loading()" class="error-banner">
+            <mat-icon>error</mat-icon>
+            <span>{{ error() }}</span>
+            <button mat-stroked-button (click)="loadLoanType()">
+                <mat-icon>refresh</mat-icon>
+                Retry
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form *ngIf="!loading()" [formGroup]="loanTypeForm" (ngSubmit)="onSubmit()">
+            <!-- Name Field (Create mode only) -->
+            <mat-form-field *ngIf="isCreateMode" appearance="outline" class="full-width">
+                <mat-label>Loan Type Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g., Home Loan, Personal Loan" maxlength="100">
+                <mat-hint align="end">{{loanTypeForm.get('name')?.value?.length || 0}}/100</mat-hint>
+                <mat-error *ngIf="loanTypeForm.get('name')?.hasError('required')">
+                    Loan type name is required
+                </mat-error>
+                <mat-error *ngIf="loanTypeForm.get('name')?.hasError('maxlength')">
+                    Name cannot exceed 100 characters
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Name Field (Update mode - disabled) -->
+            <mat-form-field *ngIf="isUpdateMode && loanType()" appearance="outline" class="full-width">
+                <mat-label>Loan Type Name</mat-label>
+                <input matInput [value]="loanType()!.name" disabled>
+                <mat-hint>Note: Loan type name cannot be changed</mat-hint>
+            </mat-form-field>
+
+            <div class="form-row">
+                <!-- Interest Rate Field -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Interest Rate (% per annum)</mat-label>
+                    <mat-icon matPrefix>percent</mat-icon>
+                    <input matInput type="number" formControlName="interestRate" placeholder="e.g., 8.5" step="0.01"
+                        min="0.01" max="100" (keydown)="onInterestRateKeyDown($event)">
+                    <mat-hint>Between 0.01% and 100%</mat-hint>
+                    <mat-error *ngIf="loanTypeForm.get('interestRate')?.hasError('required')">
+                        Interest rate is required
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('interestRate')?.hasError('min')">
+                        Interest rate must be at least 0.01%
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('interestRate')?.hasError('max')">
+                        Interest rate cannot exceed 100%
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('interestRate')?.hasError('decimalPlaces')">
+                        Interest rate can have maximum 2 decimal places
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Min Amount Field -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Minimum Amount</mat-label>
+                    <mat-icon matPrefix>currency_rupee</mat-icon>
+                    <input matInput type="number" formControlName="minAmount" placeholder="e.g., 50000" step="1000"
+                        min="1" max="1000000" (keydown)="onMinAmountKeyDown($event)">
+                    <mat-hint>Between ₹1 and ₹10,00,000</mat-hint>
+                    <mat-error *ngIf="loanTypeForm.get('minAmount')?.hasError('required')">
+                        Minimum amount is required
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('minAmount')?.hasError('min')">
+                        Minimum amount must be at least ₹1
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('minAmount')?.hasError('max')">
+                        Minimum amount cannot exceed ₹10,00,000
+                    </mat-error>
+                    <mat-error *ngIf="loanTypeForm.get('minAmount')?.hasError('decimalPlaces')">
+                        Amount can have maximum 2 decimal places
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Max Tenure Field -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Maximum Tenure (months)</mat-label>
+                <mat-icon matPrefix>schedule</mat-icon>
+                <input matInput type="number" formControlName="maxTenureInMonths" placeholder="e.g., 240" step="12"
+                    min="1" max="480" (keydown)="onMaxTenureKeyDown($event)">
+                <mat-hint>Between 1 and 480 months (integers only)</mat-hint>
+                <mat-error *ngIf="loanTypeForm.get('maxTenureInMonths')?.hasError('required')">
+                    Maximum tenure is required
+                </mat-error>
+                <mat-error *ngIf="loanTypeForm.get('maxTenureInMonths')?.hasError('min')">
+                    Maximum tenure must be at least 1 month
+                </mat-error>
+                <mat-error *ngIf="loanTypeForm.get('maxTenureInMonths')?.hasError('max')">
+                    Maximum tenure cannot exceed 480 months
+                </mat-error>
+                <mat-error *ngIf="loanTypeForm.get('maxTenureInMonths')?.hasError('notInteger')">
+                    Tenure must be a whole number (no decimals)
+                </mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+                <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="submitting()">
+                    Cancel
+                </button>
+                <button mat-raised-button color="primary" type="submit"
+                    [disabled]="loanTypeForm.invalid || submitting()">
+                    @if (submitting()) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                    <span>{{ isCreateMode ? 'Creating...' : 'Updating...' }}</span>
+                    } @else {
+                    <span>{{ isCreateMode ? 'Create Loan Type' : 'Update Loan Type' }}</span>
+                    }
+                </button>
+            </div>
+        </form>
+    </mat-card-content>
+</mat-card>

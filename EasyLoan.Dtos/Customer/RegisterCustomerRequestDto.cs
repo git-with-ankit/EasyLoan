@@ -11,7 +11,7 @@ namespace EasyLoan.Dtos.Customer
     public class RegisterCustomerRequestDto
     {
         [Required]
-        [MaxLength(100)]
+        [MaxLength(100 , ErrorMessage = "Entered Name is too long.")]
         public string Name { get; set; }
 
         [Required, MaxLength(150)]

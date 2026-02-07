@@ -7,11 +7,29 @@ import { ApplicationService } from '../application.service';
 import { LoanType, EmiScheduleItem } from '../../loan-types/loan-type.models';
 import { EmiPlanPreviewComponent } from './emi-plan-preview/emi-plan-preview.component';
 import { createPaginationParams } from '../../../shared/models/pagination.models';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
     selector: 'app-create-application',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, EmiPlanPreviewComponent],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        EmiPlanPreviewComponent,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatButtonModule,
+        MatCardModule,
+        MatIconModule,
+        MatProgressSpinnerModule
+    ],
     templateUrl: './create-application.component.html',
     styleUrl: './create-application.component.css'
 })
@@ -45,8 +63,8 @@ export class CreateApplicationComponent implements OnInit {
     private initializeForm(): void {
         this.applicationForm = this.fb.group({
             loanTypeId: ['', [Validators.required]],
-            requestedAmount: [0, [Validators.required, Validators.min(1)]],
-            requestedTenureInMonths: [0, [Validators.required, Validators.min(1)]]
+            requestedAmount: [0, [Validators.required, Validators.min(1), Validators.max(1000000)]],
+            requestedTenureInMonths: [0, [Validators.required, Validators.min(1), this.integerValidator]]
         });
     }
 
@@ -66,9 +84,8 @@ export class CreateApplicationComponent implements OnInit {
         });
     }
 
-    onLoanTypeChange(event: Event): void {
-        const selectElement = event.target as HTMLSelectElement;
-        const loanTypeId = selectElement.value;
+    onLoanTypeChange(event: any): void {
+        const loanTypeId = event.value || event.target?.value;
 
         const loanType = this.loanTypes().find(lt => lt.id === loanTypeId);
         this.selectedLoanType.set(loanType || null);
@@ -90,13 +107,15 @@ export class CreateApplicationComponent implements OnInit {
 
             amountControl?.setValidators([
                 Validators.required,
-                Validators.min(loanType.minAmount)
+                Validators.min(loanType.minAmount),
+                Validators.max(1000000)
             ]);
 
             tenureControl?.setValidators([
                 Validators.required,
                 Validators.min(1),
-                Validators.max(loanType.maxTenureInMonths)
+                Validators.max(loanType.maxTenureInMonths),
+                this.integerValidator
             ]);
 
             amountControl?.updateValueAndValidity();
@@ -185,6 +204,67 @@ export class CreateApplicationComponent implements OnInit {
         this.emiPlan.set([]);
         this.errorMessage.set('');
         this.successMessage.set('');
+    }
+
+    // Custom validator for integer values
+    integerValidator(control: AbstractControl): ValidationErrors | null {
+        const value = control.value;
+        if (value && !Number.isInteger(Number(value))) {
+            return { notInteger: true };
+        }
+        return null;
+    }
+
+    // Prevent 'e', '+', '-' for amount field
+    onAmountKeyDown(event: KeyboardEvent): void {
+        const input = event.target as HTMLInputElement;
+        const currentValue = input.value;
+
+        // Prevent 'e', 'E', '+', '-'
+        if (['e', 'E', '+', '-'].includes(event.key)) {
+            event.preventDefault();
+            return;
+        }
+
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(event.key)) {
+            return;
+        }
+
+        // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
+
+        // Prevent input if already at 7 characters (1000000 = 1 million)
+        if (currentValue.length >= 7 && !input.selectionStart !== !input.selectionEnd) {
+            return;
+        }
+
+        if (currentValue.length >= 7) {
+            event.preventDefault();
+        }
+    }
+
+    // Prevent letters, special characters, and decimal points for tenure field
+    onTenureKeyDown(event: KeyboardEvent): void {
+        // Prevent 'e', 'E', '+', '-', '.'
+        if (['e', 'E', '+', '-', '.'].includes(event.key)) {
+            event.preventDefault();
+            return;
+        }
+
+        // Allow control keys (backspace, delete, tab, arrows, etc.)
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(event.key)) {
+            return;
+        }
+
+        // Allow Ctrl/Cmd combinations
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
     }
 
     // Getters for form controls

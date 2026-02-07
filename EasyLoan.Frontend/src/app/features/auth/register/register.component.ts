@@ -54,8 +54,10 @@ export class RegisterComponent implements OnInit {
 
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+  private readonly EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   private readonly PHONE_REGEX = /^[6-9]\d{9}$/;
-  private readonly PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+  private readonly PAN_REGEX = /^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/;
+  private readonly MAX_ANNUAL_SALARY = 1000000000000000; // 1000 trillion rupees
 
   constructor(
     private fb: FormBuilder,
@@ -77,7 +79,7 @@ export class RegisterComponent implements OnInit {
       this.form = this.fb.group({
         role: ['Manager', Validators.required],
         name: ['', [Validators.required, Validators.maxLength(100)]],
-        email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+        email: ['', [Validators.required, Validators.pattern(this.EMAIL_REGEX), Validators.maxLength(150)]],
         phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
         password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
         confirmPassword: ['', Validators.required]
@@ -88,10 +90,10 @@ export class RegisterComponent implements OnInit {
       this.form = this.fb.group({
         role: ['Customer', Validators.required],
         name: ['', [Validators.required, Validators.maxLength(100)]],
-        email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+        email: ['', [Validators.required, Validators.pattern(this.EMAIL_REGEX), Validators.maxLength(150)]],
         phoneNumber: ['', [Validators.required, Validators.pattern(this.PHONE_REGEX)]],
         dateOfBirth: ['', Validators.required],
-        annualSalary: ['', [Validators.required, Validators.min(0)]],
+        annualSalary: ['', [Validators.required, Validators.min(0), Validators.max(this.MAX_ANNUAL_SALARY)]],
         panNumber: ['', [Validators.required, Validators.pattern(this.PAN_REGEX)]],
         password: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]],
         confirmPassword: ['', [Validators.required, Validators.pattern(this.PASSWORD_REGEX)]]
@@ -180,5 +182,62 @@ export class RegisterComponent implements OnInit {
 
   toggleConfirmPasswordVisibility(): void {
     this.hideConfirmPassword = !this.hideConfirmPassword;
+  }
+
+  // Prevent non-numeric input for phone number
+  onPhoneKeyPress(event: KeyboardEvent): void {
+    const charCode = event.charCode;
+    // Allow only numbers (0-9)
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
+  // Prevent 'e', '+', '-' for annual salary and limit input to 16 digits
+  onSalaryKeyDown(event: KeyboardEvent): void {
+    const input = event.target as HTMLInputElement;
+    const currentValue = input.value;
+
+    // Prevent 'e', 'E', '+', '-'
+    if (['e', 'E', '+', '-'].includes(event.key)) {
+      event.preventDefault();
+      return;
+    }
+
+    // Allow control keys (backspace, delete, tab, arrows, etc.)
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+
+    // Allow Ctrl/Cmd combinations (copy, paste, select all, etc.)
+    if (event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    // Prevent input if already at 16 characters (1000 trillion = 1,000,000,000,000,000)
+    if (currentValue.length >= 16 && !input.selectionStart !== !input.selectionEnd) {
+      // Allow if there's a selection (user is replacing text)
+      return;
+    }
+
+    if (currentValue.length >= 16) {
+      event.preventDefault();
+    }
+  }
+
+  // Validate date input to prevent invalid dates
+  onDateInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+
+    // Check if the input contains letters
+    if (/[a-zA-Z]/.test(value)) {
+      input.value = '';
+      const control = this.form.get('dateOfBirth');
+      if (control) {
+        control.setErrors({ invalidDate: true });
+      }
+    }
   }
 }
