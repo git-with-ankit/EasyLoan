@@ -19,7 +19,7 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'loan-types',
-                loadChildren: () => import('../features/loan-types/loan-types.routes').then(m => m.LOAN_TYPES_ROUTES)
+                loadChildren: () => import('./loan-types.routes').then(m => m.LOAN_TYPES_ROUTES)
             },
             {
                 path: 'assigned-applications',

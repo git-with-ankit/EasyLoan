@@ -17,7 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../../services/auth.service';
 
 type RegisterRole = 'Customer' | 'Manager';
 
@@ -165,7 +165,7 @@ export class RegisterComponent implements OnInit {
           this.isLoading.set(false);
           this.successMessage = 'Registration successful! Redirecting to login...';
           setTimeout(() => {
-            this.router.navigate(['/auth/login']);
+            this.router.navigate(['/auth/customer/login']);
           }, 2000);
         },
         error: (error: Error) => {

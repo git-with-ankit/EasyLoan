@@ -11,9 +11,9 @@ import {
   RegisterManagerResponse,
   UserRole,
   ChangePasswordRequest
-} from './auth.models';
-import { UserService, MeResponse } from '../../services/user.service';
-import { environment } from '../../../environments/environment';
+} from '../models/auth.models';
+import { UserService, MeResponse } from './user.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

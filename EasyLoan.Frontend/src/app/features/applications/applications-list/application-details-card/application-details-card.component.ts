@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApplicationService } from '../../application.service';
-import { LoanApplicationDetails } from '../../application.models';
+import { ApplicationService } from '../../../../services/application.service';
+import { LoanApplicationDetails } from '../../../../models/application.models';
 
 @Component({
     selector: 'app-application-details-card',

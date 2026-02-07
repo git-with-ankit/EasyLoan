@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { LoanType, EmiScheduleItem, CreateLoanTypeRequest, UpdateLoanTypeRequest } from './loan-type.models';
-import { PagedResponse, PaginationParams } from '../../shared/models/pagination.models';
+import { environment } from '../../environments/environment';
+import { LoanType, EmiScheduleItem, CreateLoanTypeRequest, UpdateLoanTypeRequest } from '../models/loan-type.models';
+import { PagedResponse, PaginationParams } from '../models/pagination.models';
 
 @Injectable({
     providedIn: 'root'

@@ -1,10 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ProfileService, UserProfile, UpdateUserProfile } from './profile.service';
+import { ProfileService, UserProfile, UpdateUserProfile } from '../../services/profile.service';
 import { UserService } from '../../services/user.service';
-import { CustomerProfile } from './customer-profile.models';
-import { EmployeeProfile } from './employee-profile.models';
+import { CustomerProfile } from '../../models/customer-profile.models';
+import { EmployeeProfile } from '../../models/employee-profile.models';
 
 @Component({
     selector: 'app-profile',

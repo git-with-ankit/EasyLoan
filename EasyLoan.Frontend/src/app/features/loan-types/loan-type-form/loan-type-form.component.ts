@@ -7,8 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LoanTypeService } from '../loan-type.service';
-import { LoanType } from '../loan-type.models';
+import { LoanTypeService } from '../../../services/loan-type.service';
+import { LoanType } from '../../../models/loan-type.models';
 
 @Component({
     selector: 'app-loan-type-form',

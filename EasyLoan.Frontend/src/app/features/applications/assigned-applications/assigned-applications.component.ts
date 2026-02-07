@@ -7,10 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
-import { ApplicationService } from '../application.service';
-import { LoanApplicationSummary, LoanApplicationStatus } from '../application.models';
-import { AuthService } from '../../auth/auth.service';
-import { createPaginationParams } from '../../../shared/models/pagination.models';
+import { ApplicationService } from '../../../services/application.service';
+import { LoanApplicationSummary, LoanApplicationStatus } from '../../../models/application.models';
+import { AuthService } from '../../../services/auth.service';
+import { createPaginationParams } from '../../../models/pagination.models';
 
 interface TabPaginationState {
     data: LoanApplicationSummary[];

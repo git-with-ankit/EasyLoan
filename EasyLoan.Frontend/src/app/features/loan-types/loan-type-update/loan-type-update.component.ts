@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LoanTypeFormComponent } from '../loan-type-form/loan-type-form.component';
-import { LoanTypeService } from '../loan-type.service';
+import { LoanTypeService } from '../../../services/loan-type.service';
 
 @Component({
   selector: 'app-loan-type-update',

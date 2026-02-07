@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { AuthService } from '../../features/auth/auth.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-employee-layout',

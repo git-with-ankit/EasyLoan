@@ -11,9 +11,9 @@ import {
     LoanDetails,
     LoanStatus,
     PaymentHistory
-} from './loan.models';
-import { environment } from '../../../environments/environment';
-import { PagedResponse, PaginationParams } from '../../shared/models/pagination.models';
+} from '../models/loan.models';
+import { environment } from '../../environments/environment';
+import { PagedResponse, PaginationParams } from '../models/pagination.models';
 
 @Injectable({ providedIn: 'root' })
 export class LoanService {

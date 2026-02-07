@@ -1,10 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApplicationService } from '../application.service';
-import { LoanApplicationSummary, LoanApplicationStatus } from '../application.models';
+import { ApplicationService } from '../../../services/application.service';
+import { LoanApplicationSummary, LoanApplicationStatus } from '../../../models/application.models';
 import { ApplicationCardComponent } from './application-card/application-card.component';
 import { ApplicationDetailsCardComponent } from './application-details-card/application-details-card.component';
-import { createPaginationParams } from '../../../shared/models/pagination.models';
+import { createPaginationParams } from '../../../models/pagination.models';
 
 @Component({
     selector: 'app-applications-list',

@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LoanApplicationSummary } from '../../application.models';
+import { LoanApplicationSummary } from '../../../../models/application.models';
 
 @Component({
     selector: 'app-application-card',

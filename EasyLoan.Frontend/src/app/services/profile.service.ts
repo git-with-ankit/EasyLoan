@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, switchMap, of, throwError } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { UserService } from '../../services/user.service';
-import { CustomerProfile, UpdateCustomerProfile } from './customer-profile.models';
-import { EmployeeProfile, UpdateEmployeeProfile } from './employee-profile.models';
+import { environment } from '../../environments/environment';
+import { UserService } from './user.service';
+import { CustomerProfile, UpdateCustomerProfile } from '../models/customer-profile.models';
+import { EmployeeProfile, UpdateEmployeeProfile } from '../models/employee-profile.models';
 
 export type UserProfile = CustomerProfile | EmployeeProfile;
 export type UpdateUserProfile = UpdateCustomerProfile | UpdateEmployeeProfile;

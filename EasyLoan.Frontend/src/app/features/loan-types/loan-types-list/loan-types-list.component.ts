@@ -1,8 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { LoanTypeService } from '../loan-type.service';
-import { LoanType } from '../loan-type.models';
+import { LoanTypeService } from '../../../services/loan-type.service';
+import { LoanType } from '../../../models/loan-type.models';
 
 @Component({
   selector: 'app-loan-types-list',

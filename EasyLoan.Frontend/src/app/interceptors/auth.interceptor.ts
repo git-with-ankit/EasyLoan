@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, tap, throwError } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { NotificationService } from '../services/notification.service';
-import { extractErrorMessage } from '../shared/models/error.model';
+import { extractErrorMessage } from '../models/error.model';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const userService = inject(UserService);

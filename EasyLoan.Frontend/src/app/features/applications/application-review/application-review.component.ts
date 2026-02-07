@@ -7,10 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ApplicationService } from '../application.service';
-import { LoanApplicationDetailsWithCustomerData, ReviewLoanApplicationRequest } from '../review.models';
-import { LoanApplicationStatus } from '../application.models';
-import { AuthService } from '../../auth/auth.service';
+import { ApplicationService } from '../../../services/application.service';
+import { LoanApplicationDetailsWithCustomerData, ReviewLoanApplicationRequest } from '../../../models/review.models';
+import { LoanApplicationStatus } from '../../../models/application.models';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
     selector: 'app-application-review',

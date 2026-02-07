@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AdminService } from '../dashboard.service';
-import { AdminDashboardResponse } from '../dashboard.models';
+import { AdminService } from '../../../services/dashboard.service';
+import { AdminDashboardResponse } from '../../../models/dashboard.models';
 
 @Component({
     selector: 'app-admin-dashboard',

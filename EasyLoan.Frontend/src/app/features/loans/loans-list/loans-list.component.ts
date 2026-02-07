@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LoanService } from '../loan.service';
-import { LoanSummary, LoanStatus } from '../loan.models';
+import { LoanService } from '../../../services/loan.service';
+import { LoanSummary, LoanStatus } from '../../../models/loan.models';
 import { LoanCardComponent } from './loan-card/loan-card.component';
 import { LoanDetailsCardComponent } from './loan-details-card/loan-details-card.component';
 

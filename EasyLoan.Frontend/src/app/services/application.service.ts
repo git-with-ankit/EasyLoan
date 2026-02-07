@@ -5,15 +5,15 @@ import {
     LoanApplicationSummary,
     LoanApplicationDetails,
     LoanApplicationStatus
-} from './application.models';
-import { CreateApplicationRequest, CreateApplicationResponse } from '../loan-types/loan-type.models';
+} from '../models/application.models';
+import { CreateApplicationRequest, CreateApplicationResponse } from '../models/loan-type.models';
 import {
     LoanApplicationDetailsWithCustomerData,
     ReviewLoanApplicationRequest,
     LoanApplicationReviewResponse
-} from './review.models';
-import { environment } from '../../../environments/environment';
-import { PagedResponse, PaginationParams } from '../../shared/models/pagination.models';
+} from '../models/review.models';
+import { environment } from '../../environments/environment';
+import { PagedResponse, PaginationParams } from '../models/pagination.models';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationService {
