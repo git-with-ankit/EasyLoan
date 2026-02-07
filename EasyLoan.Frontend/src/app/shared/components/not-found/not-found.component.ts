@@ -1,64 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { Router } from '@angular/router';
-import { UserService } from '../../../services/user.service';
+import { MatIconModule } from '@angular/material/icon';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
   standalone: true,
   selector: 'app-not-found',
-  imports: [MatCardModule, MatButtonModule, CommonModule],
-  template: `
-    <div class="error-container">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>404 - Page Not Found</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>The page you're looking for doesn't exist.</p>
-          <button mat-raised-button color="primary" (click)="goHome()">
-            Go to Home
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
-  styles: [`
-    .error-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: #f5f5f5;
-    }
-    mat-card {
-      text-align: center;
-      padding: 40px;
-    }
-  `]
+  imports: [MatCardModule, MatButtonModule, MatIconModule, CommonModule, RouterLink],
+  templateUrl: './not-found.component.html',
+  styleUrl: './not-found.component.css'
 })
-export class NotFoundComponent implements OnInit {
-  homeRoute = '/auth/login';
+export class NotFoundComponent {
+  homeRoute = '/';
 
   constructor(
-    private userService: UserService,
     private router: Router
   ) { }
-
-  ngOnInit() {
-    // Determine home route based on authentication and role
-    const user = this.userService.currentUser();
-    if (user) {
-      if (user.role === 'Customer') {
-        this.homeRoute = '/customer';
-      } else if (user.role === 'Manager') {
-        this.homeRoute = '/employee';
-      } else if (user.role === 'Admin') {
-        this.homeRoute = '/admin';
-      }
-    }
-  }
 
   goHome() {
     this.router.navigate([this.homeRoute]);

@@ -96,7 +96,7 @@ export class LoginComponent implements OnInit {
             this.router.navigate(['/admin']);
           } else {
             // Fallback
-            this.router.navigate(['/unauthorized']);
+            this.router.navigate(['/landing']);
           }
         } else {
           this.errorMessage = 'Failed to retrieve user information';

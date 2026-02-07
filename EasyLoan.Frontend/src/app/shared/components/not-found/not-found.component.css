@@ -1,0 +1,146 @@
+.not-found-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+}
+
+.not-found-content {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.error-icon {
+    margin-bottom: 1rem;
+}
+
+.error-icon mat-icon {
+    font-size: 120px;
+    width: 120px;
+    height: 120px;
+    color: #667eea;
+    opacity: 0.8;
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.error-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 1rem 0 0.5rem;
+}
+
+.error-message {
+    font-size: 1.125rem;
+    color: #6b7280;
+    margin: 0 0 2rem;
+    line-height: 1.6;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.helpful-links {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.links-title {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.links {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.links a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.links a mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.links a:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .not-found-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .error-code {
+        font-size: 4rem;
+    }
+
+    .error-title {
+        font-size: 1.5rem;
+    }
+
+    .error-message {
+        font-size: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons button {
+        width: 100%;
+    }
+
+    .links {
+        flex-direction: column;
+    }
+
+    .links a {
+        width: 100%;
+        justify-content: center;
+    }
+}

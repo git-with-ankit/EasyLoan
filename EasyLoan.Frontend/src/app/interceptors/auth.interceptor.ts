@@ -35,9 +35,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                     router.navigate(['/landing']);
                 }
             } else if (error.status === 403) {
-                // Forbidden - show error and redirect
+                // Forbidden - show error and redirect to landing
                 notificationService.error(errorMessage);
-                router.navigate(['/unauthorized']);
+                router.navigate(['/landing']);
             } else if (error.status === 404) {
                 notificationService.error(errorMessage);
             } else if (error.status === 500) {
