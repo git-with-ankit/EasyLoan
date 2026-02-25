@@ -1,4 +1,5 @@
-import { Component, Inject, OnInit, signal } from '@angular/core';
+import { Component, Inject, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,11 +28,16 @@ export class ApplicationDetailsCardComponent implements OnInit {
     isLoading = signal(false);
     errorMessage = signal('');
 
-    constructor(
-        private applicationService: ApplicationService,
-        public dialogRef: MatDialogRef<ApplicationDetailsCardComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: { applicationNumber: string }
-    ) { }
+    private destroyRef = inject(DestroyRef);
+    public data = inject(MAT_DIALOG_DATA) as {applicationNumber : string}
+    private applicationService = inject(ApplicationService)
+    public dialogRef = inject(MatDialogRef<ApplicationDetailsCardComponent>)
+
+    // constructor(
+    //     private applicationService: ApplicationService,
+    //     public dialogRef: MatDialogRef<ApplicationDetailsCardComponent>,
+    //     @Inject(MAT_DIALOG_DATA) public data: { applicationNumber: string }
+    // ) { }
 
     ngOnInit(): void {
         this.loadApplicationDetails();
@@ -39,16 +45,18 @@ export class ApplicationDetailsCardComponent implements OnInit {
 
     loadApplicationDetails(): void {
         this.isLoading.set(true);
-        this.applicationService.getApplicationDetails(this.data.applicationNumber).subscribe({
-            next: (data) => {
-                this.applicationDetails.set(data);
-                this.isLoading.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set('Failed to load application details');
-                this.isLoading.set(false);
-            }
-        });
+        this.applicationService.getApplicationDetails(this.data.applicationNumber)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.applicationDetails.set(data);
+                    this.isLoading.set(false);
+                },
+                error: (error) => {
+                    this.errorMessage.set('Failed to load application details');
+                    this.isLoading.set(false);
+                }
+            });
     }
 
     onClose(): void {

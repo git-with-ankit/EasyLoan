@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { LoanService } from '../../../services/loan.service';
@@ -17,6 +18,8 @@ export class OverdueEmis implements OnInit {
     isLoading = signal(false);
     errorMessage = signal('');
 
+    private destroyRef = inject(DestroyRef);
+
     constructor(
         private loanService: LoanService,
         private dialog: MatDialog
@@ -30,16 +33,18 @@ export class OverdueEmis implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        this.loanService.getAllDueEmis(EmiDueStatus.Overdue).subscribe({
-            next: (data) => {
-                this.emisByLoan.set(data);
-                this.isLoading.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load EMI data');
-                this.isLoading.set(false);
-            }
-        });
+        this.loanService.getAllDueEmis(EmiDueStatus.Overdue)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.emisByLoan.set(data);
+                    this.isLoading.set(false);
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.message || 'Failed to load EMI data');
+                    this.isLoading.set(false);
+                }
+            });
     }
 
     onLoanClick(loanNumber: string): void {
@@ -50,9 +55,11 @@ export class OverdueEmis implements OnInit {
             maxHeight: '90vh'
         });
 
-        dialogRef.afterClosed().subscribe(() => {
-            this.loadDueEmis(); // Refresh EMI list after dialog closes (in case payment was made)
-        });
+        dialogRef.afterClosed()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.loadDueEmis(); // Refresh EMI list after dialog closes (in case payment was made)
+            });
     }
 
     getLoanTotalDue(loanGroup: LoanEmiGroup): number {

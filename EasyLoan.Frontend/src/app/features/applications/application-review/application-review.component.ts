@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -11,10 +12,10 @@ import { ApplicationService } from '../../../services/application.service';
 import { LoanApplicationDetailsWithCustomerData, ReviewLoanApplicationRequest } from '../../../models/review.models';
 import { LoanApplicationStatus } from '../../../models/application.models';
 import { AuthService } from '../../../services/auth.service';
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-application-review',
-    standalone: true,
     imports: [
         CommonModule,
         ReactiveFormsModule,
@@ -23,9 +24,7 @@ import { AuthService } from '../../../services/auth.service';
         MatInputModule,
         MatSelectModule,
         MatSnackBarModule,
-        RouterModule,
-        CurrencyPipe,
-        DatePipe
+        RouterModule
     ],
     templateUrl: './application-review.component.html',
     styleUrl: './application-review.component.css'
@@ -38,6 +37,8 @@ export class ApplicationReviewComponent implements OnInit {
     isPending = signal(false);
     userRole: string = '';
     isManager = false;
+
+    private destroyRef = inject(DestroyRef);
 
     statuses = [
         { value: LoanApplicationStatus.Approved, label: 'Approve' },
@@ -70,56 +71,44 @@ export class ApplicationReviewComponent implements OnInit {
         }
     }
 
-    loadDetails() {
-        console.log('=== loadDetails called ===');
-        console.log('Application number:', this.applicationNumber);
+    loadDetails(): void {
         this.isLoading.set(true);
-        console.log('isLoading set to:', this.isLoading());
 
-        this.appService.getApplicationDetailsForReview(this.applicationNumber).subscribe({
-            next: (data) => {
-                console.log('=== Data received ===');
-                console.log('Application details loaded:', data);
+        this.appService.getApplicationDetailsForReview(this.applicationNumber)
+            .pipe(
+                finalize(() => this.isLoading.set(false)),
+                takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe({
+                next: (data) => {
 
-                this.details.set(data);
-                console.log('this.details set to:', this.details());
+                    this.details.set(data);
+                    this.isPending.set(data.status === LoanApplicationStatus.Pending);
 
-                this.isLoading.set(false);
-                console.log('isLoading set to:', this.isLoading());
+                    this.reviewForm.patchValue({
+                        approvedAmount: data.requestedAmount
+                    });
 
-                this.isPending.set(data.status === LoanApplicationStatus.Pending);
-                console.log('isPending:', this.isPending());
+                    const approvedAmountControl = this.reviewForm.get('approvedAmount');
+                    if (approvedAmountControl) {
+                        approvedAmountControl.setValidators([
+                            Validators.required,
+                            Validators.min(1),
+                            Validators.max(data.requestedAmount),
+                            this.decimalPlacesValidator(2)
+                        ]);
+                        approvedAmountControl.updateValueAndValidity();
+                    }
 
-                // Set approved amount to requested amount by default
-                this.reviewForm.patchValue({
-                    approvedAmount: data.requestedAmount
-                });
+                    if (!this.isPending()) {
+                        this.reviewForm.disable();
+                    }
 
-                // Add max validator for approved amount
-                const approvedAmountControl = this.reviewForm.get('approvedAmount');
-                if (approvedAmountControl) {
-                    approvedAmountControl.setValidators([
-                        Validators.required,
-                        Validators.min(1),
-                        Validators.max(data.requestedAmount),
-                        this.decimalPlacesValidator(2)
-                    ]);
-                    approvedAmountControl.updateValueAndValidity();
+                },
+                error: () => {
+                    this.snackBar.open('Failed to load application details ', 'Close', { duration: 5000 });
                 }
-
-                // Disable form if not pending
-                if (!this.isPending()) {
-                    this.reviewForm.disable();
-                }
-
-                console.log('=== loadDetails complete ===');
-            },
-            error: (error) => {
-                console.error('Error loading application details:', error);
-                this.isLoading.set(false);
-                this.snackBar.open('Failed to load application details: ' + (error.error?.message || error.message), 'Close', { duration: 5000 });
-            }
-        });
+            });
     }
 
     submitReview() {
@@ -135,22 +124,23 @@ export class ApplicationReviewComponent implements OnInit {
             managerComments: formValue.remarks
         };
 
-        this.appService.submitReview(this.applicationNumber, request).subscribe({
-            next: () => {
-                this.isLoading.set(false);
-                this.snackBar.open('Review submitted successfully', 'Close', { duration: 3000 });
+        this.appService.submitReview(this.applicationNumber, request)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.isLoading.set(false);
+                    this.snackBar.open('Review submitted successfully', 'Close', { duration: 3000 });
 
-                // Navigate based on user role
-                const user = this.authService.getCurrentUser();
-                const basePath = user?.role === 'Admin' ? '/admin' : '/employee';
-                this.router.navigate([basePath, 'assigned-applications']);
-            },
-            error: (error) => {
-                console.error('Error submitting review:', error);
-                this.isLoading.set(false);
-                this.snackBar.open('Failed to submit review: ' + (error.error?.message || error.message), 'Close', { duration: 5000 });
-            }
-        });
+                    // Navigate based on user role
+                    const user = this.authService.getCurrentUser();
+                    const basePath = user?.role === 'Admin' ? '/admin' : '/employee';
+                    this.router.navigate([basePath, 'assigned-applications']);
+                },
+                error: (error) => {
+                    this.isLoading.set(false);
+                    this.snackBar.open('Failed to submit review ', 'Close', { duration: 5000 });
+                }
+            });
     }
 
     // Custom validator for decimal places

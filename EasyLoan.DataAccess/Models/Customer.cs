@@ -115,3 +115,5 @@ namespace EasyLoan.DataAccess.Models
 //auth login , customer register and change password
 //totalOngoingLoans - done
 //recalculating penalty makes the penalty charge up again - done
+//422 to 409
+//admin password in secrets - either appsettings or user secrets

@@ -11,17 +11,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
     const notificationService = inject(NotificationService);
 
-    // Add withCredentials to all requests to send cookies
     req = req.clone({
         withCredentials: true
     });
 
     return next(req).pipe(
         catchError((error) => {
-            // Use the utility function to extract error message
             const errorMessage = extractErrorMessage(error);
 
-            // Skip notifications for /auth/me endpoint (used for silent auth checks)
             const isAuthMeEndpoint = req.url.includes('/auth/me');
 
             // Handle specific status codes

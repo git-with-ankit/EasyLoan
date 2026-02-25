@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -59,6 +60,8 @@ export class RegisterComponent implements OnInit {
   private readonly PAN_REGEX = /^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/;
   private readonly MAX_ANNUAL_SALARY = 1000000000000000; // 1000 trillion rupees
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
@@ -103,9 +106,11 @@ export class RegisterComponent implements OnInit {
     confirmPasswordControl?.addValidators(this.passwordMatchValidator());
 
     // Re-validate confirmPassword when password changes
-    this.form.get('password')?.valueChanges.subscribe(() => {
-      confirmPasswordControl?.updateValueAndValidity();
-    });
+    this.form.get('password')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        confirmPasswordControl?.updateValueAndValidity();
+      });
   }
 
   // Custom validator that checks if passwords match
@@ -141,19 +146,21 @@ export class RegisterComponent implements OnInit {
         password: formValue.password
       };
 
-      this.auth.registerManager(registerDto).subscribe({
-        next: () => {
-          this.isLoading.set(false);
-          this.successMessage = 'Manager created successfully!';
-          setTimeout(() => {
-            this.router.navigate(['/admin/dashboard']);
-          }, 2000);
-        },
-        error: (error: Error) => {
-          this.isLoading.set(false);
-          this.errorMessage = error.message || 'Manager creation failed. Please try again.';
-        }
-      });
+      this.auth.registerManager(registerDto)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.successMessage = 'Manager created successfully!';
+            setTimeout(() => {
+              this.router.navigate(['/admin/dashboard']);
+            }, 2000);
+          },
+          error: (error: Error) => {
+            this.isLoading.set(false);
+            this.errorMessage = error.message || 'Manager creation failed. Please try again.';
+          }
+        });
     } else {
       // Customer registration
       const registerDto = {
@@ -166,19 +173,21 @@ export class RegisterComponent implements OnInit {
         password: formValue.password
       };
 
-      this.auth.registerCustomer(registerDto).subscribe({
-        next: () => {
-          this.isLoading.set(false);
-          this.successMessage = 'Registration successful! Redirecting to login...';
-          setTimeout(() => {
-            this.router.navigate(['/auth/customer/login']);
-          }, 2000);
-        },
-        error: (error: Error) => {
-          this.isLoading.set(false);
-          this.errorMessage = error.message || 'Registration failed. Please try again.';
-        }
-      });
+      this.auth.registerCustomer(registerDto)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.successMessage = 'Registration successful! Redirecting to login...';
+            setTimeout(() => {
+              this.router.navigate(['/auth/customer/login']);
+            }, 2000);
+          },
+          error: (error: Error) => {
+            this.isLoading.set(false);
+            this.errorMessage = error.message || 'Registration failed. Please try again.';
+          }
+        });
     }
   }
 

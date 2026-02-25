@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: easyloan-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Database@123
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - easyloan-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: EasyLoan.Api/Dockerfile
+    container_name: easyloan-backend
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - easyloan-network
+
+  frontend:
+    build:
+      context: ./EasyLoan.Frontend
+      dockerfile: Dockerfile
+    container_name: easyloan-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - easyloan-network
+
+volumes:
+  sql_data:
+
+networks:
+  easyloan-network:
+    driver: bridge

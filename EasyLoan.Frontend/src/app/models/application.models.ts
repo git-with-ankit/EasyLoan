@@ -6,7 +6,7 @@ export interface LoanApplicationSummary {
     tenureInMonths: number;
     assignedEmployeeId: string;
     status: LoanApplicationStatus;
-    createdDate: string; // ISO date string
+    createdDate: string; 
 }
 
 export interface LoanApplicationDetails {

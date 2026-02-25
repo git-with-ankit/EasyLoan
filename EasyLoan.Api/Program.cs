@@ -205,6 +205,12 @@ namespace EasyLoan.Api
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<EasyLoanDbContext>();
+                db.Database.Migrate();
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

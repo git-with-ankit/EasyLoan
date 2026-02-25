@@ -1,4 +1,5 @@
-import { Component, Inject, OnInit, signal } from '@angular/core';
+import { Component, Inject, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -50,6 +51,8 @@ export class LoanDetailsCardComponent implements OnInit {
     displayedColumns: string[] = ['date', 'amount', 'status'];
     private readonly MAX_PAYMENT_AMOUNT = 1000000000000000; // 1000 trillion
 
+    private destroyRef = inject(DestroyRef);
+
     constructor(
         private loanService: LoanService,
         public dialogRef: MatDialogRef<LoanDetailsCardComponent>,
@@ -71,41 +74,47 @@ export class LoanDetailsCardComponent implements OnInit {
 
     loadLoanDetails(): void {
         this.isLoading.set(true);
-        this.loanService.getLoanDetails(this.data.loanNumber).subscribe({
-            next: (data) => {
-                this.loanDetails.set(data);
-                this.isLoading.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load loan details');
-                this.isLoading.set(false);
-            }
-        });
+        this.loanService.getLoanDetails(this.data.loanNumber)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.loanDetails.set(data);
+                    this.isLoading.set(false);
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.message || 'Failed to load loan details');
+                    this.isLoading.set(false);
+                }
+            });
     }
 
     loadEmis(): void {
-        this.loanService.getDueEmisForLoan(this.data.loanNumber, this.selectedEmiStatus()).subscribe({
-            next: (data) => {
-                this.emis.set(data);
-            },
-            error: (error) => {
-                console.error('Failed to load EMIs:', error);
-            }
-        });
+        this.loanService.getDueEmisForLoan(this.data.loanNumber, this.selectedEmiStatus())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.emis.set(data);
+                },
+                error: (error) => {
+                    console.error('Failed to load EMIs:', error);
+                }
+            });
     }
 
     loadPaymentHistory(): void {
         this.isLoadingHistory.set(true);
-        this.loanService.getPaymentHistory(this.data.loanNumber).subscribe({
-            next: (data) => {
-                this.paymentHistory.set(data);
-                this.isLoadingHistory.set(false);
-            },
-            error: (error) => {
-                console.error('Failed to load payment history:', error);
-                this.isLoadingHistory.set(false);
-            }
-        });
+        this.loanService.getPaymentHistory(this.data.loanNumber)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.paymentHistory.set(data);
+                    this.isLoadingHistory.set(false);
+                },
+                error: (error) => {
+                    console.error('Failed to load payment history:', error);
+                    this.isLoadingHistory.set(false);
+                }
+            });
     }
 
     onEmiStatusChange(status: EmiDueStatus): void {
@@ -216,21 +225,23 @@ export class LoanDetailsCardComponent implements OnInit {
         this.isProcessingPayment.set(true);
         this.errorMessage.set('');
 
-        this.loanService.makePayment(this.data.loanNumber, roundedAmount).subscribe({
-            next: (response) => {
-                this.successMessage.set(`Payment successful! Transaction ID: ${response.transactionId}`);
-                this.isProcessingPayment.set(false);
-                this.selectedEmi.set(null);
-                this.paymentAmount.reset(0);
-                this.loadEmis(); // Refresh EMI list
-                this.loadLoanDetails(); // Refresh loan details
-                this.loadPaymentHistory(); // Refresh payment history
-            },
-            error: (error) => {
-                this.errorMessage.set(error.error?.message || 'Payment failed. Please try again.');
-                this.isProcessingPayment.set(false);
-            }
-        });
+        this.loanService.makePayment(this.data.loanNumber, roundedAmount)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.successMessage.set(`Payment successful! Transaction ID: ${response.transactionId}`);
+                    this.isProcessingPayment.set(false);
+                    this.selectedEmi.set(null);
+                    this.paymentAmount.reset(0);
+                    this.loadEmis(); // Refresh EMI list
+                    this.loadLoanDetails(); // Refresh loan details
+                    this.loadPaymentHistory(); // Refresh payment history
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.error?.message || 'Payment failed. Please try again.');
+                    this.isProcessingPayment.set(false);
+                }
+            });
     }
 
     onClose(): void {

@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -33,6 +34,8 @@ export class ChangePasswordComponent {
     hideOldPassword = true;
     hideNewPassword = true;
 
+    private destroyRef = inject(DestroyRef);
+
     private readonly PASSWORD_REGEX =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
 
@@ -51,9 +54,11 @@ export class ChangePasswordComponent {
         newPasswordControl?.addValidators(this.samePasswordValidator());
 
         // Re-validate newPassword when oldPassword changes
-        this.form.get('oldPassword')?.valueChanges.subscribe(() => {
-            newPasswordControl?.updateValueAndValidity();
-        });
+        this.form.get('oldPassword')?.valueChanges
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                newPasswordControl?.updateValueAndValidity();
+            });
     }
 
     // Custom validator that checks if new password matches old password
@@ -78,19 +83,21 @@ export class ChangePasswordComponent {
         this.errorMessage.set('');
         this.successMessage.set('');
 
-        this.authService.changePassword(this.form.value).subscribe({
-            next: () => {
-                this.isLoading.set(false);
-                this.successMessage.set('Password changed successfully!');
-                setTimeout(() => {
-                    this.dialogRef.close(true);
-                }, 1500);
-            },
-            error: (error: Error) => {
-                this.isLoading.set(false);
-                this.errorMessage.set(error.message || 'Failed to change password.');
-            }
-        });
+        this.authService.changePassword(this.form.value)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.isLoading.set(false);
+                    this.successMessage.set('Password changed successfully!');
+                    setTimeout(() => {
+                        this.dialogRef.close(true);
+                    }, 1500);
+                },
+                error: (error: Error) => {
+                    this.isLoading.set(false);
+                    this.errorMessage.set(error.message || 'Failed to change password.');
+                }
+            });
     }
 
     toggleOldPasswordVisibility(): void {

@@ -1,0 +1,5 @@
+.git
+TestResults
+.vs
+EasyLoan.Api.Tests
+EasyLoan.UnitTest

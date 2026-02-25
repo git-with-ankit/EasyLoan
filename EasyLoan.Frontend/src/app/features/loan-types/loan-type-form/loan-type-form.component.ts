@@ -1,4 +1,5 @@
-import { Component, OnInit, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -37,6 +38,8 @@ export class LoanTypeFormComponent implements OnInit {
     loading = signal<boolean>(false);
     submitting = signal<boolean>(false);
     error = signal<string | null>(null);
+    
+    private destroyRef = inject(DestroyRef);
 
     constructor(
         private fb: FormBuilder,

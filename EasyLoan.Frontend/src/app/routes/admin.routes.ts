@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { canDeactivateReview } from '../guards/can-deactivate-review.guard';
+import { canDeactivateProfile } from '../guards/can-deactivate-profile.guard';
 
 export const ADMIN_ROUTES: Routes = [
     {
@@ -27,7 +29,8 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'assigned-applications/:applicationNumber/review',
-                loadComponent: () => import('../features/applications/application-review/application-review.component').then(m => m.ApplicationReviewComponent)
+                loadComponent: () => import('../features/applications/application-review/application-review.component').then(m => m.ApplicationReviewComponent),
+                canDeactivate: [canDeactivateReview]
             },
             {
                 path: 'create-manager',
@@ -35,7 +38,8 @@ export const ADMIN_ROUTES: Routes = [
             },
             {
                 path: 'profile',
-                loadComponent: () => import('../features/profile/profile.component').then(m => m.ProfileComponent)
+                loadComponent: () => import('../features/profile/profile.component').then(m => m.ProfileComponent),
+                canDeactivate: [canDeactivateProfile]
             }
         ]
     },

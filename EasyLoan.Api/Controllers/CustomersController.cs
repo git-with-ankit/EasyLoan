@@ -67,7 +67,6 @@ namespace EasyLoan.Api.Controllers
         {
             var token = await _authService.LoginCustomerAsync(request);
             
-            // Set HTTP-only cookie
             Response.Cookies.Append("easyloan_auth", token, new CookieOptions
             {
                 HttpOnly = true,

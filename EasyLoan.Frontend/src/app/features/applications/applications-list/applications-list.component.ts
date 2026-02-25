@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { ApplicationService } from '../../../services/application.service';
@@ -9,7 +10,6 @@ import { createPaginationParams } from '../../../models/pagination.models';
 
 @Component({
     selector: 'app-applications-list',
-    standalone: true,
     imports: [CommonModule, ApplicationCardComponent],
     templateUrl: './applications-list.component.html',
     styleUrl: './applications-list.component.css'
@@ -19,6 +19,8 @@ export class ApplicationsListComponent implements OnInit {
     selectedStatus = signal<LoanApplicationStatus>(LoanApplicationStatus.Pending);
     isLoading = signal(false);
     errorMessage = signal('');
+
+    private destroyRef = inject(DestroyRef);
 
     LoanApplicationStatus = LoanApplicationStatus; // Expose enum to template
 
@@ -35,21 +37,21 @@ export class ApplicationsListComponent implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        // Fetch all applications for the selected status (use max allowed page size)
         const pagination = createPaginationParams(1, 100);
 
-        this.applicationService.getApplications(this.selectedStatus(), pagination).subscribe({
-            next: (response) => {
-                // Extract items from paginated response
-                this.applications.set(response.items);
-                this.isLoading.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load applications');
-                this.applications.set([]); // Reset to empty array on error
-                this.isLoading.set(false);
-            }
-        });
+        this.applicationService.getApplications(this.selectedStatus(), pagination)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.applications.set(response.items);
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    this.errorMessage.set('Failed to load applications');
+                    this.applications.set([]); 
+                    this.isLoading.set(false);
+                }
+            });
     }
 
     onStatusChange(status: LoanApplicationStatus): void {

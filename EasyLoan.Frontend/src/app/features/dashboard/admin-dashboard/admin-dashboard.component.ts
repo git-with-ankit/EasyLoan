@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +26,8 @@ export class AdminDashboardComponent implements OnInit {
     loading = signal<boolean>(true);
     error = signal<string | null>(null);
 
+    private destroyRef = inject(DestroyRef);
+
     constructor(private adminService: AdminService) { }
 
     ngOnInit(): void {
@@ -35,16 +38,18 @@ export class AdminDashboardComponent implements OnInit {
         this.loading.set(true);
         this.error.set(null);
 
-        this.adminService.getAdminDashboard().subscribe({
-            next: (data) => {
-                this.dashboardData.set(data);
-                this.loading.set(false);
-            },
-            error: (err) => {
-                this.error.set('Failed to load dashboard data. Please try again.');
-                this.loading.set(false);
-                console.error('Error loading dashboard:', err);
-            }
-        });
+        this.adminService.getAdminDashboard()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.dashboardData.set(data);
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    this.error.set('Failed to load dashboard data. Please try again.');
+                    this.loading.set(false);
+                    console.error('Error loading dashboard:', err);
+                }
+            });
     }
 }

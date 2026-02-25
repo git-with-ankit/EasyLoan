@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ProfileService, UserProfile, UpdateUserProfile } from '../../services/profile.service';
@@ -26,6 +27,8 @@ export class ProfileComponent implements OnInit {
     isEmployee = signal(false);
 
     private readonly MAX_ANNUAL_SALARY = 1000000000000000; // 1000 trillion rupees
+
+    private destroyRef = inject(DestroyRef);
 
     constructor(
         private profileService: ProfileService,
@@ -64,30 +67,32 @@ export class ProfileComponent implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        this.profileService.getProfile().subscribe({
-            next: (data: UserProfile) => {
-                this.profile.set(data);
-                if (this.isCustomer()) {
-                    const customerData = data as CustomerProfile;
-                    this.profileForm.patchValue({
-                        name: customerData.name,
-                        phoneNumber: customerData.phoneNumber,
-                        annualSalary: customerData.annualSalary
-                    });
-                } else {
-                    const employeeData = data as EmployeeProfile;
-                    this.profileForm.patchValue({
-                        name: employeeData.name,
-                        phoneNumber: employeeData.phoneNumber
-                    });
+        this.profileService.getProfile()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data: UserProfile) => {
+                    this.profile.set(data);
+                    if (this.isCustomer()) {
+                        const customerData = data as CustomerProfile;
+                        this.profileForm.patchValue({
+                            name: customerData.name,
+                            phoneNumber: customerData.phoneNumber,
+                            annualSalary: customerData.annualSalary
+                        });
+                    } else {
+                        const employeeData = data as EmployeeProfile;
+                        this.profileForm.patchValue({
+                            name: employeeData.name,
+                            phoneNumber: employeeData.phoneNumber
+                        });
+                    }
+                    this.isLoading.set(false);
+                },
+                error: (error: Error) => {
+                    this.errorMessage.set(error.message || 'Failed to load profile');
+                    this.isLoading.set(false);
                 }
-                this.isLoading.set(false);
-            },
-            error: (error: Error) => {
-                this.errorMessage.set(error.message || 'Failed to load profile');
-                this.isLoading.set(false);
-            }
-        });
+            });
     }
 
     onEdit(): void {
@@ -130,19 +135,21 @@ export class ProfileComponent implements OnInit {
 
         const updateData = this.profileForm.value;
 
-        this.profileService.updateProfile(updateData).subscribe({
-            next: (data: UserProfile) => {
-                this.profile.set(data);
-                this.isEditing.set(false);
-                this.isSaving.set(false);
-                this.successMessage.set('Profile updated successfully!');
-                setTimeout(() => this.successMessage.set(''), 3000);
-            },
-            error: (error: Error) => {
-                this.isSaving.set(false);
-                this.errorMessage.set(error.message || 'Failed to update profile');
-            }
-        });
+        this.profileService.updateProfile(updateData)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data: UserProfile) => {
+                    this.profile.set(data);
+                    this.isEditing.set(false);
+                    this.isSaving.set(false);
+                    this.successMessage.set('Profile updated successfully!');
+                    setTimeout(() => this.successMessage.set(''), 3000);
+                },
+                error: (error: Error) => {
+                    this.isSaving.set(false);
+                    this.errorMessage.set(error.message || 'Failed to update profile');
+                }
+            });
     }
 
     formatDate(dateString: string): string {

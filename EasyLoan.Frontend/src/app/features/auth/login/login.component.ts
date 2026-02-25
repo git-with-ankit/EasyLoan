@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -41,6 +42,8 @@ export class LoginComponent implements OnInit {
   hidePassword = true;
   loginType: LoginRole = 'Customer';
 
+  private destroyRef = inject(DestroyRef);
+
   private readonly PASSWORD_REGEX =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
   private readonly EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -54,11 +57,13 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     // Get login type from route data
-    this.route.data.subscribe(data => {
-      if (data['type']) {
-        this.loginType = data['type'];
-      }
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(data => {
+        if (data['type']) {
+          this.loginType = data['type'];
+        }
+      });
 
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.pattern(this.EMAIL_REGEX), Validators.maxLength(150)]],
@@ -79,34 +84,36 @@ export class LoginComponent implements OnInit {
       ? this.auth.loginCustomer(loginDto)
       : this.auth.loginEmployee(loginDto);
 
-    login$.subscribe({
-      next: () => {
-        this.isLoading.set(false);
+    login$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isLoading.set(false);
 
-        // Get the actual user role from the token
-        const user = this.auth.getCurrentUser();
+          // Get the actual user role from the token
+          const user = this.auth.getCurrentUser();
 
-        if (user) {
-          // Navigate based on the actual role
-          if (user.role === 'Customer') {
-            this.router.navigate(['/customer']);
-          } else if (user.role === 'Manager') {
-            this.router.navigate(['/employee']);
-          } else if (user.role === 'Admin') {
-            this.router.navigate(['/admin']);
+          if (user) {
+            // Navigate based on the actual role
+            if (user.role === 'Customer') {
+              this.router.navigate(['/customer']);
+            } else if (user.role === 'Manager') {
+              this.router.navigate(['/employee']);
+            } else if (user.role === 'Admin') {
+              this.router.navigate(['/admin']);
+            } else {
+              // Fallback
+              this.router.navigate(['/landing']);
+            }
           } else {
-            // Fallback
-            this.router.navigate(['/landing']);
+            this.errorMessage = 'Failed to retrieve user information';
           }
-        } else {
-          this.errorMessage = 'Failed to retrieve user information';
+        },
+        error: (error: Error) => {
+          this.isLoading.set(false);
+          // this.errorMessage = error.message || 'Login failed. Please check your credentials.';
         }
-      },
-      error: (error: Error) => {
-        this.isLoading.set(false);
-        // this.errorMessage = error.message || 'Login failed. Please check your credentials.';
-      }
-    });
+      });
   }
 
   togglePasswordVisibility(): void {

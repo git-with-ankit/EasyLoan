@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
@@ -41,7 +42,6 @@ interface TabPaginationState {
 export class AssignedApplicationsComponent implements OnInit {
     displayedColumns: string[] = ['applicationNumber', 'loanType', 'amount', 'appliedOn', 'status', 'actions'];
 
-    // Pagination state for each tab using signals
     pendingState = signal<TabPaginationState>({
         data: [],
         pageIndex: 0,
@@ -68,6 +68,8 @@ export class AssignedApplicationsComponent implements OnInit {
 
     userRole = '';
 
+    private destroyRef = inject(DestroyRef);
+
     constructor(
         private appService: ApplicationService,
         private authService: AuthService,
@@ -92,27 +94,29 @@ export class AssignedApplicationsComponent implements OnInit {
 
         const pagination = createPaginationParams(currentState.pageIndex + 1, currentState.pageSize); // Convert to 1-indexed
 
-        this.appService.getApplications(status, pagination).subscribe({
-            next: (response) => {
-                stateSignal.set({
-                    data: Array.isArray(response.items) ? response.items : [],
-                    totalCount: response.totalCount || 0,
-                    pageIndex: currentState.pageIndex,
-                    pageSize: currentState.pageSize,
-                    isLoading: false
-                });
-            },
-            error: (err) => {
-                console.error('Error loading applications:', err);
-                stateSignal.set({
-                    data: [],
-                    totalCount: 0,
-                    pageIndex: currentState.pageIndex,
-                    pageSize: currentState.pageSize,
-                    isLoading: false
-                });
-            }
-        });
+        this.appService.getApplications(status, pagination)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    stateSignal.set({
+                        data: Array.isArray(response.items) ? response.items : [],
+                        totalCount: response.totalCount || 0,
+                        pageIndex: currentState.pageIndex,
+                        pageSize: currentState.pageSize,
+                        isLoading: false
+                    });
+                },
+                error: (err) => {
+                    console.error('Error loading applications:', err);
+                    stateSignal.set({
+                        data: [],
+                        totalCount: 0,
+                        pageIndex: currentState.pageIndex,
+                        pageSize: currentState.pageSize,
+                        isLoading: false
+                    });
+                }
+            });
     }
 
     onPendingPageChange(event: PageEvent): void {

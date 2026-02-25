@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -45,6 +46,8 @@ export class CreateApplicationComponent implements OnInit {
     errorMessage = signal('');
     successMessage = signal('');
 
+    private destroyRef = inject(DestroyRef);
+
     applicationForm!: FormGroup;
 
     constructor(
@@ -72,16 +75,18 @@ export class CreateApplicationComponent implements OnInit {
         this.isLoadingLoanTypes.set(true);
         this.errorMessage.set('');
 
-        this.loanTypeService.getLoanTypes().subscribe({
-            next: (data) => {
-                this.loanTypes.set(data);
-                this.isLoadingLoanTypes.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load loan types');
-                this.isLoadingLoanTypes.set(false);
-            }
-        });
+        this.loanTypeService.getLoanTypes()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.loanTypes.set(data);
+                    this.isLoadingLoanTypes.set(false);
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.message || 'Failed to load loan types');
+                    this.isLoadingLoanTypes.set(false);
+                }
+            });
     }
 
     onLoanTypeChange(event: any): void {
@@ -144,26 +149,28 @@ export class CreateApplicationComponent implements OnInit {
     private fetchAllEmiPages(loanTypeId: string, amount: number, tenure: number, pageNumber: number = 1, accumulatedItems: any[] = []): void {
         const pagination = createPaginationParams(pageNumber, 100); // Max allowed by backend
 
-        this.loanTypeService.previewEmiPlan(loanTypeId, amount, tenure, pagination).subscribe({
-            next: (response) => {
-                // Accumulate items from this page
-                const allItems = [...accumulatedItems, ...response.items];
+        this.loanTypeService.previewEmiPlan(loanTypeId, amount, tenure, pagination)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    // Accumulate items from this page
+                    const allItems = [...accumulatedItems, ...response.items];
 
-                // Check if there are more pages
-                if (pageNumber < response.totalPages) {
-                    // Fetch next page
-                    this.fetchAllEmiPages(loanTypeId, amount, tenure, pageNumber + 1, allItems);
-                } else {
-                    // All pages fetched, set the complete EMI plan
-                    this.emiPlan.set(allItems);
+                    // Check if there are more pages
+                    if (pageNumber < response.totalPages) {
+                        // Fetch next page
+                        this.fetchAllEmiPages(loanTypeId, amount, tenure, pageNumber + 1, allItems);
+                    } else {
+                        // All pages fetched, set the complete EMI plan
+                        this.emiPlan.set(allItems);
+                        this.isLoadingEmiPlan.set(false);
+                    }
+                },
+                error: (error) => {
+                    // this.errorMessage.set(error.error?.message || 'Failed to generate EMI plan');
                     this.isLoadingEmiPlan.set(false);
                 }
-            },
-            error: (error) => {
-                // this.errorMessage.set(error.error?.message || 'Failed to generate EMI plan');
-                this.isLoadingEmiPlan.set(false);
-            }
-        });
+            });
     }
 
     onSubmit(): void {
@@ -177,21 +184,23 @@ export class CreateApplicationComponent implements OnInit {
         this.errorMessage.set('');
         this.successMessage.set('');
 
-        this.applicationService.createApplication(this.applicationForm.value).subscribe({
-            next: (response) => {
-                this.successMessage.set(`Application submitted successfully! Application Number: ${response.applicationNumber}`);
-                this.isSubmitting.set(false);
+        this.applicationService.createApplication(this.applicationForm.value)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    this.successMessage.set(`Application submitted successfully! Application Number: ${response.applicationNumber}`);
+                    this.isSubmitting.set(false);
 
-                // Redirect to applications list after 2 seconds
-                setTimeout(() => {
-                    this.router.navigate(['/customer/applications']);
-                }, 2000);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.error?.message || 'Failed to submit application. Please try again.');
-                this.isSubmitting.set(false);
-            }
-        });
+                    // Redirect to applications list after 2 seconds
+                    setTimeout(() => {
+                        this.router.navigate(['/customer/applications']);
+                    }, 2000);
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.error?.message || 'Failed to submit application. Please try again.');
+                    this.isSubmitting.set(false);
+                }
+            });
     }
 
     resetForm(): void {

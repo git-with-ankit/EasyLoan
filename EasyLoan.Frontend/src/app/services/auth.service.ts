@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, switchMap } from 'rxjs';
 import { Router } from '@angular/router';
 import {
@@ -20,6 +21,7 @@ export class AuthService {
   private baseUrl = `${environment.apiUrl}`;
   private userService = inject(UserService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   constructor(private http: HttpClient) { }
 
@@ -49,17 +51,19 @@ export class AuthService {
 
   logout(): void {
     // Use unified auth logout endpoint
-    this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
-      next: () => {
-        this.userService.clearUser();
-        this.router.navigate(['/landing']);
-      },
-      error: () => {
-        // Even if logout fails, clear local state and redirect
-        this.userService.clearUser();
-        this.router.navigate(['/landing']);
-      }
-    });
+    this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.userService.clearUser();
+          this.router.navigate(['/landing']);
+        },
+        error: () => {
+          // Even if logout fails, clear local state and redirect
+          this.userService.clearUser();
+          this.router.navigate(['/landing']);
+        }
+      });
   }
 
   isAuthenticated(): boolean {

@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { LoanService } from '../../../services/loan.service';
@@ -19,6 +20,8 @@ export class LoansListComponent implements OnInit {
     isLoading = signal(false);
     errorMessage = signal('');
 
+    private destroyRef = inject(DestroyRef);
+
     LoanStatus = LoanStatus;
 
     constructor(
@@ -34,16 +37,18 @@ export class LoansListComponent implements OnInit {
         this.isLoading.set(true);
         this.errorMessage.set('');
 
-        this.loanService.getLoans(this.selectedStatus()).subscribe({
-            next: (data) => {
-                this.loans.set(data);
-                this.isLoading.set(false);
-            },
-            error: (error) => {
-                this.errorMessage.set(error.message || 'Failed to load loans');
-                this.isLoading.set(false);
-            }
-        });
+        this.loanService.getLoans(this.selectedStatus())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (data) => {
+                    this.loans.set(data);
+                    this.isLoading.set(false);
+                },
+                error: (error) => {
+                    this.errorMessage.set(error.message || 'Failed to load loans');
+                    this.isLoading.set(false);
+                }
+            });
     }
 
     onStatusChange(status: LoanStatus): void {
@@ -59,8 +64,10 @@ export class LoansListComponent implements OnInit {
             maxHeight: '90vh'
         });
 
-        dialogRef.afterClosed().subscribe(() => {
-            this.loadLoans(); // Refresh loans after dialog closes (in case payment was made)
-        });
+        dialogRef.afterClosed()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.loadLoans(); // Refresh loans after dialog closes (in case payment was made)
+            });
     }
 }

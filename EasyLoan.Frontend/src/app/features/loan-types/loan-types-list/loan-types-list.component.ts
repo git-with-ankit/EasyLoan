@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -26,6 +27,8 @@ export class LoanTypesListComponent implements OnInit {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private loanTypeService: LoanTypeService,
     private router: Router
@@ -39,19 +42,21 @@ export class LoanTypesListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.loanTypeService.getLoanTypes().subscribe({
-      next: (data) => {
-        console.log('Loan types received:', data);
-        this.loanTypes.set(data);
-        this.loading.set(false);
-        console.log('Loading set to false, loanTypes count:', this.loanTypes().length);
-      },
-      error: (err) => {
-        this.error.set('Failed to load loan types. Please try again.');
-        this.loading.set(false);
-        console.error('Error loading loan types:', err);
-      }
-    });
+    this.loanTypeService.getLoanTypes()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          console.log('Loan types received:', data);
+          this.loanTypes.set(data);
+          this.loading.set(false);
+          console.log('Loading set to false, loanTypes count:', this.loanTypes().length);
+        },
+        error: (err) => {
+          this.error.set('Failed to load loan types. Please try again.');
+          this.loading.set(false);
+          console.error('Error loading loan types:', err);
+        }
+      });
   }
 
   navigateToCreate(): void {

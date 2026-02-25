@@ -26,6 +26,7 @@ export const routes: Routes = [
   {
     path: 'customer',
     canActivate: [authGuard, roleGuard],
+    canActivateChild: [authGuard, roleGuard],
     data: { roles: ['Customer'] },
     loadChildren: () =>
       import('./routes/customer.routes').then(m => m.CUSTOMER_ROUTES),
@@ -34,6 +35,7 @@ export const routes: Routes = [
   {
     path: 'employee',
     canActivate: [authGuard, roleGuard],
+    canActivateChild: [authGuard, roleGuard],
     data: { roles: ['Manager', 'Admin'] },
     loadChildren: () =>
       import('./routes/employee.routes').then(m => m.EMPLOYEE_ROUTES),
@@ -42,6 +44,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
+    canActivateChild: [authGuard, roleGuard],
     data: { roles: ['Admin'] },
     loadChildren: () =>
       import('./routes/admin.routes').then(m => m.ADMIN_ROUTES),

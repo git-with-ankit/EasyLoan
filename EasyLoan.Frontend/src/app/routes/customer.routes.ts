@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { canDeactivateApplication } from '../guards/can-deactivate-application.guard';
+import { canDeactivateProfile } from '../guards/can-deactivate-profile.guard';
 
 export const CUSTOMER_ROUTES: Routes = [
     {
@@ -23,11 +25,13 @@ export const CUSTOMER_ROUTES: Routes = [
             },
             {
                 path: 'apply-loan',
-                loadComponent: () => import('../features/applications/create-application/create-application.component').then(m => m.CreateApplicationComponent)
+                loadComponent: () => import('../features/applications/create-application/create-application.component').then(m => m.CreateApplicationComponent),
+                canDeactivate: [canDeactivateApplication]
             },
             {
                 path: 'profile',
-                loadComponent: () => import('../features/profile/profile.component').then(m => m.ProfileComponent)
+                loadComponent: () => import('../features/profile/profile.component').then(m => m.ProfileComponent),
+                canDeactivate: [canDeactivateProfile]
             }
         ]
     },
